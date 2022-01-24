@@ -1,0 +1,14 @@
+
+path_sample_table: '/gpfs/project/projects/medbioinf/projects/hgsvc/2021_pgas/project-diploid-assembly/annotation/samples/samples.tsv'
+path_hifiec_reads: '/gpfs/project/projects/medbioinf/projects/hgsvc/2021_pgas/run_folder/output/reference_assembly/non-hap-res/layout/hifiasm'
+path_hifiaf_reads: '/gpfs/project/projects/medbioinf/projects/hgsvc/2021_pgas/run_folder/input/fastq'
+path_ontul_reads: '/gpfs/project/projects/medbioinf/projects/hgsvc/ontqc/run_folder/input/ONTUL'
+path_ontec_reads: '/gpfs/project/projects/medbioinf/projects/hgsvc/ontqc/run_folder/input/ONTEC'
+path_assembly_graphs: '/gpfs/project/projects/medbioinf/projects/hgsvc/2021_pgas/run_folder/output/reference_assembly/non-hap-res/layout/hifiasm'
+path_chry_contigs: '/gpfs/project/projects/medbioinf/data/share/globus/sig_chrY/2021-08_freeze-v2_-hifiasm_v0154/assemblies/Y_contigs'
+path_alignment_cache: '/gpfs/project/projects/medbioinf/projects/hgsvc/ontqc/run_folder/output/alignments/reads_to_linear_ref'
+
+num_cpu_low: 6
+num_cpu_medium: 12
+num_cpu_high: 24
+num_cpu_max: 72

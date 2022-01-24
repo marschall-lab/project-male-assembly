@@ -1,0 +1,12 @@
+name: biotools
+dependencies:
+  - Python=3.8.*
+  - pip
+  - minimap2=2.24
+  - samtools=1.10
+  - pigz=2.6
+  - seqtk=1.3
+  - meryl=1.3
+  - yak=0.1
+  - mbg=1.0.8
+  - graphaligner=1.0.14

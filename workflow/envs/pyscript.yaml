@@ -1,0 +1,18 @@
+name: pyscript
+dependencies:
+  - Python=3.8.*
+  - pip
+  - numpy=1.22.1
+  - matplotlib=3.5.1
+  - htslib=1.14
+  - libdeflate=1.9  # v1.0 may trigger pysam import error - DO NOT DOWNGRADE
+  - pysam=0.17
+  - dnaio=0.5.0  # Python and compression - the holy quaternity:
+  - xopen=1.1.0  # always jointly go for xopen, dnaio, pigz and python-isal
+  - pigz=2.6     # (should be automatic via dependencies) 
+  - python-isal=0.9.0  # most efficient way to handle gzipped files (plus fasta/fastq via dnaio)
+  - networkx=2.6.3
+  - biopython=1.76
+  - pandas=1.4.0
+  - pytables=3.6.1
+  - intervaltree=3.1.0

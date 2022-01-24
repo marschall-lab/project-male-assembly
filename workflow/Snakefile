@@ -1,0 +1,24 @@
+include: 'rules/00_pyfun_input.smk'
+include: 'rules/00_pyfun_utils.smk'
+include: 'rules/00_pyfun_rsrc.smk'
+include: 'rules/10_utils.smk'
+include: 'rules/20_preprocessing.smk'
+include: 'rules/30_hybrid_assembly.smk'
+
+localrules: run_hybrid_assembly
+
+COMPLETE_SAMPLES = sorted(set(ONTUL_SAMPLES).intersection(set(HIFIEC_SAMPLES)))
+if 'NA19317' in COMPLETE_SAMPLES and 'NA19347' in COMPLETE_SAMPLES:
+    COMPLETE_SAMPLES.append('NA193N7')
+
+
+rule run_hybrid_assembly:
+    input:
+        run_ok = expand(
+            'output/hybrid/verkko/{sample_long}.{hifi_type}.{ont_type}.{mapq}.{chrom}.ok',
+            sample_long=[SAMPLE_INFOS[sample]['long_id'] for sample in COMPLETE_SAMPLES if SAMPLE_INFOS[sample]['sex'] == 'M'],
+            hifi_type=['HIFIEC', 'HIFIAF', 'ONTEC', 'OHEC'],
+            ont_type=['ONTUL'],
+            mapq=['mq00'],
+            chrom=['chrX', 'chrY', 'chrXY'],
+        )

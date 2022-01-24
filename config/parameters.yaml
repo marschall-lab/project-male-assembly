@@ -1,0 +1,31 @@
+
+
+
+mbg_init_kmer:
+  - 501
+  - 501
+  - 501
+mbg_window_size:
+  - 100
+  - 100
+  - 100
+mbg_resolve_kmer:
+  - 15001
+  - 100001  # can only be used with ONTEC reads
+  - 150001  # can only be used with ONTEC reads
+
+# LJA is not used anymore
+lja_small_kmer:
+  - 501
+lja_large_kmer:
+  - 5001
+
+# set synonyms for hifiasm
+# output graphs to simplify
+# file naming patterns
+# Update: not used with Verkko
+hifiasm_tig_names:
+  UTGRAW: r_utg,
+  UTGPRI: p_utg,
+  CTGPRI: p_ctg,
+  CTGALT: a_ctg

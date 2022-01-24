@@ -1,0 +1,7 @@
+name: verkko
+dependencies:
+  - Python=3.8.*
+  - pip
+  - verkko=1.0
+  - graphaligner=1.0.14
+  - mbg=1.0.8

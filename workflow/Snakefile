@@ -16,8 +16,8 @@ rule run_hybrid_assembly:
         run_ok = expand(
             'output/hybrid/verkko/{sample_long}.{hifi_type}.{ont_type}.{mapq}.{chrom}.ok',
             sample_long=[SAMPLE_INFOS[sample]['long_id'] for sample in COMPLETE_SAMPLES if SAMPLE_INFOS[sample]['sex'] == 'M'],
-            hifi_type=['HIFIEC', 'HIFIAF', 'ONTEC', 'OHEC'],
+            hifi_type=['HIFIEC', 'HIFIAF'],
             ont_type=['ONTUL'],
             mapq=['mq00'],
-            chrom=['chrX', 'chrY', 'chrXY'],
+            chrom=['chrY'],
         )

@@ -10,16 +10,18 @@ rule run_verkko_targeted_assembly:
         'log/output/hybrid/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.verkko.log'
     benchmark:
         'rsrc/output/hybrid/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.verkko.rsrc'
-    conda:
-        '../envs/verkko.yaml'
+    # conda:
+    #     '../envs/verkko.yaml'
+    singularity:
+        'verkko_v1.0_1a00b60.sif'
     threads: config['num_cpu_high']
     resources:
-        mem_mb = lambda wildcards, attempt: 110592 * attempt,
+        mem_mb = lambda wildcards, attempt: 24576 * attempt,
         walltime = lambda wildcards, attempt: f'{35 * attempt}:59:00'
     params:
         run_correction = lambda wildcards: '--no-correction' if wildcards.hifi_type in ['HIFIEC', 'ONTEC', 'OHEC'] else '',
         high_maxk = lambda wildcards: '--max-k 100000' if wildcards.hifi_type in ['ONTEC', 'OHEC'] else ''
     shell:
-        'verkko --local --hifi {input.hifi} --nano {input.ont} -d {output.wd} '
+        '/repos/verkko/bin/verkko --local --hifi {input.hifi} --nano {input.ont} -d {output.wd} '
             '{params.run_correction} {params.high_maxk} --threads {threads} &> {log} '
             ' && touch {output.complete}'

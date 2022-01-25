@@ -62,7 +62,7 @@ rule extract_aligned_chrom_read_sequences:
     output:
         'output/read_subsets/{chrom}/{sample_info}_{sample}_{read_type}.{chrom}-reads.{mapq}.{seq_type}.gz',
     conda:
-        '../envs/biotools.yml'
+        '../envs/biotools.yaml'
     wildcard_constraints:
         sample = CONSTRAINT_REGULAR_SAMPLES,
         read_type = '(HIFIEC|HIFIAF|ONTUL|ONTEC)',
@@ -81,7 +81,7 @@ rule merge_sex_chrom_reads:
     output:
         'output/read_subsets/chrXY/{sample_info}_{sample}_{read_type}.chrXY-reads.{mapq}.{seq_type}.gz',
     conda:
-        '../../../environment/conda/conda_biotools.yml'
+        '../envs/biotools.yaml'
     wildcard_constraints:
         read_type = '(HIFIEC|HIFIAF|ONTUL|ONTEC)',
         sample = CONSTRAINT_REGULAR_SAMPLES,
@@ -99,7 +99,7 @@ rule merge_read_types:
     output:
         'output/read_subsets/{chrom}/{sample_info}_{sample}_OHEC.{chrom}-reads.{mapq}.{seq_type}.gz',
     conda:
-        '../../../environment/conda/conda_biotools.yml'
+        '../envs/biotools.yaml'
     wildcard_constraints:
         chrom = '(chrY|chrX|chrXY)',
         sample = CONSTRAINT_REGULAR_SAMPLES,
@@ -119,7 +119,7 @@ rule merge_afr_mix_subsets:
     output:
         'output/read_subsets/{chrom}/{sample_info}_{sample}_{read_type}.{chrom}-reads.{mapq}.{seq_type}.gz',
     conda:
-        '../../../environment/conda/conda_biotools.yml'
+        '../envs/biotools.yaml'
     wildcard_constraints:
         sample = '(NA193N7|NA193NN|AFR4MIX)'
     threads: config['num_cpu_low']

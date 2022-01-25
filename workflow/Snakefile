@@ -1,6 +1,5 @@
 include: 'rules/00_pyfun_input.smk'
 include: 'rules/00_pyfun_utils.smk'
-include: 'rules/00_pyfun_rsrc.smk'
 include: 'rules/10_utils.smk'
 include: 'rules/20_preprocessing.smk'
 include: 'rules/30_hybrid_assembly.smk'

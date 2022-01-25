@@ -281,7 +281,7 @@ def get_lja_param(param_spec, which=None):
     return result
 
 
-def select_chrom_reads(wildcards):
+def select_hifi_reads(wildcards):
     """
     Why does this exist?
     - avoid carrying wildcard for input sequence type (FASTA vs FASTQ)
@@ -290,7 +290,7 @@ def select_chrom_reads(wildcards):
         seq_type = 'fastq'
     else:
         seq_type = 'fasta'
-    template = 'output/read_subsets/{chrom}/{sample_info}_{sample}_{read_type}.{chrom}-reads.{mapq}.{seq_type}.gz'
+    template = 'output/read_subsets/{chrom}/{sample_info}_{sample}_{hifi_type}.{chrom}-reads.{mapq}.{seq_type}.gz'
     formatter = dict(wildcards)
     formatter['seq_type'] = seq_type
     reads_path = template.format(**formatter)

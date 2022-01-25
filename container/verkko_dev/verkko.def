@@ -1,0 +1,14 @@
+Bootstrap: localimage
+From: ga_mbg.sif
+
+%post
+    cd /repos
+    # Install latest Verkko
+    git clone https://github.com/marbl/verkko.git
+    cd verkko/src
+    git submodule update --init --recursive
+    git checkout 1a00b60
+    make -j8
+
+%environment
+    export PATH=/repos/verkko/bin:/repos/verkko/lib/verkko/bin:$PATH

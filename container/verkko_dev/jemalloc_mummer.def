@@ -1,0 +1,28 @@
+Bootstrap: localimage
+From: base_env.sif
+
+%post
+    # Install recent Snakemake
+    mkdir /repos
+    cd /repos
+    # Install Jemalloc release to get "jemalloc-config"
+    wget https://github.com/jemalloc/jemalloc/releases/download/5.2.1/jemalloc-5.2.1.tar.bz2
+    tar xjf jemalloc-5.2.1.tar.bz2
+    rm jemalloc-5.2.1.tar.bz2
+    cd jemalloc-5.2.1/
+    ./configure
+    make -j8
+    make install
+    cd /repos
+    rm -rf jemalloc-5.2.1/
+    # Install MUMMER release candidate to /usr/local
+    wget https://github.com/mummer4/mummer/releases/download/v4.0.0rc1/mummer-4.0.0rc1.tar.gz
+    tar xzf mummer-4.0.0rc1.tar.gz
+    rm mummer-4.0.0rc1.tar.gz
+    cd mummer-4.0.0rc1/
+    autoreconf -fi
+    ./configure
+    make -j8
+    make install
+    cd /repos
+    rm -rf mummer-4.0.0rc1/

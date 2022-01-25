@@ -1,0 +1,29 @@
+Bootstrap: library
+From: ubuntu:20.04
+
+%post
+    apt-get update
+    apt-get install --assume-yes software-properties-common
+    add-apt-repository universe
+    apt-get update
+    # much of the stuff below: GraphAligner deps,
+    # end of the list: MUMMER src build, otherwise
+    # unclear if headers are available for GA
+    apt-get install --assume-yes \
+        wget git build-essential \
+        python3 python3-pip \
+        pkg-config zlib1g-dev \
+        libsdsl-dev libboost-dev \
+        protobuf-compiler \
+        libprotobuf-dev libprotoc-dev \
+        libboost-serialization-dev \
+        libboost-program-options-dev \
+        libsparsehash-dev yaggo libtool \
+        automake autoconf autotools-dev
+    # Verkko = Snakemake pipeline
+    pip install snakemake==6.13.1
+    apt-get autoremove --assume-yes
+    apt-get clean --assume-yes
+
+%environment
+    export LC_ALL=C

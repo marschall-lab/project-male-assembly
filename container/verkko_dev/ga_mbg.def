@@ -1,0 +1,23 @@
+Bootstrap: localimage
+From: jemalloc_mummer.sif
+
+%post
+    cd /repos
+    # Install GraphAligner release v1.0.14
+    git clone https://github.com/maickrau/GraphAligner.git
+    cd GraphAligner/
+    git submodule update --init --recursive
+    git checkout v1.0.14
+    make -j8 bin/GraphAligner
+    cp bin/GraphAligner /usr/local/bin
+    cd /repos
+    rm -rf GraphAligner
+    # Install MBG release v1.0.8
+    git clone https://github.com/maickrau/MBG.git
+    cd MBG
+    git submodule update --init --recursive
+    git checkout v1.0.8
+    make -j8 bin/MBG
+    cp bin/MBG /usr/local/bin
+    cd /repos
+    rm -rf MBG/

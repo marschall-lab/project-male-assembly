@@ -24,6 +24,9 @@ From: ubuntu:20.04
     pip install snakemake==6.13.1
     apt-get autoremove --assume-yes
     apt-get clean --assume-yes
+    # some Verkko scripts search for "python"
+    ln -s /bin/python3 /bin/python
+
 
 %environment
     export LC_ALL=C

@@ -1,4 +1,5 @@
 
+path_ref_folder: '/gpfs/project/projects/medbioinf/data/share/globus/sig_chrY/references'
 path_sample_table: '/gpfs/project/projects/medbioinf/projects/hgsvc/2021_pgas/project-diploid-assembly/annotation/samples/samples.tsv'
 path_hifiec_reads: '/gpfs/project/projects/medbioinf/projects/hgsvc/2021_pgas/run_folder/output/reference_assembly/non-hap-res/layout/hifiasm'
 path_hifiaf_reads: '/gpfs/project/projects/medbioinf/projects/hgsvc/2021_pgas/run_folder/input/fastq'

@@ -7,10 +7,10 @@ rule merge_hg002_chry_draft:
     T2T/chm13 assembly
     """
     input:
-        genome = '/gpfs/project/projects/medbioinf/data/references/T2Tv11_T2TC_chm13.fasta',
-        chry = '/gpfs/project/projects/medbioinf/data/references/hg002.chrY.v2.fasta'
+        genome = ancient(config['path_ref_folder'].strip('/') + '/T2Tv11_T2TC_chm13.fasta'),
+        chry = ancient(config['path_ref_folder'].strip('/') + '/hg002.chrY.v2.fasta')
     output:
-        genome = '/gpfs/project/projects/medbioinf/data/references/T2Tv11_hg002Yv2_chm13.fasta'
+        genome = config['path_ref_folder'].strip('/') + '/T2Tv11_hg002Yv2_chm13.fasta'
     resources:
         mem_mb = lambda wildcards, attempt: 2048 * attempt
     run:

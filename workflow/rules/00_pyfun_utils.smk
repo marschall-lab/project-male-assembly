@@ -1,3 +1,5 @@
+import pathlib
+
 
 def find_script_path(script_name, subfolder=''):
     import os
@@ -279,6 +281,20 @@ def get_lja_param(param_spec, which=None):
         assert which in param_pos, f'Cannot process "which": {which}'
         result = result[param_pos[which]]
     return result
+
+
+def select_reference_genome(ref_name):
+
+    ref_path = pathlib.Path(config['path_ref_folder']).resolve(strict=True)
+
+    available_references = config['reference_genomes']
+    try:
+        ref_genome = pathlib.Path(available_references[ref_name])
+    except KeyError:
+        raise ValueError(f'Requested reference "{ref_name}" is not available: {available_references}')
+
+    ref_genome_path = ref_path / ref_genome
+    return ref_genome_path
 
 
 def select_hifi_reads(wildcards):

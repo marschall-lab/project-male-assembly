@@ -1,4 +1,9 @@
 
+reference_genomes:
+  T2TX: 'T2Tv11_T2TC_chm13.fasta'
+  T2TXY: 'T2Tv11_hg002Yv2_chm13.fasta'
+  GRCh38: 'GRCh38_HGSVC2_noalt.fasta'
+  hg38: ''  # placeholder for "only main chromosomes"
 
 
 mbg_init_kmer:

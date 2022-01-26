@@ -14,7 +14,7 @@ if 'NA19317' in COMPLETE_SAMPLES and 'NA19347' in COMPLETE_SAMPLES:
 rule run_hybrid_assembly:
     input:
         run_ok = expand(
-            'output/hybrid/verkko/{sample_long}.{hifi_type}.{ont_type}.{mapq}.{chrom}.ok',
+            'output/hybrid/verkko/{sample_long}.{hifi_type}.{ont_type}.{mapq}.{chrom}/assembly.fasta',
             sample_long=[SAMPLE_INFOS[sample]['long_id'] for sample in COMPLETE_SAMPLES if SAMPLE_INFOS[sample]['sex'] == 'M'],
             hifi_type=['HIFIEC', 'HIFIAF'],
             ont_type=['ONTUL'],

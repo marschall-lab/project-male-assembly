@@ -1,5 +1,15 @@
 
 rule run_verkko_targeted_assembly:
+    """
+    Note that the below call explicitly deletes the working
+    directory before starting Verkko as Verkko's own
+    Snakemake workflow cannot necessarily detect corrupt
+    leftovers from previous runs if these were caused by
+    bugs in one of the scripts.
+    In principle, Verkko should be capable to continue
+    the previous run, but I leave that for a post-beta
+    release version for now...
+    """
     input:
         ont = 'output/read_subsets/{chrom}/{sample_info}_{sample}_{ont_type}.{chrom}-reads.{mapq}.fasta.gz',
         hifi = select_hifi_reads
@@ -25,5 +35,6 @@ rule run_verkko_targeted_assembly:
         high_maxk = lambda wildcards: '--max-k 100000' if wildcards.hifi_type in ['ONTEC', 'OHEC'] else '',
         work_dir = lambda wildcards, output: output.assembly[0].rsplit('/', 1)[0]
     shell:
+        'rm -rf {params.work_dir} && '
         '/repos/verkko/bin/verkko --local --hifi {input.hifi} --nano {input.ont} -d {params.work_dir} '
             '{params.run_correction} {params.high_maxk} --threads {threads} &> {log} '

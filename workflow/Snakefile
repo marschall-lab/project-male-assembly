@@ -1,3 +1,17 @@
+
+import pathlib
+
+if config.get('use_reference_containers', True):
+    refcon_module = pathlib.Path("ref-container/workflow/rules/ext_include/refcon_load.smk")
+    refcon_repo_path = config.get("refcon_repo_path", None)
+    if refcon_repo_path is None:
+        refcon_repo_path = pathlib.Path(workflow.basedir).parent.parent
+    else:
+        refcon_repo_path = pathlib.Path(refcon_repo_path)
+        assert refcon_repo_path.is_dir()
+    refcon_include_module = refcon_repo_path / refcon_module
+    include: refcon_include_module
+
 include: 'rules/00_pyfun_input.smk'
 include: 'rules/00_pyfun_utils.smk'
 include: 'rules/10_utils.smk'

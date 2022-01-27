@@ -36,3 +36,17 @@ rule index_bam_alignment:
         walltime = lambda wildcards, attempt: f'{attempt ** 3:02}:59:00'
     shell:
         'samtools index -b -@ {threads} {input}'
+
+
+rule index_fasta_file:
+    input:
+        '{filepath}.fasta'
+    output:
+        '{filepath}.fasta.fai'
+    conda:
+        '../envs/biotools.yaml'
+    resources:
+        mem_mb = lambda wildcards, attempt: 1024 * attempt,
+        walltime = lambda wildcards, attempt: f'{attempt:02}:59:00'
+    shell:
+        'samtools faidx {input}'

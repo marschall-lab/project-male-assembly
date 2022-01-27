@@ -1,8 +1,8 @@
 
 reference_genomes:
-  T2TX: 'T2Tv11_T2TC_chm13.fasta'
-  T2TXY: 'T2Tv11_hg002Yv2_chm13.fasta'
-  GRCh38: 'GRCh38_HGSVC2_noalt.fasta'
+  T2TX: 'references_derived/T2T_chm13_122XM.fasta'
+  T2TXY: 'references_derived/T2T_122XYM.fasta'
+  GRCh38: ''
   hg38: ''  # placeholder for "only main chromosomes"
 
 

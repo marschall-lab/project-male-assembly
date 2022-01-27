@@ -1,16 +1,54 @@
 import pathlib as pl
 
 
-rule merge_hg002_chry_draft:
-    """
-    Add current T2T/chrY draft to
-    T2T/chm13 assembly
-    """
+rule t2t_convert_to_ucsc_ids:
     input:
-        genome = ancient(config['path_ref_folder'].strip('/') + '/T2Tv11_T2TC_chm13.fasta'),
-        chry = ancient(config['path_ref_folder'].strip('/') + '/hg002.chrY.v2.fasta')
+        genbank = 'references/GCA_009914755.3_CHM13_T2T_v1.1.fasta',
+        mapping = expand('references/{chr2acc}',
+            chr2acc=[
+                'GCA_009914755.3_CHM13_T2T_v1.1.primary-chr2acc.tsv',
+                'GCA_009914755.3_CHM13_T2T_v1.1.mito-chr2acc.tsv'
+            ]
+        )
     output:
-        genome = config['path_ref_folder'].strip('/') + '/T2Tv11_hg002Yv2_chm13.fasta'
+        local = 'references_derived/T2T_chm13_122XM.fasta'
+    resources:
+        mem_mb = lambda wildcards, attempt: 12288 * attempt
+    run:
+        import pandas as pd
+        import io
+
+        lut = []
+        for mapping in input.mapping:
+            df = pd.read_csv(mapping, sep='\t', header=None, names=['short', 'acc'], comment='#')
+            lut.append(df)
+        lut = pd.concat(lut)
+        lut['short'] = lut['short'].apply(lambda x: 'chrM' if x == 'MT' else f'chr{x}')
+        lut = {acc:chrom for chrom, acc in lut.itertuples(index=None)}
+
+        out_buffer = io.StringIO()
+        with open(input.genbank, 'r') as fasta:
+            for line in fasta:
+                if line.startswith('>'):
+                    new_names = [k for k in lut.keys() if k in line]
+                    if len(new_names) != 1:
+                        raise ValueError(f'No unique name mapping for input chromosome {line.strip()}')
+                    this_chrom = f'>{new_names[0]}\n'
+                    out_buffer.write(this_chrom)
+                    continue
+                out_buffer.write(line)
+
+        with open(output.local, 'w') as dump:
+            _ = dump.write(out_buffer.getvalue())
+    # END OF RUN BLOCK
+
+
+rule t2t_add_hg002_to_chm13:
+    input:
+        genome = 'references_derived/T2T_chm13_122XM.fasta',
+        chry = 'references/CP086569.2.fasta'
+    output:
+        genome = 'references_derived/T2T_122XYM.fasta'
     resources:
         mem_mb = lambda wildcards, attempt: 2048 * attempt
     run:
@@ -22,11 +60,14 @@ rule merge_hg002_chry_draft:
         out_buffer = io.StringIO()
         _ = out_buffer.write('>chrY\n')
         with open(input.chry, 'r') as fasta_in:
-            _ = fasta_in.readline()
+            header = fasta_in.readline()
+            if not 'CP086569.2' in header:
+                raise ValueError(f'This is not the correct version of chrY: {header.strip()}')
             _ = out_buffer.write(fasta_in.read())
 
         with open(output.genome, 'a') as fasta_out:
             _ = fasta_out.write(out_buffer.getvalue())
+    # END OF RUN BLOCK
 
 
 ###################################################################
@@ -36,6 +77,7 @@ rule merge_hg002_chry_draft:
 # the output cache is implemented as part of the HGSVC ONT-QC
 # pipeline; should be moved here at some point
 ###################################################################
+
 
 rule extract_aligned_chry_read_names:
     input:

@@ -30,7 +30,7 @@ rule t2t_convert_to_ucsc_ids:
         with open(input.genbank, 'r') as fasta:
             for line in fasta:
                 if line.startswith('>'):
-                    new_names = [k for k in lut.keys() if k in line]
+                    new_names = [v for k, v in lut.items() if k in line]
                     if len(new_names) != 1:
                         raise ValueError(f'No unique name mapping for input chromosome {line.strip()}')
                     this_chrom = f'>{new_names[0]}\n'

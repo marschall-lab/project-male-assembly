@@ -7,8 +7,13 @@ From: ga_mbg.sif
     git clone https://github.com/marbl/verkko.git
     cd verkko/src
     git submodule update --init --recursive
-    git checkout 1a00b60
+    # Reminder to update label below
+    git checkout fd7725e
     make -j8
 
 %environment
     export PATH=/repos/verkko/bin:/repos/verkko/lib/verkko/bin:$PATH
+
+%labels
+    verkko_release 1.0b
+    verkko_commit fd7725e

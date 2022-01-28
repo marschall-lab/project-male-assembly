@@ -130,3 +130,7 @@ dmypy.json
 
 # VS code
 .vscode/
+
+# Ignore container built for testing
+# Verkko dev versions
+*.sif

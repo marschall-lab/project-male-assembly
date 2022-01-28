@@ -102,7 +102,7 @@ rule extract_aligned_chrom_read_sequences:
         names = 'output/read_subsets/{chrom}/{sample_info}_{sample}_{read_type}.{chrom}-reads.{mapq}.txt',
         reads = lambda wildcards: SAMPLE_INFOS[wildcards.sample][wildcards.read_type],
     output:
-        'output/read_subsets/{chrom}/{sample_info}_{sample}_{read_type}.{chrom}-reads.{mapq}.{seq_type}.gz',
+        'output/read_subsets/{chrom}/{sample_info}_{sample}_{read_type}.{chrom}-reads.{mapq}.fasta.gz',
     conda:
         '../envs/biotools.yaml'
     wildcard_constraints:
@@ -113,15 +113,15 @@ rule extract_aligned_chrom_read_sequences:
     resources:
         walltime = lambda wildcards, attempt: f'{4 * attempt:02}:00:00',
     shell:
-        'seqtk subseq {input.reads} {input.names} | pigz -p {threads} --best > {output}'
+        'seqtk subseq {input.reads} {input.names} | seqtk seq -A -C | pigz -p {threads} --best > {output}'
 
 
 rule merge_sex_chrom_reads:
     input:
-        chrx = 'output/read_subsets/chrX/{sample_info}_{sample}_{read_type}.chrX-reads.{mapq}.{seq_type}.gz',
-        chry = 'output/read_subsets/chrY/{sample_info}_{sample}_{read_type}.chrY-reads.{mapq}.{seq_type}.gz',
+        chrx = 'output/read_subsets/chrX/{sample_info}_{sample}_{read_type}.chrX-reads.{mapq}.fasta.gz',
+        chry = 'output/read_subsets/chrY/{sample_info}_{sample}_{read_type}.chrY-reads.{mapq}.fasta.gz',
     output:
-        'output/read_subsets/chrXY/{sample_info}_{sample}_{read_type}.chrXY-reads.{mapq}.{seq_type}.gz',
+        'output/read_subsets/chrXY/{sample_info}_{sample}_{read_type}.chrXY-reads.{mapq}.fasta.gz',
     conda:
         '../envs/biotools.yaml'
     wildcard_constraints:
@@ -136,10 +136,10 @@ rule merge_sex_chrom_reads:
 
 rule merge_read_types:
     input:
-        hifiec = 'output/read_subsets/{chrom}/{sample_info}_{sample}_HIFIEC.{chrom}-reads.{mapq}.{seq_type}.gz',
-        ontec = 'output/read_subsets/{chrom}/{sample_info}_{sample}_ONTEC.{chrom}-reads.{mapq}.{seq_type}.gz',
+        hifiec = 'output/read_subsets/{chrom}/{sample_info}_{sample}_HIFIEC.{chrom}-reads.{mapq}.fasta.gz',
+        ontec = 'output/read_subsets/{chrom}/{sample_info}_{sample}_ONTEC.{chrom}-reads.{mapq}.fasta.gz',
     output:
-        'output/read_subsets/{chrom}/{sample_info}_{sample}_OHEC.{chrom}-reads.{mapq}.{seq_type}.gz',
+        'output/read_subsets/{chrom}/{sample_info}_{sample}_OHEC.{chrom}-reads.{mapq}.fasta.gz',
     conda:
         '../envs/biotools.yaml'
     wildcard_constraints:
@@ -159,7 +159,7 @@ rule merge_afr_mix_subsets:
     input:
         reads = select_afr_mix_subsets
     output:
-        'output/read_subsets/{chrom}/{sample_info}_{sample}_{read_type}.{chrom}-reads.{mapq}.{seq_type}.gz',
+        'output/read_subsets/{chrom}/{sample_info}_{sample}_{read_type}.{chrom}-reads.{mapq}.fasta.gz',
     conda:
         '../envs/biotools.yaml'
     wildcard_constraints:

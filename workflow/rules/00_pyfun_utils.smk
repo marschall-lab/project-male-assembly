@@ -30,24 +30,29 @@ def find_script_path(script_name, subfolder=''):
 
 def select_alignment_cache_file(wildcards):
 
+    input_qc_reference = config['input_qc_reference']
+
     cache_dir = pl.Path(config['path_alignment_cache'])
-    cache_files = list(cache_dir.glob(f'{wildcards.sample}*{wildcards.read_type}*T2Tv11_hg002Yv2_chm13.cov.cache.h5'))
+    glob_expression = f'{wildcards.sample}*{wildcards.read_type}*{input_qc_reference}.cov.cache.h5'
+    cache_files = list(cache_dir.glob(glob_expression))
     if not cache_files:
-        raise ValueError('too few ' + str(wildcards))
+        raise ValueError(
+            'Missing input - no cached whole-genome read coverage file for expression '
+            f'{glob_expression} /// {str(wildcards)}'
+        )
     if len(cache_files) > 1:
-        raise ValueError('too many ' + str(wildcards))
+        raise ValueError(
+            'Ambiguous input - more than one cached whole-genome read coverage file for expression '
+            f'{glob_expression} /// {str(wildcards)}: {cache_files}'
+        )
     return cache_files[0]
 
 
 def select_afr_mix_subsets(wildcards):
 
     assert 'mq0' in wildcards.mapq
-    if wildcards.read_type == 'HIFIAF':
-        seq_type = 'fastq'
-    else:
-        seq_type = 'fasta'
     merge_samples = SAMPLE_INFOS[wildcards.sample]['merge']
-    template = 'output/read_subsets/{chrom}/{sample_long}_{read_type}.{chrom}-reads.{mapq}.{seq_type}.gz'
+    template = 'output/read_subsets/{chrom}/{sample_long}_{read_type}.{chrom}-reads.{mapq}.fasta.gz'
     selected_readsets = []
     for sample in merge_samples:
         sample_long = SAMPLE_INFOS[sample]['long_id']
@@ -55,7 +60,6 @@ def select_afr_mix_subsets(wildcards):
             'sample_long': sample_long,
             'read_type': wildcards.read_type,
             'mapq': wildcards.mapq,
-            'seq_type': seq_type,
             'chrom': wildcards.chrom
         }
         selected_readsets.append(template.format(**formatter))
@@ -295,19 +299,3 @@ def select_reference_genome(ref_name):
 
     #ref_genome_path = ref_path / ref_genome
     return ref_genome
-
-
-def select_hifi_reads(wildcards):
-    """
-    Why does this exist?
-    - avoid carrying wildcard for input sequence type (FASTA vs FASTQ)
-    """
-    if wildcards.hifi_type == 'HIFIAF':
-        seq_type = 'fastq'
-    else:
-        seq_type = 'fasta'
-    template = 'output/read_subsets/{chrom}/{sample_info}_{sample}_{hifi_type}.{chrom}-reads.{mapq}.{seq_type}.gz'
-    formatter = dict(wildcards)
-    formatter['seq_type'] = seq_type
-    reads_path = template.format(**formatter)
-    return reads_path

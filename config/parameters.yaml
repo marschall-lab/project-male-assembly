@@ -1,4 +1,12 @@
 
+# this is the short identifier for the T2T
+# plus hg002-Y used in the ONT-QC pipeline
+# that produces some input for this pipeline:
+# - cached coverages of whole-genome read alignments
+# --- used to inform read subset selection for male assembly
+input_qc_reference: T2TXYM
+
+
 reference_genomes:
   T2TX: 'references_derived/T2T_chm13_122XM.fasta'
   T2TXY: 'references_derived/T2T_122XYM.fasta'

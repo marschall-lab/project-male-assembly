@@ -12,7 +12,7 @@ rule run_verkko_targeted_assembly:
     """
     input:
         ont = 'output/read_subsets/{chrom}/{sample_info}_{sample}_{ont_type}.{chrom}-reads.{mapq}.fasta.gz',
-        hifi = select_hifi_reads
+        hifi = 'output/read_subsets/{chrom}/{sample_info}_{sample}_{hifi_type}.{chrom}-reads.{mapq}.fasta.gz'
     output:
         assembly = multiext(
             'output/hybrid/verkko/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}/assembly',

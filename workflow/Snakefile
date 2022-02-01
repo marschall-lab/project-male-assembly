@@ -27,9 +27,6 @@ COMPLETE_SAMPLES = sorted(set(ONTUL_SAMPLES).intersection(set(HIFIEC_SAMPLES)))
 if 'NA19317' in COMPLETE_SAMPLES and 'NA19347' in COMPLETE_SAMPLES:
     COMPLETE_SAMPLES.append('NA193N7')
 
-# while debugging Verkko, restrict the sample set for now
-COMPLETE_SAMPLES = [s for s in COMPLETE_SAMPLES if s in ['HG02666', 'HC02666', 'NA18989', 'HC18989', 'NA193N7']]
-
 
 rule run_all:
     input:
@@ -41,4 +38,39 @@ rule run_all:
             mapq=['mq00'],
             chrom=['chrY'],
             reference=['T2TXY']
+        )
+
+
+rule populate_share:
+    input:
+        readsets = expand(
+            'output/share/read_subsets/{sample_long}_{read_type}.{chrom}-reads.{mapq}.copied.ok',
+            sample_long=[SAMPLE_INFOS[sample]['long_id'] for sample in COMPLETE_SAMPLES if SAMPLE_INFOS[sample]['sex'] == 'M'],
+            read_type=['HIFIEC', 'HIFIAF', 'ONTUL', 'ONTEC'],
+            mapq=['mq00'],
+            chrom=['chrY'],
+            reference=['T2TXY']
+        ),
+        assemblies = expand(
+            'output/share/assemblies/verkko_{release}_{commit}/{sample_long}.{hifi_type}.{ont_type}.{mapq}.{chrom}.copied.ok',
+            sample_long=[SAMPLE_INFOS[sample]['long_id'] for sample in COMPLETE_SAMPLES if SAMPLE_INFOS[sample]['sex'] == 'M'],
+            hifi_type=['HIFIEC', 'HIFIAF'],
+            ont_type=['ONTUL'],
+            mapq=['mq00'],
+            chrom=['chrY'],
+            reference=['T2TXY'],
+            release=config['verkko_release'],
+            commit=config['verkko_commit']
+        ),
+        aln_ctg_ref = expand(
+            'output/share/alignments/contigs-to-ref/verkko_{release}_{commit}/{sample_long}.{hifi_type}.{ont_type}.{mapq}.{chrom}_aln-to_{reference}.copied.ok',
+            sample_long=[SAMPLE_INFOS[sample]['long_id'] for sample in COMPLETE_SAMPLES if SAMPLE_INFOS[sample]['sex'] == 'M'],
+            hifi_type=['HIFIEC', 'HIFIAF'],
+            ont_type=['ONTUL'],
+            mapq=['mq00'],
+            chrom=['chrY'],
+            reference=['T2TXY'],
+            release=config['verkko_release'],
+            commit=config['verkko_commit'],
+            reference=config['T2TXY']
         )

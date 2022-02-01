@@ -13,6 +13,9 @@ path_assembly_graphs: '/gpfs/project/projects/medbioinf/projects/hgsvc/2021_pgas
 path_chry_contigs: '/gpfs/project/projects/medbioinf/data/share/globus/sig_chrY/2021-08_freeze-v2_-hifiasm_v0154/assemblies/Y_contigs'
 path_alignment_cache: '/gpfs/project/projects/medbioinf/projects/hgsvc/ontqc/run_folder/output/alignments/reads_to_linear_ref'
 
+path_root_share_working: /gpfs/project/projects/medbioinf/data/share/globus/sig_chrY/working
+path_root_share_references: /gpfs/project/projects/medbioinf/data/share/globus/sig_chrY/references
+
 num_cpu_low: 6
 num_cpu_medium: 12
 num_cpu_high: 24

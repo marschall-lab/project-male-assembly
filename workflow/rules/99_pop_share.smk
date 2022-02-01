@@ -40,19 +40,20 @@ rule copy_chromosome_assemblies:
 
         with open(input.version, 'r') as js_dump:
             verkko = json.load(js_dump)
-            release = verrko['verkko_release']
+            release = verkko['verkko_release']
             commit = verkko['verkko_commit']
 
         share_path = pl.Path(config['path_root_share_working']).resolve()
-        verkko_subfolder = share_path / pl.Path(f'assemblies/verkko_{release}_{commit}/{wildcards.chrom}/{wildcards.read_type}')
+        verkko_subfolder = share_path / pl.Path(f'assemblies/verkko_{release}_{commit}/{wildcards.chrom}/{wildcards.hifi_type}')
         verkko_subfolder.mkdir(parents=True, exist_ok=True)
 
         check_file = ''
 
         for source in [input.linear, input.graph] + list(input.stats):
             # not sure if easier to separate by output type...
+            new_name = pl.Path(source.replace('/assembly', '.assembly')).name
             source_path = pl.Path(source)
-            dest_path = verkko_subfolder / source_path.name
+            dest_path = verkko_subfolder / new_name
             sh.copy(source_path, dest_path)
             check_file += f'{source_path}\t{dest_path}\n'
 
@@ -76,11 +77,11 @@ rule copy_chromosome_contig_alignments:
 
         with open(input.version, 'r') as js_dump:
             verkko = json.load(js_dump)
-            release = verrko['verkko_release']
+            release = verkko['verkko_release']
             commit = verkko['verkko_commit']
 
         share_path = pl.Path(config['path_root_share_working']).resolve()
-        verkko_subfolder = share_path / pl.Path(f'alignments/contigs-to-ref/verkko_{release}_{commit}/{wildcards.chrom}/{wildcards.read_type}')
+        verkko_subfolder = share_path / pl.Path(f'alignments/contigs-to-ref/verkko_{release}_{commit}/{wildcards.chrom}/{wildcards.hifi_type}')
         verkko_subfolder.mkdir(parents=True, exist_ok=True)
 
         check_file = ''

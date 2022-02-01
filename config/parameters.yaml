@@ -13,6 +13,8 @@ reference_genomes:
   GRCh38: ''
   hg38: ''  # placeholder for "only main chromosomes"
 
+verkko_release: 1.0b
+verkko_commit: fd7725e
 
 mbg_init_kmer:
   - 501

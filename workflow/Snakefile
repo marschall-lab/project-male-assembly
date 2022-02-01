@@ -49,7 +49,6 @@ rule populate_share:
             read_type=['HIFIEC', 'HIFIAF', 'ONTUL', 'ONTEC'],
             mapq=['mq00'],
             chrom=['chrY'],
-            reference=['T2TXY']
         ),
         assemblies = expand(
             'output/share/assemblies/verkko_{release}_{commit}/{sample_long}.{hifi_type}.{ont_type}.{mapq}.{chrom}.copied.ok',
@@ -58,7 +57,6 @@ rule populate_share:
             ont_type=['ONTUL'],
             mapq=['mq00'],
             chrom=['chrY'],
-            reference=['T2TXY'],
             release=config['verkko_release'],
             commit=config['verkko_commit']
         ),
@@ -72,5 +70,4 @@ rule populate_share:
             reference=['T2TXY'],
             release=config['verkko_release'],
             commit=config['verkko_commit'],
-            reference=config['T2TXY']
         )

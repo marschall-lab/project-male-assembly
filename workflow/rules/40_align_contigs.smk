@@ -37,7 +37,7 @@ rule align_contigs_to_reference_bam:
         '../envs/biotools.yaml'
     threads: config['num_cpu_low']
     resources:
-        mem_mb = lambda wildcards, attempt: 20480 * attempt,
+        mem_mb = lambda wildcards, attempt: 49152 * attempt,
         walltime = lambda wildcards, attempt: f'{attempt * attempt:02}:59:00',
     shell:
         MINIMAP_CTG_REF_BAM

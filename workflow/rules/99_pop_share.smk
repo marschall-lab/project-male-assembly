@@ -1,5 +1,35 @@
 
 
+rule copy_references:
+    input:
+        grch38_noalt = 'references_derived/GRCh38_noalt.fasta',
+        grch38_noalt_idx = 'references_derived/GRCh38_noalt.fasta.fai',
+        grch38_chry = 'references_derived/GRCh38_chrY.fasta',
+        t2t_chm13 = 'references_derived/T2T_chm13_122XM.fasta',
+        t2t_chm13_idx = 'references_derived/T2T_chm13_122XM.fasta.fai',
+        t2t_hg002 = 'references_derived/T2T_122XYM.fasta',
+        t2t_hg002_idx = 'references_derived/T2T_122XYM.fasta.fai',
+        t2t_chry = 'references_derived/T2T_chrY.fasta',
+    output:
+        ok = 'output/share/references.ok'
+    run:
+        import pathlib as pl
+        import shutil as sh
+    
+        share_path = pl.Path(config['path_root_share_references']).resolve()
+
+        check_file = ''
+        for ref_file in input:
+            source = pl.Path(ref_file)
+            dest = share_path / source.name
+            sh.copy(source, dest)
+            check_file += f'{source}\t{dest}\n'
+
+        with open(output.ok, 'w') as dump:
+            _ = dump.write(check_file)
+    # END OF RUN BLOCK
+
+
 rule copy_chromosome_readsets:
     input:
         fasta = 'output/read_subsets/{chrom}/{sample_info}_{sample}_{read_type}.{chrom}-reads.{mapq}.fasta.gz'

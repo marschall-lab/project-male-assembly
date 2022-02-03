@@ -48,7 +48,8 @@ rule t2t_add_hg002_to_chm13:
         genome = 'references_derived/T2T_chm13_122XM.fasta',
         chry = 'references/CP086569.2.fasta'
     output:
-        genome = 'references_derived/T2T_122XYM.fasta'
+        genome = 'references_derived/T2T_122XYM.fasta',
+        chry = 'references_derived/T2T_chrY.fasta'
     resources:
         mem_mb = lambda wildcards, attempt: 2048 * attempt
     run:
@@ -67,7 +68,51 @@ rule t2t_add_hg002_to_chm13:
 
         with open(output.genome, 'a') as fasta_out:
             _ = fasta_out.write(out_buffer.getvalue())
+
+        with open(output.chry, 'w') as fasta_out:
+            _ = fasta_out.write(out_buffer.getvalue())
     # END OF RUN BLOCK
+
+
+rule deselect_decoy_chroms_grch38:
+    input:
+        index = 'references/GCA_000001405.15_GRCh38_no_alt_plus_hs38d1_analysis_set.fasta.fai'
+    output:
+        listing = 'references_derived/GRCh38_keep_chromosomes.txt'
+    shell:
+        'grep -v decoy {input.index} > {output.listing}'
+
+
+rule extract_non_decoy_chroms_grch38:
+    input:
+        genome = 'references/GCA_000001405.15_GRCh38_no_alt_plus_hs38d1_analysis_set.fasta',
+        chrom_list = 'references_derived/GRCh38_keep_chromosomes.txt'
+    output:
+        genome = 'references_derived/GRCh38_noalt.fasta'
+    conda:
+        '../envs/biotools.yaml'
+    resources:
+        walltime = lambda wildcards, attempt: f'{attempt:02}:59:00',
+        mem_mb = lambda wildcards, attempt: 1024 * attempt,
+    shell:
+        'seqtk subseq {input.genome} {input.chrom_list} > {output.genome}'
+
+
+rule extract_grch38_chrom_y:
+    input:
+        genome = 'references_derived/GRCh38_noalt.fasta'
+    output:
+        chrom = 'references_derived/GRCh38_chrY.fasta'
+    conda:
+        '../envs/biotools.yaml'
+    resources:
+        walltime = lambda wildcards, attempt: f'{attempt:02}:59:00',
+        mem_mb = lambda wildcards, attempt: 1024 * attempt,
+    shell:
+        'echo chrY > tmp.name && '
+        'seqtk subseq {input.genome} tmp.name > {output.chrom} && '
+        'rm tmp.name'
+
 
 
 ###################################################################

@@ -10,7 +10,7 @@ input_qc_reference: T2TXYM
 reference_genomes:
   T2TX: 'references_derived/T2T_chm13_122XM.fasta'
   T2TXY: 'references_derived/T2T_122XYM.fasta'
-  GRCh38: ''
+  GRCh38: 'references_derived/GRCh38_noalt.fasta'
   hg38: ''  # placeholder for "only main chromosomes"
 
 verkko_release: 1.0b

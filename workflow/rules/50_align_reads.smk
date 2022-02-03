@@ -9,4 +9,6 @@
 #     """
 #     input:
 #         ctg = 'output/hybrid/verkko/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}/assembly.fasta',
-#         reads = 
+#         reads = 'output/read_subsets/{chrom}/{sample_info}_{sample}_{other_reads}.{chrom}-reads.{mapq}.fasta.gz',
+#     output:
+        

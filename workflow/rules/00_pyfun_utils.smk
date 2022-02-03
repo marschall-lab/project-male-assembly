@@ -289,13 +289,10 @@ def get_lja_param(param_spec, which=None):
 
 def select_reference_genome(ref_name):
 
-    #ref_path = pathlib.Path(config['path_ref_folder']).resolve(strict=True)
-
     available_references = config['reference_genomes']
     try:
         ref_genome = pathlib.Path(available_references[ref_name])
     except KeyError:
         raise ValueError(f'Requested reference "{ref_name}" is not available: {available_references}')
 
-    #ref_genome_path = ref_path / ref_genome
     return ref_genome

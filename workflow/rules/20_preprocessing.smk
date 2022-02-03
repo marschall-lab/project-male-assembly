@@ -1,5 +1,6 @@
 import pathlib as pl
 
+localrules: deselect_decoy_chroms_grch38
 
 rule t2t_convert_to_ucsc_ids:
     input:
@@ -80,7 +81,7 @@ rule deselect_decoy_chroms_grch38:
     output:
         listing = 'references_derived/GRCh38_keep_chromosomes.txt'
     shell:
-        'grep -v decoy {input.index} > {output.listing}'
+        'grep -v decoy {input.index} | cut -f 1 > {output.listing}'
 
 
 rule extract_non_decoy_chroms_grch38:
@@ -95,7 +96,7 @@ rule extract_non_decoy_chroms_grch38:
         walltime = lambda wildcards, attempt: f'{attempt:02}:59:00',
         mem_mb = lambda wildcards, attempt: 1024 * attempt,
     shell:
-        'seqtk subseq {input.genome} {input.chrom_list} > {output.genome}'
+        'seqtk subseq {input.genome} {input.chrom_list} | seqtk seq -C > {output.genome}'
 
 
 rule extract_grch38_chrom_y:

@@ -110,7 +110,7 @@ rule extract_grch38_chrom_y:
         walltime = lambda wildcards, attempt: f'{attempt:02}:59:00',
         mem_mb = lambda wildcards, attempt: 1024 * attempt,
     shell:
-        'echo chrY > tmp.name && '
+        'echo chrY > tmp.name && echo chrY_KI270740v1_random >> tmp.name && '
         'seqtk subseq {input.genome} tmp.name > {output.chrom} && '
         'rm tmp.name'
 

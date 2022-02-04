@@ -40,9 +40,11 @@ rule index_bam_alignment:
 
 rule index_fasta_file:
     input:
-        '{filepath}.fasta'
+        '{subfolder}/{filepath}.fasta'
     output:
-        '{filepath}.fasta.fai'
+        '{subfolder}/{filepath}.fasta.fai'
+    wildcard_constraints:
+        subfolder = '(references_derived|output)'
     conda:
         '../envs/biotools.yaml'
     resources:

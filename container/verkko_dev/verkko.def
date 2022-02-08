@@ -8,7 +8,7 @@ From: ga_mbg.sif
     cd verkko/src
     git submodule update --init --recursive
     # Reminder to update label below
-    git checkout fd7725e
+    git checkout 9e09963
     make -j8
 
 %environment
@@ -16,4 +16,4 @@ From: ga_mbg.sif
 
 %labels
     verkko_release 1.0b
-    verkko_commit fd7725e
+    verkko_commit 9e09963

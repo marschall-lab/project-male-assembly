@@ -1,4 +1,13 @@
 
+# For files that are not dependant on a Verkko version,
+# do not copy files again if the version on the Globus
+# share has the same size as the source file. At the time
+# of writing, this is only relevant for reference files
+# and read sets.
+SKIP_SIZE = config.get('populate_share_skip_size', False)
+
+# TODO
+# entire module should be switched to rsync for simplicity
 
 rule copy_references:
     input:
@@ -13,6 +22,7 @@ rule copy_references:
     output:
         ok = 'output/share/references.ok'
     run:
+        import os
         import pathlib as pl
         import shutil as sh
     
@@ -20,9 +30,15 @@ rule copy_references:
 
         check_file = ''
         for ref_file in input:
+            make_copy = True
             source = pl.Path(ref_file)
             dest = share_path / source.name
-            sh.copy(source, dest)
+            if dest.is_file() and SKIP_SIZE:
+                source_size = os.stat(source).st_size
+                dest_size = os.stat(dest).st_size
+                make_copy = source_size != dest_size
+            if make_copy:
+                sh.copy(source, dest)
             check_file += f'{source}\t{dest}\n'
 
         with open(output.ok, 'w') as dump:
@@ -36,6 +52,7 @@ rule copy_chromosome_readsets:
     output:
         ok = 'output/share/read_subsets/{sample_info}_{sample}_{read_type}.{chrom}-reads.{mapq}.copied.ok'
     run:
+        import os
         import pathlib as pl
         import shutil as sh
 
@@ -45,7 +62,13 @@ rule copy_chromosome_readsets:
 
         source = pl.Path(input.fasta)
         destination = readsets_subfolder / source.name
-        sh.copy(source, destination)
+        if destination.is_file() and SKIP_SIZE:
+            source_size = os.stat(source).st_size
+            dest_size = os.stat(destination).st_size
+            if source_size != dest_size:
+                sh.copy(source, destination)
+        else:
+            sh.copy(source, destination)
 
         with open(output.ok, 'w') as dump:
             _ = dump.write(f'{source}\t{destination}\n')

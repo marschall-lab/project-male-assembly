@@ -1,0 +1,14 @@
+name: verkko
+dependencies:
+  - Python>=3.7
+  - pip
+  - _openmp_mutex>=4.5
+  - graphaligner>=1.0.14
+  - mbg>=1.0.8
+  - gsl=2.6
+  - libgcc-ng>=9.4.0
+  - libstdcxx-ng>=9.4.0
+  - snakemake-minimal>=6.0.0
+  - pulp
+  - coincbc
+  - mamba

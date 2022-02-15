@@ -6,21 +6,23 @@ rule run_verkko_test_data:
     input:
         hifi = '/gpfs/project/projects/medbioinf/data/share/globus/dev_debug/ga_mbg/verkko_test-data/hifi.fastq.gz',
         ont = '/gpfs/project/projects/medbioinf/data/share/globus/dev_debug/ga_mbg/verkko_test-data/ont.fastq.gz',
-        verkko_install = directory('/gpfs/project/ebertp/data/repository/verkko')
+        verkko_install = '/gpfs/project/ebertp/data/repository/verkko'  # install directory w/ code changes
     output:
         assembly = 'output/temp/test_verkko/assembly.fasta'
     log:
         'log/output/temp/test_verkko/run.log'
     conda:
-        '../envs/verrko_test.yaml'
+        '../envs/verkko_test.yaml'
     params:
         verkko_bin = lambda wildcards, input: pathlib.Path(input.verkko_install, 'bin').resolve(strict=True),
         verkko_lib_bin = lambda wildcards, input: pathlib.Path(input.verkko_install, 'lib/verkko/bin').resolve(strict=True),
         workdir = lambda wildcards, output: pathlib.Path(output.assembly).parent
     shell:
+        'module load gcc/10.2.0 ; '
         'VERKKO={input.verkko_install} '
         'PATH={params.verkko_bin}:{params.verkko_lib_bin}:$PATH '
-        'verkko -d {params.workdir} --hifi {input.hifi} --nano {input.ont} &> {log}'
+        'verkko -d {params.workdir} --hifi {input.hifi} --nano {input.ont} '
+        '--python=`which python` --mbg=`which MBG` --graphaligner=`which GraphAligner` &> {log}'
 
 
 rule run_verkko_targeted_assembly:

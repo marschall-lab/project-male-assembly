@@ -4,7 +4,7 @@ dependencies:
   - pip
   - _openmp_mutex>=4.5
   - graphaligner>=1.0.14
-  - mbg>=1.0.8
+  #- mbg>=1.0.8  # bug fix in MBG requires dev version setup, gh#d04c73b
   - gsl=2.6
   - libgcc-ng>=9.4.0
   - libstdcxx-ng>=9.4.0

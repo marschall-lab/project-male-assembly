@@ -1,6 +1,6 @@
 import pathlib
 
-localrules: run_verkko_test_data
+localrules: run_verkko_test_data, run_verkko_whole_genome_assembly
 
 rule run_verkko_test_data:
     input:
@@ -22,7 +22,7 @@ rule run_verkko_test_data:
         'VERKKO={input.verkko_install} '
         'PATH={params.verkko_bin}:{params.verkko_lib_bin}:$PATH '
         'verkko -d {params.workdir} --hifi {input.hifi} --nano {input.ont} '
-        '--python=`which python` --mbg=`which MBG` --graphaligner=`which GraphAligner` &> {log}'
+        '--python `which python` --mbg `which MBG` --graphaligner `which GraphAligner` &> {log}'
 
 
 rule run_verkko_targeted_assembly:
@@ -49,6 +49,8 @@ rule run_verkko_targeted_assembly:
         'log/output/hybrid/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.verkko.log'
     benchmark:
         'rsrc/output/hybrid/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.verkko.rsrc'
+    wildcard_constraints:
+        chrom = '(chrY|chrX|chrXY)'
     # conda:
     #     '../envs/verkko.yaml'
     singularity:
@@ -66,3 +68,45 @@ rule run_verkko_targeted_assembly:
         'cat /.singularity.d/labels.json > {output.version} && '
         '/repos/verkko/bin/verkko --local --hifi {input.hifi} --nano {input.ont} -d {params.work_dir} '
             '{params.run_correction} {params.high_maxk} --threads {threads} &> {log} '
+
+
+rule run_verkko_whole_genome_assembly:
+    """
+    Whole-genome runs are only feasible on a distributed cluster infrastructure,
+    which requires some code changes to Verkko for the HILBERT cluster. This mimicks
+    the rule above for the test data.
+
+    Note about Verkko / Canu scripts:
+    - compiled w/ gcc/10.2.0
+
+    Note about MBG dev version:
+    - compiled w/ gcc/10.2.0 and zlib/1.2.11
+    - export LIBRARY_PATH=$LD_LIBRARY_PATH
+
+    """
+    input:
+        hifi = lambda wildcards: SAMPLE_INFOS[wildcards.sample][wildcards.hifi_type],
+        ont = lambda wildcards: SAMPLE_INFOS[wildcards.sample][wildcards.ont_type],
+        verkko_install = '/gpfs/project/ebertp/data/repository/verkko',
+        mbg_install = '/gpfs/project/ebertp/data/repository/MBG' 
+    output:
+        assembly = multiext(
+            'output/hybrid/verkko/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.wg/assembly',
+            '.fasta', '.gfa', '.hifi-coverage.csv', '.layout', '.ont-coverage.csv'
+        ),
+    log:
+        'log/output/hybrid/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.wg.verkko.log'
+    conda:
+        '../envs/verkko_test.yaml'
+    params:
+        verkko_bin = lambda wildcards, input: pathlib.Path(input.verkko_install, 'bin').resolve(strict=True),
+        verkko_lib_bin = lambda wildcards, input: pathlib.Path(input.verkko_install, 'lib/verkko/bin').resolve(strict=True),
+        mbg_bin = lambda wildcards, input: pathlib.Path(input.mbg_install, 'bin').resolve(strict=True),
+        workdir = lambda wildcards, output: pathlib.Path(output.assembly).parent
+    shell:
+        'module load gcc/10.2.0 ; '
+        'module load zlib/1.2.11 ; '
+        'VERKKO={input.verkko_install} '
+        'PATH={params.verkko_bin}:{params.verkko_lib_bin}:$PATH '
+        'verkko -d {params.workdir} --hifi {input.hifi} --nano {input.ont} '
+        '--python `which python` --mbg {params.mbg_bin}/MBG --graphaligner `which GraphAligner` &> {log}'

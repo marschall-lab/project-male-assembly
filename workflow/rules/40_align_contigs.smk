@@ -1,5 +1,5 @@
 
-MINIMAP_CTG_REF_BASE = 'minimap2 -t {threads} -x asm20 -Y -m 10000 --end-bonus=100 -p 0.95 --secondary=yes -N 1 '
+MINIMAP_CTG_REF_BASE = 'minimap2 -t {threads} -x asm20 -Y -p 0.95 --secondary=yes -N 1 '
 
 MINIMAP_CTG_REF_BAM = MINIMAP_CTG_REF_BASE + '-a -L --MD --eqx '
 MINIMAP_CTG_REF_BAM += '-R "@RG\\tID:{wildcards.sample}_{wildcards.hifi_type}_{wildcards.chrom}\\tSM:{wildcards.sample}" '

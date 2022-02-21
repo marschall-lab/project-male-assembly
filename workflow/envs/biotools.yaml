@@ -10,3 +10,4 @@ dependencies:
   - yak=0.1
   - mbg=1.0.8
   - graphaligner=1.0.14
+  - bedtools=2.30

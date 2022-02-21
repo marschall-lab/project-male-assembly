@@ -287,7 +287,7 @@ def get_lja_param(param_spec, which=None):
     return result
 
 
-def select_reference_genome(ref_name):
+def select_reference_genome(ref_name, fasta_index=False):
 
     available_references = config['reference_genomes']
     try:
@@ -295,4 +295,10 @@ def select_reference_genome(ref_name):
     except KeyError:
         raise ValueError(f'Requested reference "{ref_name}" is not available: {available_references}')
 
+    if fasta_index:
+        ref_genome = ref_genome.with_suffix('.fasta.fai')
+
     return ref_genome
+
+
+def 

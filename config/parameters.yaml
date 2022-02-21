@@ -13,6 +13,13 @@ reference_genomes:
   GRCh38: 'references_derived/GRCh38_noalt.fasta'
   hg38: ''  # placeholder for "only main chromosomes"
 
+# chrY sequence classes: custom annotation created by Pille H.
+# i.e. need to be placed manually somewhere; if stable, should
+# be included in project repository
+reference_y_seq_classes:
+  T2TXY: /gpfs/project/projects/medbioinf/data/share/globus/sig_chrY/references/T2T.chrY-seq-classes.bed
+  GRCh38: /gpfs/project/projects/medbioinf/data/share/globus/sig_chrY/references/GRCh38.chrY-seq-classes.bed
+
 verkko_release: 1.0b
 verkko_commit: 9e09963
 

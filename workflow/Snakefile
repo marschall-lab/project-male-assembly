@@ -19,6 +19,7 @@ include: 'rules/20_preprocessing.smk'
 include: 'rules/30_hybrid_assembly.smk'
 include: 'rules/40_align_contigs.smk'
 include: 'rules/50_align_reads.smk'
+include: 'rules/60_eval_contig_align.smk'
 include: 'rules/99_pop_share.smk'
 
 localrules: run_all
@@ -31,8 +32,8 @@ if 'NA19317' in COMPLETE_SAMPLES and 'NA19347' in COMPLETE_SAMPLES:
 rule run_all:
     input:
         run_chry = expand(
-            'output/alignments/contigs-to-ref/{sample_long}.{hifi_type}.{ont_type}.{mapq}.{chrom}_aln-to_{reference}.paf.gz',
-            sample_long=[SAMPLE_INFOS[sample]['long_id'] for sample in COMPLETE_SAMPLES if SAMPLE_INFOS[sample]['sex'] == 'M'],
+            'output/eval/contigs-to-ref/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}_aln-to_{reference}.ref-cov.tsv',
+            sample_long=[SAMPLE_INFOS[sample]['long_id'] for sample in ['HC02666', 'HC18989', 'HG02666', 'NA18989'] if SAMPLE_INFOS[sample]['sex'] == 'M'],
             hifi_type=['HIFIEC', 'HIFIAF'],
             ont_type=['ONTUL'],
             mapq=['mq00'],
@@ -40,7 +41,7 @@ rule run_all:
             reference=['T2TXY', 'GRCh38']
         ),
         run_wg = expand(
-            'output/alignments/contigs-to-ref/{sample_long}.{hifi_type}.{ont_type}.na.wg_aln-to_{reference}.paf.gz',
+            'output/eval/contigs-to-ref/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}_aln-to_{reference}.ref-cov.tsv',
             sample_long=[SAMPLE_INFOS[sample]['long_id'] for sample in ['HC02666', 'HC18989'] if SAMPLE_INFOS[sample]['sex'] == 'M'],
             hifi_type=['HIFIAF'],
             ont_type=['ONTUL'],

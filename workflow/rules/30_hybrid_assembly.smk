@@ -22,7 +22,7 @@ rule run_verkko_test_data:
         'VERKKO={input.verkko_install} '
         'PATH={params.verkko_bin}:{params.verkko_lib_bin}:$PATH '
         'verkko -d {params.workdir} --hifi {input.hifi} --nano {input.ont} '
-        '--python `which python` --mbg `which MBG` --graphaligner `which GraphAligner` &> {log}'
+        '--python `which python` --mbg `which MBG` --graphaligner `which GraphAligner` --pbs &> {log}'
 
 
 rule run_verkko_targeted_assembly:
@@ -102,11 +102,11 @@ rule run_verkko_whole_genome_assembly:
         verkko_bin = lambda wildcards, input: pathlib.Path(input.verkko_install, 'bin').resolve(strict=True),
         verkko_lib_bin = lambda wildcards, input: pathlib.Path(input.verkko_install, 'lib/verkko/bin').resolve(strict=True),
         mbg_bin = lambda wildcards, input: pathlib.Path(input.mbg_install, 'bin').resolve(strict=True),
-        workdir = lambda wildcards, output: pathlib.Path(output.assembly).parent
+        workdir = lambda wildcards, output: pathlib.Path(output.assembly[0]).parent
     shell:
         'module load gcc/10.2.0 ; '
         'module load zlib/1.2.11 ; '
         'VERKKO={input.verkko_install} '
         'PATH={params.verkko_bin}:{params.verkko_lib_bin}:$PATH '
         'verkko -d {params.workdir} --hifi {input.hifi} --nano {input.ont} '
-        '--python `which python` --mbg {params.mbg_bin}/MBG --graphaligner `which GraphAligner` &> {log}'
+        '--python `which python` --mbg {params.mbg_bin}/MBG --graphaligner `which GraphAligner` --pbs &> {log}'

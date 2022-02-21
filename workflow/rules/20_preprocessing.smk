@@ -115,6 +115,30 @@ rule extract_grch38_chrom_y:
         'rm tmp.name'
 
 
+rule create_reference_bed_file:
+    input:
+        fai = lambda wildcards: select_reference_genome(wildcards.reference, True),
+        seq_classes = lambda wildcards: ancient(config['reference_y_seq_classes'][wildcards.reference])
+    output:
+        bed = 'references_derived/{reference}.bed'
+    run:
+        bed_out = []
+        with open(input.fai, 'r') as fasta_index:
+            for line in fasta_index:
+                chrom, chrom_size = line.strip().split()[:2]
+                if chrom == 'chrY':
+                    continue
+                bed_out.append((chrom, '0', chrom_size, chrom))
+
+        with open(input.seq_classes) as table:
+            for line in table:
+                chrom, start, end, name = line.strip().split()[:4]
+                bed_out.append((chrom, start, end, name))
+
+        with open(output.bed, 'w') as dump:
+            _ = dump.write('\n'.join(['\t'.join(record) for record in bed_out]) + '\n')
+
+
 
 ###################################################################
 # Below: extract subsets of reads aligning to specific chromosomes

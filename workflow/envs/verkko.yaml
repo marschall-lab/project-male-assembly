@@ -2,6 +2,6 @@ name: verkko
 dependencies:
   - Python=3.8.*
   - pip
-  - verkko
+  - verkko=1.0=h64afbab_2
   - graphaligner=1.0.15
   - mbg=1.0.9

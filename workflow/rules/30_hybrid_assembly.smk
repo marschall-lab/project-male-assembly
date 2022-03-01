@@ -3,26 +3,34 @@ import pathlib
 localrules: run_verkko_test_data, run_verkko_whole_genome_assembly
 
 rule run_verkko_test_data:
+    """
+    === Update 2022-03-01 ===
+    Use v1.0-beta2 release version installed via Conda.
+    This version of Verkko still needs to be adapted for the support
+    of PBS/Pro
+    """
     input:
         hifi = '/gpfs/project/projects/medbioinf/data/share/globus/dev_debug/ga_mbg/verkko_test-data/hifi.fastq.gz',
         ont = '/gpfs/project/projects/medbioinf/data/share/globus/dev_debug/ga_mbg/verkko_test-data/ont.fastq.gz',
-        verkko_install = '/gpfs/project/ebertp/data/repository/verkko'  # install directory w/ code changes
+        #verkko_install = '/gpfs/project/ebertp/data/repository/verkko'  # install directory w/ code changes
     output:
         assembly = 'output/temp/test_verkko/assembly.fasta'
     log:
         'log/output/temp/test_verkko/run.log'
     conda:
-        '../envs/verkko_test.yaml'
+        '../envs/verkko.yaml'
     params:
-        verkko_bin = lambda wildcards, input: pathlib.Path(input.verkko_install, 'bin').resolve(strict=True),
-        verkko_lib_bin = lambda wildcards, input: pathlib.Path(input.verkko_install, 'lib/verkko/bin').resolve(strict=True),
         workdir = lambda wildcards, output: pathlib.Path(output.assembly).parent
+        #verkko_bin = lambda wildcards, input: pathlib.Path(input.verkko_install, 'bin').resolve(strict=True),
+        #verkko_lib_bin = lambda wildcards, input: pathlib.Path(input.verkko_install, 'lib/verkko/bin').resolve(strict=True),
     shell:
-        'module load gcc/10.2.0 ; '
-        'VERKKO={input.verkko_install} '
-        'PATH={params.verkko_bin}:{params.verkko_lib_bin}:$PATH '
         'verkko -d {params.workdir} --hifi {input.hifi} --nano {input.ont} '
         '--python `which python` --mbg `which MBG` --graphaligner `which GraphAligner` --pbs &> {log}'
+        # === dropped after updating to v1.0-beta2
+        #'module load gcc/10.2.0 ; '
+        #'VERKKO={input.verkko_install} '
+        #'PATH={params.verkko_bin}:{params.verkko_lib_bin}:$PATH '
+
 
 
 rule run_verkko_targeted_assembly:
@@ -81,7 +89,7 @@ rule run_verkko_whole_genome_assembly:
 
     Note about MBG dev version:
     - compiled w/ gcc/10.2.0 and zlib/1.2.11
-    - export LIBRARY_PATH=$LD_LIBRARY_PATH
+    - export LIBRARY_PATH=$LD_LIBRARY_PATH # ld --verbose | grep SEARCH_DIR
 
     """
     input:
@@ -97,7 +105,7 @@ rule run_verkko_whole_genome_assembly:
     log:
         'log/output/hybrid/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.wg.verkko.log'
     conda:
-        '../envs/verkko_test.yaml'
+        '../envs/verkko.yaml'
     params:
         verkko_bin = lambda wildcards, input: pathlib.Path(input.verkko_install, 'bin').resolve(strict=True),
         verkko_lib_bin = lambda wildcards, input: pathlib.Path(input.verkko_install, 'lib/verkko/bin').resolve(strict=True),

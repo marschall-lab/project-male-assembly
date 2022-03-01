@@ -299,6 +299,3 @@ def select_reference_genome(ref_name, fasta_index=False):
         ref_genome = ref_genome.with_suffix('.fasta.fai')
 
     return ref_genome
-
-
-def 

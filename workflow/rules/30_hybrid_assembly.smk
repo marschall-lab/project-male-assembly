@@ -84,6 +84,9 @@ rule run_verkko_whole_genome_assembly:
     which requires some code changes to Verkko for the HILBERT cluster. This mimicks
     the rule above for the test data.
 
+    === Update 2022-03-01 ===
+    Below infos no longer relevant (use Verkko bioconda version)
+
     Note about Verkko / Canu scripts:
     - compiled w/ gcc/10.2.0
 
@@ -95,26 +98,34 @@ rule run_verkko_whole_genome_assembly:
     input:
         hifi = lambda wildcards: SAMPLE_INFOS[wildcards.sample][wildcards.hifi_type],
         ont = lambda wildcards: SAMPLE_INFOS[wildcards.sample][wildcards.ont_type],
-        verkko_install = '/gpfs/project/ebertp/data/repository/verkko',
-        mbg_install = '/gpfs/project/ebertp/data/repository/MBG' 
+        # verkko_install = '/gpfs/project/ebertp/data/repository/verkko',
+        # mbg_install = '/gpfs/project/ebertp/data/repository/MBG' 
     output:
         assembly = multiext(
             'output/hybrid/verkko/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.wg/assembly',
-            '.fasta', '.gfa', '.hifi-coverage.csv', '.layout', '.ont-coverage.csv'
+            '.fasta',
+            '.homopolymer-compressed.gfa',
+            '.homopolymer-compressed.layout',
+            '.hifi-coverage.csv',
+            '.ont-coverage.csv'
         ),
+        ec_reads = 'output/hybrid/verkko/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.wg/hifi-corrected.fasta',
+        version = 'output/hybrid/verkko/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.verrko.info'
     log:
         'log/output/hybrid/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.wg.verkko.log'
     conda:
         '../envs/verkko.yaml'
     params:
-        verkko_bin = lambda wildcards, input: pathlib.Path(input.verkko_install, 'bin').resolve(strict=True),
-        verkko_lib_bin = lambda wildcards, input: pathlib.Path(input.verkko_install, 'lib/verkko/bin').resolve(strict=True),
-        mbg_bin = lambda wildcards, input: pathlib.Path(input.mbg_install, 'bin').resolve(strict=True),
-        workdir = lambda wildcards, output: pathlib.Path(output.assembly[0]).parent
+        workdir = lambda wildcards, output: pathlib.Path(output.assembly[0]).parent,
+        # verkko_bin = lambda wildcards, input: pathlib.Path(input.verkko_install, 'bin').resolve(strict=True),
+        # verkko_lib_bin = lambda wildcards, input: pathlib.Path(input.verkko_install, 'lib/verkko/bin').resolve(strict=True),
+        # mbg_bin = lambda wildcards, input: pathlib.Path(input.mbg_install, 'bin').resolve(strict=True),
     shell:
-        'module load gcc/10.2.0 ; '
-        'module load zlib/1.2.11 ; '
-        'VERKKO={input.verkko_install} '
-        'PATH={params.verkko_bin}:{params.verkko_lib_bin}:$PATH '
+        'verkko --version > {output.info} && '
         'verkko -d {params.workdir} --hifi {input.hifi} --nano {input.ont} '
-        '--python `which python` --mbg {params.mbg_bin}/MBG --graphaligner `which GraphAligner` --pbs &> {log}'
+        '--python `which python` --mbg `which MBG` --graphaligner `which GraphAligner` --pbs &> {log}'
+        # 'module load gcc/10.2.0 ; '
+        # 'module load zlib/1.2.11 ; '
+        # 'VERKKO={input.verkko_install} '
+        # 'PATH={params.verkko_bin}:{params.verkko_lib_bin}:$PATH '
+

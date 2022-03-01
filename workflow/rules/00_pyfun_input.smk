@@ -34,6 +34,45 @@ def read_sample_table(tsv_path):
     return sample_infos
 
 
+def normalize_sample_name(sample_infos, test_sample):
+
+    try:
+        if test_sample in sample_infos:
+            alt_sample = test_sample
+        elif 'NA' in test_sample:
+            alt_sample = 'GM' + test_sample[2:]
+        elif 'GM' in test_sample:
+            alt_sample = 'NA' + test_sample[2:]
+        else:
+            alt_sample = 'undetermined'
+        _ = sample_infos[alt_sample]
+    except KeyError:
+        raise KeyError(f'Sample / ALT sample name does not exist: {test_sample} / {alt_sample}')
+    return alt_sample
+
+
+def add_hifirw_readsets(sample_infos, hifirw_path):
+
+    suffix = '.fastq.gz'
+    flag_files = pathlib.Path(hifirw_path).glob('**/*.final')
+    hifirw_samples = []
+
+    for flag_file in flag_files:
+        assert flag_file.name == 'status.final'
+        sample = flag_file.parent.name
+        # raw / data not preprocessed via QC pipeline
+        # may not yet have a normalized sample name
+        sample = normalize_sample_name(sample_infos, sample)
+
+        fastq_files = sorted(flag_file.parent.glob(f'*{suffix}'))
+        if not fastq_files:
+            raise ValueError(f'No HiFi (raw) FASTQ (split) files for sample / path: {sample} / {flag_file.parent}')
+        sample_infos[sample]['HIFIRW'] = fastq_files
+        hifirw_samples.append(sample)
+
+    return sample_infos, sorted(hifirw_samples)
+
+
 def add_hifiec_readsets(sample_infos, hifiec_path):
 
     fasta_files = pathlib.Path(hifiec_path).glob('*.ec-reads.fasta.gz')
@@ -98,7 +137,7 @@ def add_assembly_graphs(sample_infos, assembly_path):
     return sample_infos, sorted(assembled_samples)
 
 
-def add_ontul_readsets(sample_infos, ontul_path):
+def add_ontul_readsets_merged(sample_infos, ontul_path):
 
     suffix = 'GPYv5011SUP.fasta.gz'
     fasta_files = pathlib.Path(ontul_path).glob(f'*{suffix}')
@@ -113,6 +152,28 @@ def add_ontul_readsets(sample_infos, ontul_path):
         assert file_sample in sample_infos
         sample_infos[file_sample]['ONTUL'] = fasta_file
         ontul_samples.append(file_sample)
+
+    return sample_infos, sorted(ontul_samples)
+
+
+def add_ontul_readsets_split(sample_infos, ontul_path):
+
+    suffix = 'guppy-5.0.11-sup-prom_fastq_pass.fastq.gz'
+    flag_files = pathlib.Path(ontul_path).glob('**/*.final')
+    ontul_samples = []
+
+    for flag_file in flag_files:
+        assert flag_file.name == 'status.final'
+        sample = flag_file.parent.name
+        # raw / data not preprocessed via QC pipeline
+        # may not yet have a normalized sample name
+        sample = normalize_sample_name(sample_infos, sample)
+
+        fastq_files = sorted(flag_file.parent.glob(f'*{suffix}'))
+        if not fastq_files:
+            raise ValueError(f'No ONT-UL FASTQ (split) files for sample / path: {sample} / {flag_file.parent}')
+        sample_infos[sample]['ONTUL'] = fastq_files
+        ontul_samples.append(sample)
 
     return sample_infos, sorted(ontul_samples)
 
@@ -137,10 +198,14 @@ def add_ontec_readsets(sample_infos, ontec_path):
 
 
 PATH_SAMPLE_TABLE = config['path_sample_table']
+PATH_HIFIRW_READS = config['path_hifirw_reads']
 PATH_HIFIEC_READS = config['path_hifiec_reads']
 PATH_HIFIAF_READS = config['path_hifiaf_reads']
 PATH_ASSEMBLY_GRAPHS = config['path_assembly_graphs']
-PATH_ONTUL_READS = config['path_ontul_reads']
+if config.get('use_preprocessed_readsets', False):
+    PATH_ONTUL_READS = config['path_ontul_reads_merged']
+else:
+    PATH_ONTUL_READS = config['path_ontul_reads_split']
 PATH_ONTEC_READS = config['path_ontec_reads']
 
 
@@ -150,16 +215,20 @@ def init_samples_and_data():
     location_sample_table = (location_smk_file / pathlib.Path(PATH_SAMPLE_TABLE)).resolve()
     
     sample_infos = read_sample_table(location_sample_table)
+    sample_infos, hifirw_samples = add_hifirw_readsets(sample_infos, PATH_HIFIRW_READS)
     sample_infos, hifiec_samples = add_hifiec_readsets(sample_infos, PATH_HIFIEC_READS)
     sample_infos, hifiaf_samples = add_hifiaf_readsets(sample_infos, PATH_HIFIAF_READS)
     sample_infos, assembled_samples = add_assembly_graphs(sample_infos, PATH_ASSEMBLY_GRAPHS)
-    sample_infos, ontul_samples = add_ontul_readsets(sample_infos, PATH_ONTUL_READS)
+    if config.get('use_preprocessed_readsets', False):
+        sample_infos, ontul_samples = add_ontul_readsets_merged(sample_infos, PATH_ONTUL_READS)
+    else:
+        sample_infos, ontul_samples = add_ontul_readsets_split(sample_infos, PATH_ONTUL_READS)
     sample_infos, ontec_samples = add_ontec_readsets(sample_infos, PATH_ONTEC_READS)
 
-    return sample_infos, hifiec_samples, hifiaf_samples, ontul_samples, ontec_samples, assembled_samples
+    return sample_infos, hifirw_samples, hifiec_samples, hifiaf_samples, ontul_samples, ontec_samples, assembled_samples
 
 
-SAMPLE_INFOS, HIFIEC_SAMPLES, HIFIAF_SAMPLES, ONTUL_SAMPLES, ONTEC_SAMPLES, ASSEMBLED_SAMPLES = init_samples_and_data()
+SAMPLE_INFOS, HIFIRW_SAMPLES, HIFIEC_SAMPLES, HIFIAF_SAMPLES, ONTUL_SAMPLES, ONTEC_SAMPLES, ASSEMBLED_SAMPLES = init_samples_and_data()
 
 CONSTRAINT_REGULAR_SAMPLES = '(' + '|'.join(sorted(k for k in SAMPLE_INFOS.keys() if SAMPLE_INFOS[k].get('is_regular', True))) + ')'
 CONSTRAINT_ALL_SAMPLES = '(' + '|'.join(sorted(SAMPLE_INFOS.keys())) + ')'

@@ -20,8 +20,8 @@ reference_y_seq_classes:
   T2TXY: /gpfs/project/projects/medbioinf/data/share/globus/sig_chrY/references/T2T.chrY-seq-classes.bed
   GRCh38: /gpfs/project/projects/medbioinf/data/share/globus/sig_chrY/references/GRCh38.chrY-seq-classes.bed
 
-verkko_release: 1.0b
-verkko_commit: 9e09963
+verkko_release: v1.0
+verkko_commit: beta2
 
 populate_share_skip_size: true
 

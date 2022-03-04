@@ -215,14 +215,20 @@ def init_samples_and_data():
     location_sample_table = (location_smk_file / pathlib.Path(PATH_SAMPLE_TABLE)).resolve()
     
     sample_infos = read_sample_table(location_sample_table)
-    sample_infos, hifirw_samples = add_hifirw_readsets(sample_infos, PATH_HIFIRW_READS)
+    hifirw_samples = []
+    for hifi_path in PATH_HIFIRW_READS:
+        sample_infos, path_hifirw_samples = add_hifirw_readsets(sample_infos, PATH_HIFIRW_READS)
+        hifirw_samples.extend(path_hifirw_samples)
     sample_infos, hifiec_samples = add_hifiec_readsets(sample_infos, PATH_HIFIEC_READS)
     sample_infos, hifiaf_samples = add_hifiaf_readsets(sample_infos, PATH_HIFIAF_READS)
     sample_infos, assembled_samples = add_assembly_graphs(sample_infos, PATH_ASSEMBLY_GRAPHS)
     if config.get('use_preprocessed_readsets', False):
         sample_infos, ontul_samples = add_ontul_readsets_merged(sample_infos, PATH_ONTUL_READS)
     else:
-        sample_infos, ontul_samples = add_ontul_readsets_split(sample_infos, PATH_ONTUL_READS)
+        ontul_samples = []
+        for ont_path in PATH_ONTUL_READS:
+            sample_infos, path_ont_samples = add_ontul_readsets_split(sample_infos, PATH_ONTUL_READS)
+            ontul_samples.extend(path_ont_samples)
     sample_infos, ontec_samples = add_ontec_readsets(sample_infos, PATH_ONTEC_READS)
 
     return sample_infos, hifirw_samples, hifiec_samples, hifiaf_samples, ontul_samples, ontec_samples, assembled_samples

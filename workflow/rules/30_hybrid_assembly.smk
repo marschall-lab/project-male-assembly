@@ -52,7 +52,7 @@ rule run_verkko_targeted_assembly:
             'output/hybrid/verkko/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}/assembly',
             '.fasta', '.gfa', '.hifi-coverage.csv', '.layout', '.ont-coverage.csv'
         ),
-        version = 'output/hybrid/verkko/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.verrko.info'
+        version = 'output/hybrid/verkko/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.verkko.info'
     log:
         'log/output/hybrid/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.verkko.log'
     benchmark:
@@ -110,7 +110,7 @@ rule run_verkko_whole_genome_assembly:
             '.ont-coverage.csv'
         ),
         ec_reads = 'output/hybrid/verkko/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.wg/hifi-corrected.fasta',
-        version = 'output/hybrid/verkko/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.verrko.info'
+        version = 'output/hybrid/verkko/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.wg.verkko.info'
     log:
         'log/output/hybrid/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.wg.verkko.log'
     conda:
@@ -121,7 +121,7 @@ rule run_verkko_whole_genome_assembly:
         # verkko_lib_bin = lambda wildcards, input: pathlib.Path(input.verkko_install, 'lib/verkko/bin').resolve(strict=True),
         # mbg_bin = lambda wildcards, input: pathlib.Path(input.mbg_install, 'bin').resolve(strict=True),
     shell:
-        'verkko --version > {output.info} && '
+        'verkko --version > {output.version} && '
         'verkko -d {params.workdir} --hifi {input.hifi} --nano {input.ont} '
         '--python `which python` --mbg `which MBG` --graphaligner `which GraphAligner` --pbs &> {log}'
         # 'module load gcc/10.2.0 ; '

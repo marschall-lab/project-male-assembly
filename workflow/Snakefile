@@ -33,7 +33,7 @@ rule run_all:
     input:
         run_wg = expand(
             'output/eval/contigs-to-ref/{sample_long}.{hifi_type}.{ont_type}.na.wg_aln-to_{reference}.ref-cov.tsv',
-            sample_long=[SAMPLE_INFOS[sample]['long_id'] for sample in ['HC02666', 'HC18989'] if SAMPLE_INFOS[sample]['sex'] == 'M'],
+            sample_long=[SAMPLE_INFOS[sample]['long_id'] for sample in ['HC02666', 'HC18989', 'HG03579'] if SAMPLE_INFOS[sample]['sex'] == 'M'],
             hifi_type=['HIFIRW'],
             ont_type=['ONTUL'],
             reference=['T2TXY', 'GRCh38']

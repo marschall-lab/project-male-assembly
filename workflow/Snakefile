@@ -28,16 +28,25 @@ COMPLETE_SAMPLES = sorted(set(ONTUL_SAMPLES).intersection(set(HIFIRW_SAMPLES)))
 if 'NA19317' in COMPLETE_SAMPLES and 'NA19347' in COMPLETE_SAMPLES:
     COMPLETE_SAMPLES.append('NA193N7')
 
-
+# HPRC test sample: HG03579
 rule run_all:
     input:
         run_wg = expand(
             'output/eval/contigs-to-ref/{sample_long}.{hifi_type}.{ont_type}.na.wg_aln-to_{reference}.ref-cov.tsv',
-            sample_long=[SAMPLE_INFOS[sample]['long_id'] for sample in ['HC02666', 'HC18989', 'HG03579'] if SAMPLE_INFOS[sample]['sex'] == 'M'],
+            sample_long=[SAMPLE_INFOS[sample]['long_id'] for sample in ['HC02666', 'HC18989'] if SAMPLE_INFOS[sample]['sex'] == 'M'],
             hifi_type=['HIFIRW'],
             ont_type=['ONTUL'],
             reference=['T2TXY', 'GRCh38']
         ),
+        aln_wg = expand(
+            'output/alignments/reads-to-assm/{sample_long}.{other_reads}_aln-to_{hifi_type}.{ont_type}.na.{chrom}.{ext}',
+            sample_long=[SAMPLE_INFOS[sample]['long_id'] for sample in ['HC02666', 'HC18989'] if SAMPLE_INFOS[sample]['sex'] == 'M'],
+            hifi_type=['HIFIRW'],
+            ont_type=['ONTUL'],
+            other_reads=['ONTUL', 'HIFIEC'],
+            chrom=['wg'],
+            ext=['bam.bai', 'paf.gz']
+        )
         # run_chry = expand(
         #     'output/eval/contigs-to-ref/{sample_long}.{hifi_type}.{ont_type}.{mapq}.{chrom}_aln-to_{reference}.ref-cov.tsv',
         #     sample_long=[SAMPLE_INFOS[sample]['long_id'] for sample in ['HC02666', 'HC18989', 'HG02666', 'NA18989'] if SAMPLE_INFOS[sample]['sex'] == 'M'],

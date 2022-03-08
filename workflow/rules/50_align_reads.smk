@@ -43,6 +43,8 @@ rule align_reads_to_assembly_paf:
     wildcard_constraints:
         chrom = 'wg'
     threads: config['num_cpu_medium']
+    conda:
+        '../envs/biotools.yaml'
     resources:
         mem_mb = lambda wildcards, attempt: 65536 + 48576 * attempt,
         walltime = lambda wildcards, attempt: f'{71*attempt}:59:00'
@@ -68,6 +70,8 @@ rule align_reads_to_assembly_bam:
     wildcard_constraints:
         chrom = 'wg'
     threads: config['num_cpu_medium']
+    conda:
+        '../envs/biotools.yaml'
     resources:
         mem_mb = lambda wildcards, attempt: 65536 + 48576 * attempt,
         walltime = lambda wildcards, attempt: f'{71*attempt}:59:00'
@@ -98,6 +102,8 @@ rule align_subset_reads_to_assembly_paf:
         mapq = 'mq00',
         chrom = '(chrY|chrX|chrXY)'
     threads: config['num_cpu_low']
+    conda:
+        '../envs/biotools.yaml'
     resources:
         mem_mb = lambda wildcards, attempt: 32768 * attempt,
         walltime = lambda wildcards, attempt: f'{attempt*attempt:02}:59:00'
@@ -128,6 +134,8 @@ rule align_subset_reads_to_assembly_bam:
         mapq = 'mq00',
         chrom = '(chrY|chrX|chrXY)'
     threads: config['num_cpu_low']
+    conda:
+        '../envs/biotools.yaml'
     resources:
         mem_mb = lambda wildcards, attempt: 32768 * attempt,
         walltime = lambda wildcards, attempt: f'{attempt*attempt:02}:59:00'

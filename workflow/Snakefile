@@ -72,7 +72,7 @@ rule populate_share:
         assemblies = expand(
             'output/share/assemblies/verkko_{major}_{minor}/{sample_long}.{hifi_type}.{ont_type}.{mapq}.{chrom}.copied.ok',
             sample_long=[SAMPLE_INFOS[sample]['long_id'] for sample in COMPLETE_SAMPLES if SAMPLE_INFOS[sample]['sex'] == 'M'],
-            hifi_type=['HIFIEC', 'HIFIAF'],
+            hifi_type=['HIFIRW'],
             ont_type=['ONTUL'],
             mapq=['na'],
             chrom=['wg'],

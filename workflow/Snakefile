@@ -17,6 +17,7 @@ include: 'rules/00_pyfun_utils.smk'
 include: 'rules/10_utils.smk'
 include: 'rules/20_preprocessing.smk'
 include: 'rules/30_hybrid_assembly.smk'
+include: 'rules/35_motif_search.smk'
 include: 'rules/40_align_contigs.smk'
 include: 'rules/50_align_reads.smk'
 include: 'rules/60_eval_contig_align.smk'
@@ -28,64 +29,84 @@ COMPLETE_SAMPLES = sorted(set(ONTUL_SAMPLES).intersection(set(HIFIRW_SAMPLES)))
 if 'NA19317' in COMPLETE_SAMPLES and 'NA19347' in COMPLETE_SAMPLES:
     COMPLETE_SAMPLES.append('NA193N7')
 
+if bool(config.get('mnml_test', False)):
+    COMPLETE_SAMPLES = ['HC02666', 'HC18989']
+elif bool(config.get('ext_test', False)):
+    COMPLETE_SAMPLES = ['HC02666', 'HC18989', 'HC01457', 'HC19384']
+elif bool(config.get('hprc_test', False)):
+    COMPLETE_SAMPLES = ['HG03579']
+else:
+    pass
+
+
 # HPRC test sample: HG03579
 rule run_all:
     input:
         run_wg = expand(
             'output/eval/contigs-to-ref/{sample_long}.{hifi_type}.{ont_type}.na.wg_aln-to_{reference}.ref-cov.tsv',
-            sample_long=[SAMPLE_INFOS[sample]['long_id'] for sample in ['HC02666', 'HC18989'] if SAMPLE_INFOS[sample]['sex'] == 'M'],
+            sample_long=[SAMPLE_INFOS[sample]['long_id'] for sample in COMPLETE_SAMPLES if SAMPLE_INFOS[sample]['sex'] == 'M'],
             hifi_type=['HIFIRW'],
             ont_type=['ONTUL'],
             reference=['T2TXY', 'GRCh38']
         ),
         aln_wg = expand(
-            'output/alignments/reads-to-assm/{sample_long}.{other_reads}_aln-to_{hifi_type}.{ont_type}.na.{chrom}.{ext}',
-            sample_long=[SAMPLE_INFOS[sample]['long_id'] for sample in ['HC02666', 'HC18989'] if SAMPLE_INFOS[sample]['sex'] == 'M'],
+            'output/alignments/reads-to-assm/{sample_long}.{other_reads}_aln-to_{hifi_type}.{ont_type}.na.wg.{ext}',
+            sample_long=[SAMPLE_INFOS[sample]['long_id'] for sample in COMPLETE_SAMPLES if SAMPLE_INFOS[sample]['sex'] == 'M'],
             hifi_type=['HIFIRW'],
             ont_type=['ONTUL'],
-            other_reads=['ONTUL', 'HIFIEC'],
-            chrom=['wg'],
+            other_reads=['ONTUL', 'HIFIRW'],
             ext=['bam.bai', 'paf.gz']
         )
-        # run_chry = expand(
-        #     'output/eval/contigs-to-ref/{sample_long}.{hifi_type}.{ont_type}.{mapq}.{chrom}_aln-to_{reference}.ref-cov.tsv',
-        #     sample_long=[SAMPLE_INFOS[sample]['long_id'] for sample in ['HC02666', 'HC18989', 'HG02666', 'NA18989'] if SAMPLE_INFOS[sample]['sex'] == 'M'],
-        #     hifi_type=['HIFIEC', 'HIFIAF'],
-        #     ont_type=['ONTUL'],
-        #     mapq=['mq00'],
-        #     chrom=['chrY'],
-        #     reference=['T2TXY', 'GRCh38']
-        # ),
+        motifs_wg = expand(
+            'output/motif_search/{sample_long}.{hifi_type}.{ont_type}.na.wg.{motif}.table.txt',
+            sample_long=[SAMPLE_INFOS[sample]['long_id'] for sample in COMPLETE_SAMPLES if SAMPLE_INFOS[sample]['sex'] == 'M'],
+            hifi_type=['HIFIRW'],
+            ont_type=['ONTUL'],
+            motif=['DYZ18_Yq', 'DYZ2_Yq', 'DYZ1_Yq']
+        )
 
 
 rule populate_share:
     input:
         refs = 'output/share/references.ok',
-        readsets = expand(
-            'output/share/read_subsets/{sample_long}_{read_type}.{chrom}-reads.{mapq}.copied.ok',
-            sample_long=[SAMPLE_INFOS[sample]['long_id'] for sample in COMPLETE_SAMPLES if SAMPLE_INFOS[sample]['sex'] == 'M'],
-            read_type=['HIFIEC', 'HIFIAF', 'ONTUL'],
-            mapq=['mq00'],
-            chrom=['chrY'],
-        ),
         assemblies = expand(
-            'output/share/assemblies/verkko_{release}_{commit}/{sample_long}.{hifi_type}.{ont_type}.{mapq}.{chrom}.copied.ok',
+            'output/share/assemblies/verkko_{major}_{minor}/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.copied.ok',
             sample_long=[SAMPLE_INFOS[sample]['long_id'] for sample in COMPLETE_SAMPLES if SAMPLE_INFOS[sample]['sex'] == 'M'],
             hifi_type=['HIFIEC', 'HIFIAF'],
             ont_type=['ONTUL'],
-            mapq=['mq00'],
-            chrom=['chrY'],
-            release=config['verkko_release'],
-            commit=config['verkko_commit']
+            mapq=['na'],
+            chrom=['wg'],
+            major=config['verkko_major'].strip('"'),
+            minor=config['verkko_minor'].strip('"'),
         ),
         aln_ctg_ref = expand(
-            'output/share/alignments/contigs-to-ref/verkko_{release}_{commit}/{sample_long}.{hifi_type}.{ont_type}.{mapq}.{chrom}_aln-to_{reference}.copied.ok',
+            'output/share/alignments/contigs-to-ref/verkko_{major}_{minor}/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}_aln-to_{reference}.copied.ok',
             sample_long=[SAMPLE_INFOS[sample]['long_id'] for sample in COMPLETE_SAMPLES if SAMPLE_INFOS[sample]['sex'] == 'M'],
-            hifi_type=['HIFIEC', 'HIFIAF'],
+            hifi_type=['HIFIRW'],
             ont_type=['ONTUL'],
-            mapq=['mq00'],
-            chrom=['chrY'],
+            mapq=['na'],
+            chrom=['wg'],
             reference=['T2TXY', 'GRCh38'],
-            release=config['verkko_release'],
-            commit=config['verkko_commit'],
+            major=config['verkko_major'].strip('"'),
+            minor=config['verkko_minor'].strip('"'),
+        ),
+        aln_reads_assm = expand(
+            'output/share/alignments/reads-to-assm/verkko_{major}_{minor}/{sample_info}_{sample}.{other_reads}_aln-to_{hifi_type}.{ont_type}.{mapq}.{chrom}.copied.ok',
+            hifi_type=['HIFIRW'],
+            ont_type=['ONTUL'],
+            other_reads=['HIFIRW'],
+            mapq=['na'],
+            chrom=['wg'],
+            reference=['T2TXY', 'GRCh38'],
+            major=config['verkko_major'].strip('"'),
+            minor=config['verkko_minor'].strip('"'),
+
         )
+        # DEPRECATED: whole-genome runs by default
+        # readsets = expand(
+        #     'output/share/read_subsets/{sample_long}_{read_type}.{chrom}-reads.{mapq}.copied.ok',
+        #     sample_long=[SAMPLE_INFOS[sample]['long_id'] for sample in COMPLETE_SAMPLES if SAMPLE_INFOS[sample]['sex'] == 'M'],
+        #     read_type=['HIFIEC', 'HIFIAF', 'ONTUL'],
+        #     mapq=['mq00'],
+        #     chrom=['chrY'],
+        # ),

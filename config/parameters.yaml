@@ -4,6 +4,7 @@
 # that produces some input for this pipeline:
 # - cached coverages of whole-genome read alignments
 # --- used to inform read subset selection for male assembly
+# DEPRECATED: whole-genome runs by default now
 input_qc_reference: T2TXYM
 
 
@@ -20,8 +21,8 @@ reference_y_seq_classes:
   T2TXY: /gpfs/project/projects/medbioinf/data/share/globus/sig_chrY/references/T2T.chrY-seq-classes.bed
   GRCh38: /gpfs/project/projects/medbioinf/data/share/globus/sig_chrY/references/GRCh38.chrY-seq-classes.bed
 
-verkko_release: v1.0
-verkko_commit: beta2
+verkko_major: "1.0"
+verkko_minor: "beta2"
 
 populate_share_skip_size: true
 

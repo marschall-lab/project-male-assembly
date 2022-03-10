@@ -1,4 +1,5 @@
 import pathlib
+import json
 
 
 def find_script_path(script_name, subfolder=''):
@@ -299,3 +300,51 @@ def select_reference_genome(ref_name, fasta_index=False):
         ref_genome = ref_genome.with_suffix('.fasta.fai')
 
     return ref_genome
+
+
+def parse_verkko_version(file_path):
+
+    major = None
+    minor = None
+    
+    with open(file_path, 'r') as info_file:
+        try:
+            version = json.load(info_file)
+            # custom build in Singularity Container
+            # not suitable for whole-genome runs, thus
+            # deprecated
+            major = version['verkko_release']
+            minor = version['verkko_commit']
+        except json.JSONDecodeError:
+            info_file.seek(0)
+            version_info = info_file.read().strip().split()
+            if 'bioconda' in version_info:
+                major = version_info[-2]
+                minor = version_info[-1]
+            elif 'HEAD' in version_info:
+                # git dev build, has no major version,
+                # so use date timestamp
+                major = 'dev-' + version_info[-3].replace('-', '')
+                minor = version_info[-4][:7]
+            else:
+                raise ValueError(f'Unexpected Verkko version info: {version_info}')
+    return major, minor
+
+
+def determine_verkko_subfolder(version_file, prefix, suffix):
+    """
+    Create versioned Verkko subfolder for sharing results
+    """
+    share_path = pl.Path(config['path_root_share_working']).resolve(strict=True)
+
+    file_name = pl.Path(versio_file).name
+    assert file_name.endswith('.verkko.info')
+    assembly_id = file_name.rsplit('.', 2)[0]
+
+    major, minor = parse_verkko_version(versio_file)
+    assert major == config['verkko_major'].strip('"'), f'Verkko version error: {major} / {minor}'
+    assert minor = config['verkko_minor'].strip('"'), f'Verkko version error: {major} / {minor}'
+    subfolder = pl.Path(prefix, f'verkko_{major}_{minor}', suffix)
+    full_path = share_path / subfolder
+    full_path.mkdir(parents=True, exist_ok=True)
+    return full_path, assembly_id

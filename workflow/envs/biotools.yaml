@@ -8,6 +8,7 @@ dependencies:
   - seqtk=1.3
   - meryl=1.3
   - yak=0.1
-  - mbg=1.0.8
-  - graphaligner=1.0.14
   - bedtools=2.30
+  - graphaligner=1.0.15
+  - mbg=1.0.9
+  - hmmer=3.3.2

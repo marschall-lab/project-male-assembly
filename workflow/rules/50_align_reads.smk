@@ -4,7 +4,7 @@ MINIMAP_READ_ASSM_BASE = 'minimap2 -t {threads} -x {params.preset} -Y -p 0.95 --
 MINIMAP_READ_ASSM_BAM = MINIMAP_READ_ASSM_BASE + '-a -L --MD --eqx '
 MINIMAP_READ_ASSM_BAM += '-R "@RG\\tID:{wildcards.sample}_{wildcards.hifi_type}_{wildcards.chrom}_{wildcards.other_reads}\\tSM:{wildcards.sample}" '
 MINIMAP_READ_ASSM_BAM += '{input.ctg} {input.reads} | samtools view -u -F 4 | '
-MINIMAP_READ_ASSM_BAM += 'samtools sort --threads {threads} -l 9 -o {output} /dev/stdin'
+MINIMAP_READ_ASSM_BAM += 'samtools sort --threads {threads} -m {resources.sort_mem}M -l 9 -o {output} /dev/stdin'
 
 MINIMAP_READ_ASSM_PAF = MINIMAP_READ_ASSM_BASE + '--cs -c --paf-no-hit {input.ctg} {input.reads} | pigz -p {threads} --best > {output}'
 
@@ -47,7 +47,7 @@ rule align_reads_to_assembly_paf:
         '../envs/biotools.yaml'
     resources:
         mem_mb = lambda wildcards, attempt: 65536 + 48576 * attempt,
-        walltime = lambda wildcards, attempt: f'{71*attempt}:59:00'
+        walltime = lambda wildcards, attempt: f'{47*attempt}:59:00'
     params:
         preset = lambda wildcards: MINIMAP_PRESETS[wildcards.other_reads]
     shell:
@@ -74,7 +74,8 @@ rule align_reads_to_assembly_bam:
         '../envs/biotools.yaml'
     resources:
         mem_mb = lambda wildcards, attempt: 65536 + 48576 * attempt,
-        walltime = lambda wildcards, attempt: f'{71*attempt}:59:00'
+        walltime = lambda wildcards, attempt: f'{47*attempt}:59:00',
+        sort_mem = lambda wildcards, attempt: 2048 * attempt
     params:
         preset = lambda wildcards: MINIMAP_PRESETS[wildcards.other_reads]
     shell:

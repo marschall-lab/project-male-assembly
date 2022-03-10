@@ -38,7 +38,7 @@ rule copy_references:
                 dest_size = os.stat(dest).st_size
                 make_copy = source_size != dest_size
             if make_copy:
-                sh.copy(source, dest)
+                sh.copy2(source, dest)
             check_file += f'{source}\t{dest}\n'
 
         with open(output.ok, 'w') as dump:
@@ -75,39 +75,71 @@ rule copy_chromosome_readsets:
     # END OF RUN BLOCK
 
 
-rule copy_chromosome_assemblies:
+rule copy_verkko_assemblies:
+    """
+    Collect additional files on-the-fly
+    HPC outputs are not useful for downstream analyses (at the moment)
+    """
     input:
-        version = 'output/hybrid/verkko/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.verrko.info',
+        version = 'output/hybrid/verkko/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.verkko.info',
         linear = 'output/hybrid/verkko/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}/assembly.fasta',
-        graph = 'output/hybrid/verkko/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}/assembly.gfa',
-        stats = multiext(
-            'output/hybrid/verkko/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}/assembly',
-            '.hifi-coverage.csv', '.layout', '.ont-coverage.csv'
-        )
     output:
-        ok = 'output/share/assemblies/verkko_{release}_{commit}/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.copied.ok'
+        ok = 'output/share/assemblies/verkko_{major}_{minor}/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.copied.ok'
     run:
-        import json
         import pathlib as pl
         import shutil as sh
 
-        with open(input.version, 'r') as js_dump:
-            verkko = json.load(js_dump)
-            release = verkko['verkko_release']
-            commit = verkko['verkko_commit']
+        skip_hpc_outputs = True
 
-        share_path = pl.Path(config['path_root_share_working']).resolve()
-        verkko_subfolder = share_path / pl.Path(f'assemblies/verkko_{release}_{commit}/{wildcards.chrom}/{wildcards.hifi_type}')
-        verkko_subfolder.mkdir(parents=True, exist_ok=True)
+        verkko_subfolder, assembly_id = determine_verkko_subfolder(
+            input.version,
+            'assemblies',
+            wildcards.chrom
+        )
 
         check_file = ''
 
-        for source in [input.linear, input.graph] + list(input.stats):
-            # not sure if easier to separate by output type...
-            new_name = pl.Path(source.replace('/assembly', '.assembly')).name
+        assembly_pattern = pl.Path(input.linear).with_suffix('').name
+        assembly_files = pl.Path(input.linear).parent.glob(f'./{assembly_pattern}*')
+
+        for assm_file in assembly_files:
+            new_name = pl.Path(assembly_id + '.' + assm_file.name)
+            if 'compressed' in new_name and skip_hpc_outputs:
+                continue
+            dest_file = verkko_subfolder / new_name
+            sh.copy2(assm_file, dest_file)
+            check_file += f'{assm_file}\t{dest_file}\n'
+
+        with open(output.ok, 'w') as dump:
+            _ = dump.write(check_file)
+    # END OF RUN BLOCK
+
+
+rule copy_contig_to_ref_alignments:
+    input:
+        version = 'output/hybrid/verkko/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.verkko.info',
+        bam = 'output/alignments/contigs-to-ref/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}_aln-to_{reference}.sort.bam',
+        bai = 'output/alignments/contigs-to-ref/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}_aln-to_{reference}.sort.bam.bai',
+        paf = 'output/alignments/contigs-to-ref/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}_aln-to_{reference}.paf.gz',
+        bed = 'output/eval/contigs-to-ref/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}_aln-to_{reference}.bed',
+        cov = 'output/eval/contigs-to-ref/{sample_long}.{hifi_type}.{ont_type}.na.wg_aln-to_{reference}.ref-cov.tsv',
+    output:
+        ok = 'output/share/alignments/contigs-to-ref/verkko_{major}_{minor}/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}_aln-to_{reference}.copied.ok'
+    run:
+        import pathlib as pl
+        import shutil as sh
+
+        verkko_subfolder, assembly_id = determine_verkko_subfolder(
+            input.version,
+            'alignments/contigs-to-ref',
+            wildcards.chrom
+        )
+        check_file = ''
+
+        for source in [input.bam, input.bai, input.paf, input.bed, input.cov]:
             source_path = pl.Path(source)
-            dest_path = verkko_subfolder / new_name
-            sh.copy(source_path, dest_path)
+            dest_path = verkko_subfolder / source_path.name
+            sh.copy2(source_path, dest_path)
             check_file += f'{source_path}\t{dest_path}\n'
 
         with open(output.ok, 'w') as dump:
@@ -115,34 +147,31 @@ rule copy_chromosome_assemblies:
     # END OF RUN BLOCK
 
 
-rule copy_chromosome_contig_alignments:
+rule copy_reads_to_assm_alignments:
     input:
-        version = 'output/hybrid/verkko/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.verrko.info',
-        bam = 'output/alignments/contigs-to-ref/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}_aln-to_{reference}.sort.bam',
-        bai = 'output/alignments/contigs-to-ref/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}_aln-to_{reference}.sort.bam.bai',
-        paf = 'output/alignments/contigs-to-ref/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}_aln-to_{reference}.paf.gz'
+        version = 'output/hybrid/verkko/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.verkko.info',
+        bam = 'output/alignments/reads-to-assm/{sample_info}_{sample}.{other_reads}_aln-to_{hifi_type}.{ont_type}.{mapq}.{chrom}.bam',
+        bai = 'output/alignments/reads-to-assm/{sample_info}_{sample}.{other_reads}_aln-to_{hifi_type}.{ont_type}.{mapq}.{chrom}.bam.bai',
+        paf = 'output/alignments/reads-to-assm/{sample_info}_{sample}.{other_reads}_aln-to_{hifi_type}.{ont_type}.{mapq}.{chrom}.paf.gz'
     output:
-        ok = 'output/share/alignments/contigs-to-ref/verkko_{release}_{commit}/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}_aln-to_{reference}.copied.ok'
+        ok = 'output/share/alignments/reads-to-assm/verkko_{major}_{minor}/{sample_info}_{sample}.{other_reads}_aln-to_{hifi_type}.{ont_type}.{mapq}.{chrom}.copied.ok'
+    resources:
+        walltime = lambda wildcards, attempt: f'{attempt*attempt:02}:59:00'
     run:
-        import json
         import pathlib as pl
         import shutil as sh
 
-        with open(input.version, 'r') as js_dump:
-            verkko = json.load(js_dump)
-            release = verkko['verkko_release']
-            commit = verkko['verkko_commit']
-
-        share_path = pl.Path(config['path_root_share_working']).resolve()
-        verkko_subfolder = share_path / pl.Path(f'alignments/contigs-to-ref/verkko_{release}_{commit}/{wildcards.chrom}/{wildcards.hifi_type}')
-        verkko_subfolder.mkdir(parents=True, exist_ok=True)
-
+        verkko_subfolder, assembly_id = determine_verkko_subfolder(
+            input.version,
+            'alignments/reads-to-assm',
+            wildcards.chrom
+        )
         check_file = ''
 
         for source in [input.bam, input.bai, input.paf]:
             source_path = pl.Path(source)
             dest_path = verkko_subfolder / source_path.name
-            sh.copy(source_path, dest_path)
+            sh.copy2(source_path, dest_path)
             check_file += f'{source_path}\t{dest_path}\n'
 
         with open(output.ok, 'w') as dump:

@@ -108,7 +108,7 @@ rule copy_verkko_assemblies:
 
         for assm_file in assembly_files:
             new_name = pl.Path(assembly_id + '.' + assm_file.name)
-            if 'compressed' in new_name and skip_hpc_outputs:
+            if 'compressed' in str(new_name) and skip_hpc_outputs:
                 continue
             dest_file = verkko_subfolder / new_name
             sh.copy2(assm_file, dest_file)

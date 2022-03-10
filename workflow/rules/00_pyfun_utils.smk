@@ -337,11 +337,11 @@ def determine_verkko_subfolder(version_file, prefix, suffix):
     """
     share_path = pl.Path(config['path_root_share_working']).resolve(strict=True)
 
-    file_name = pl.Path(versio_file).name
+    file_name = pl.Path(version_file).name
     assert file_name.endswith('.verkko.info')
     assembly_id = file_name.rsplit('.', 2)[0]
 
-    major, minor = parse_verkko_version(versio_file)
+    major, minor = parse_verkko_version(version_file)
     assert major == config['verkko_major'].strip('"'), f'Verkko version error: {major} / {minor}'
     assert minor == config['verkko_minor'].strip('"'), f'Verkko version error: {major} / {minor}'
     subfolder = pl.Path(prefix, f'verkko_{major}_{minor}', suffix)

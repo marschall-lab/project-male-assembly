@@ -343,7 +343,7 @@ def determine_verkko_subfolder(version_file, prefix, suffix):
 
     major, minor = parse_verkko_version(versio_file)
     assert major == config['verkko_major'].strip('"'), f'Verkko version error: {major} / {minor}'
-    assert minor = config['verkko_minor'].strip('"'), f'Verkko version error: {major} / {minor}'
+    assert minor == config['verkko_minor'].strip('"'), f'Verkko version error: {major} / {minor}'
     subfolder = pl.Path(prefix, f'verkko_{major}_{minor}', suffix)
     full_path = share_path / subfolder
     full_path.mkdir(parents=True, exist_ok=True)

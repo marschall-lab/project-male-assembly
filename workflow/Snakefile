@@ -70,7 +70,7 @@ rule populate_share:
     input:
         refs = 'output/share/references.ok',
         assemblies = expand(
-            'output/share/assemblies/verkko_{major}_{minor}/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.copied.ok',
+            'output/share/assemblies/verkko_{major}_{minor}/{sample_long}.{hifi_type}.{ont_type}.{mapq}.{chrom}.copied.ok',
             sample_long=[SAMPLE_INFOS[sample]['long_id'] for sample in COMPLETE_SAMPLES if SAMPLE_INFOS[sample]['sex'] == 'M'],
             hifi_type=['HIFIEC', 'HIFIAF'],
             ont_type=['ONTUL'],
@@ -80,7 +80,7 @@ rule populate_share:
             minor=config['verkko_minor'].strip('"'),
         ),
         aln_ctg_ref = expand(
-            'output/share/alignments/contigs-to-ref/verkko_{major}_{minor}/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}_aln-to_{reference}.copied.ok',
+            'output/share/alignments/contigs-to-ref/verkko_{major}_{minor}/{sample_long}.{hifi_type}.{ont_type}.{mapq}.{chrom}_aln-to_{reference}.copied.ok',
             sample_long=[SAMPLE_INFOS[sample]['long_id'] for sample in COMPLETE_SAMPLES if SAMPLE_INFOS[sample]['sex'] == 'M'],
             hifi_type=['HIFIRW'],
             ont_type=['ONTUL'],
@@ -91,7 +91,8 @@ rule populate_share:
             minor=config['verkko_minor'].strip('"'),
         ),
         aln_reads_assm = expand(
-            'output/share/alignments/reads-to-assm/verkko_{major}_{minor}/{sample_info}_{sample}.{other_reads}_aln-to_{hifi_type}.{ont_type}.{mapq}.{chrom}.copied.ok',
+            'output/share/alignments/reads-to-assm/verkko_{major}_{minor}/{sample_long}.{other_reads}_aln-to_{hifi_type}.{ont_type}.{mapq}.{chrom}.copied.ok',
+            sample_long=[SAMPLE_INFOS[sample]['long_id'] for sample in COMPLETE_SAMPLES if SAMPLE_INFOS[sample]['sex'] == 'M'],
             hifi_type=['HIFIRW'],
             ont_type=['ONTUL'],
             other_reads=['HIFIRW'],

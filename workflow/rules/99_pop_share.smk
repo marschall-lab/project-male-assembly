@@ -19,6 +19,10 @@ rule copy_references:
         t2t_hg002 = 'references_derived/T2T_122XYM.fasta',
         t2t_hg002_idx = 'references_derived/T2T_122XYM.fasta.fai',
         t2t_chry = 'references_derived/T2T_chrY.fasta',
+        motifs = expand(
+            'references_derived/{motif}.fasta',
+            motif=config['motif_search']
+        )
     output:
         ok = 'output/share/references.ok'
     run:

@@ -21,6 +21,11 @@ reference_y_seq_classes:
   T2TXY: /gpfs/project/projects/medbioinf/data/share/globus/sig_chrY/references/T2T.chrY-seq-classes.bed
   GRCh38: /gpfs/project/projects/medbioinf/data/share/globus/sig_chrY/references/GRCh38.chrY-seq-classes.bed
 
+motif_search:
+  - DYZ18_Yq
+  - DYZ1_Yq
+  - DYZ2_Yq
+
 verkko_major: "1.0"
 verkko_minor: "beta2"
 

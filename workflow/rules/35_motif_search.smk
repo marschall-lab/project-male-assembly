@@ -73,7 +73,7 @@ rule normalize_motif_hits:
         bed_all = 'output/motif_search/10_norm/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.{motif}.norm.bed',
         bed_hiq = 'output/motif_search/10_norm/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.{motif}.norm-hiq.bed',
     resources:
-        mem_mb = mem_mb = lambda wildcards, attempt: 2048 * attempt,
+        mem_mb = lambda wildcards, attempt: 2048 * attempt,
     params:
         min_score_t = lambda wildcards: SCORE_THRESHOLDS_MOTIF[wildcards.motif]
     run:
@@ -96,6 +96,13 @@ rule normalize_motif_hits:
         df['hit_hiq'] = 0
         df.loc[df['bit_score'] > params.min_score_t, 'hit_hiq'] = 1
 
+        # for hits on the revcomp strand, switch start and end to create valid BED output
+        revcomp_select = df['target_strand'] == '-'
+        forward_cols = ['target_hit_start', 'target_hit_end', 'target_env_start', 'target_env_end']
+        reverse_cols = ['target_hit_end', 'target_hit_start', 'target_env_end', 'target_env_start']
+        df.loc[revcomp_select, forward_cols] = df.loc[revcomp_select, reverse_cols].values
+        assert (df['target_hit_start'] < df['target_hit_end']).all()
+
         df.to_csv(output.table, sep='\t', header=True, index=False)
         bed_columns = ['target', 'target_hit_start', 'target_hit_end', 'query', 'bit_score', 'target_strand', 'hit_hiq']
         df = df[bed_columns]
@@ -114,7 +121,7 @@ rule aggregate_motif_hits_by_target:
     output:
         table = 'output/motif_search/20_target_agg/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.{motif}.agg-trg.tsv',
     resources:
-        mem_mb = mem_mb = lambda wildcards, attempt: 2048 * attempt,
+        mem_mb = lambda wildcards, attempt: 2048 * attempt,
     run:
         import pandas as pd
         import collections as col
@@ -137,14 +144,15 @@ rule aggregate_motif_hits_by_target:
             record['pct_hits_hiq'] = round(record['num_hits_hiq'] / record['num_hits_total'] * 100, 2)
             hiq_subset = hits.loc[hits['hit_hiq'] > 0, :].copy()
             record['num_bp_hiq'] = (hiq_subset['target_hit_end'] - (hiq_subset['target_hit_start'] - 1)).sum()
-            record['pct_bp_hiq'] = round(record['num_bp_hit'] / record['target_length'] * 100, 2)
-            record['mean_pct_len_hiq'] = hiq_subset['query_hit_pct'].mean()
-            record['median_pct_len_hiq'] = hiq_subset['query_hit_pct'].median()
-            record['mean_score_hiq'] = hiq_subset['bit_score'].mean()
-            record['median_score_hiq'] = hiq_subset['bit_score'].median()
+            record['pct_bp_hiq'] = round(record['num_bp_hiq'] / record['target_length'] * 100, 2)
+            record['mean_pct_len_hiq'] = round(hiq_subset['query_hit_pct'].mean(), 2)
+            record['median_pct_len_hiq'] = round(hiq_subset['query_hit_pct'].median(), 2)
+            record['mean_score_hiq'] = round(hiq_subset['bit_score'].mean(), 0)
+            record['median_score_hiq'] = round(hiq_subset['bit_score'].median(), 0)
             records.append(record)
 
         agg = pd.DataFrame.from_records(records).fillna(0, inplace=False)
+        agg['num_bp_hiq'] = agg['num_bp_hiq'].astype(int)
         agg.sort_values('target', inplace=True)
         agg.to_csv(output.table, sep='\t', header=True, index=False)
     # END OF RUN BLOCK

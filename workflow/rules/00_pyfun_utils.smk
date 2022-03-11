@@ -348,3 +348,18 @@ def determine_verkko_subfolder(version_file, prefix, suffix):
     full_path = share_path / subfolder
     full_path.mkdir(parents=True, exist_ok=True)
     return full_path, assembly_id
+
+
+def get_fasta_seq_length(fasta_file):
+
+    seq_lengths = dict()
+    with open(fasta_file, 'r') as fasta:
+        for line in fasta:
+            if not line.strip():
+                continue
+            if line.startswith('>'):
+                seq_name = line.strip()[1:]
+            else:
+                seq_length = len(line.strip())
+                seq_lengths[seq_name] = seq_length
+    return seq_lengths

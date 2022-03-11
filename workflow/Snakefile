@@ -35,6 +35,8 @@ elif bool(config.get('ext_test', False)):
     COMPLETE_SAMPLES = ['HC02666', 'HC18989', 'HC01457', 'HC19384']
 elif bool(config.get('hprc_test', False)):
     COMPLETE_SAMPLES = ['HG03579']
+elif bool(config.get('batch1', False)):
+    COMPLETE_SAMPLES = ['HC02666', 'HC18989', 'HC01457', 'HC19384', 'HG01890', 'HG00358', 'HG03579', 'HG01243', 'HG01952']
 else:
     pass
 
@@ -58,7 +60,7 @@ rule run_all:
             ext=['bam.bai', 'paf.gz']
         ),
         motifs_wg = expand(
-            'output/motif_search/{sample_long}.{hifi_type}.{ont_type}.na.wg.{motif}.table.txt',
+            'output/motif_search/20_target_agg/{sample_long}.{hifi_type}.{ont_type}.na.wg.{motif}.agg-trg.tsv',
             sample_long=[SAMPLE_INFOS[sample]['long_id'] for sample in COMPLETE_SAMPLES if SAMPLE_INFOS[sample]['sex'] == 'M'],
             hifi_type=['HIFIRW'],
             ont_type=['ONTUL'],

@@ -109,7 +109,7 @@ rule run_verkko_whole_genome_assembly:
             '.hifi-coverage.csv',
             '.ont-coverage.csv'
         ),
-        ec_reads = 'output/hybrid/verkko/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.wg/hifi-corrected.fasta',
+        #ec_reads = 'output/hybrid/verkko/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.wg/hifi-corrected.fasta',
         version = 'output/hybrid/verkko/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.wg.verkko.info'
     log:
         'log/output/hybrid/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.wg.verkko.log'

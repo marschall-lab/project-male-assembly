@@ -8,24 +8,143 @@ I filter the nhmmer_out_parse.txt based on the 'score' column (column 14):
 - DYZ18 - score >2100
 """
 
+RUNTIME_MOTIF_FACTOR = {
+    'DYZ2_Yq': 10,
+}
+
+
 rule hmmer_motif_search:
     input:
         assm = 'output/hybrid/verkko/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}/assembly.fasta',
         qry = 'references_derived/{motif}.fasta'
     output:
-        txt = 'output/motif_search/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.{motif}.txt',
-        table = 'output/motif_search/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.{motif}.table.txt',
+        txt = 'output/motif_search/00_detection/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.{motif}.txt',
+        table = 'output/motif_search/00_detection/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.{motif}.table.txt',
     log:
-        'log/output/motif_search/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.{motif}.hmmer.log',
+        'log/output/motif_search/00_detection/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.{motif}.hmmer.log',
     benchmark:
-        'rsrc/output/motif_search/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.{motif}.hmmer.rsrc',
+        'rsrc/output/motif_search/00_detection/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.{motif}.hmmer.rsrc',
     conda:
         '../envs/biotools.yaml'
     threads: config['num_cpu_medium']
     resources:
-        mem_mb = lambda wildcards, attempt: 49152 + 24576 * attempt,
-        walltime = lambda wildcards, attempt: f'{attempt**3:02}:59:00',
+        mem_mb = lambda wildcards, attempt: 24576 + 24576 * attempt,
+        walltime = lambda wildcards, attempt: f'{attempt*RUNTIME_MOTIF_FACTOR.get(wildcards.motif, 1):02}:59:00',
     params:
         evalue = '1.60E-150'
     shell:
         'nhmmer --cpu {threads} -o {output.txt} --tblout {output.table} -E {params.evalue} {input.qry} {input.assm} &> {log}'
+
+
+HMMER_TABLE_COLUMNS = [
+    ('target', True),
+    ('target_accession', False),
+    ('query', True),
+    ('query_accession', False),
+    ('query_hit_start', True),
+    ('query_hit_end', True),
+    ('target_hit_start', True),
+    ('target_hit_end', True),
+    ('target_env_start', True),
+    ('target_env_end', True),
+    ('target_length', True),
+    ('target_strand', True),
+    ('evalue', True,),
+    ('bit_score', True),
+    ('bias', True),
+    ('description', False)
+]
+
+HMMER_TABLE_NAMES = [t[0] for t in HMMER_TABLE_COLUMNS]
+HMMER_TABLE_USE_COLS = [t[0] for t in HMMER_TABLE_COLUMNS if t[1]]
+
+SCORE_THRESHOLDS_MOTIF = {
+    'DYZ1_Yq': 2500,
+    'DYZ18_Yq': 2100,
+    'DYZ2_Yq': 1700,
+}
+
+rule normalize_motif_hits:
+    input:
+        table = 'output/motif_search/00_detection/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.{motif}.table.txt',
+        motif = 'references_derived/{motif}.fasta',
+    output:
+        table = 'output/motif_search/10_norm/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.{motif}.norm.tsv',
+        bed_all = 'output/motif_search/10_norm/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.{motif}.norm.bed',
+        bed_hiq = 'output/motif_search/10_norm/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.{motif}.norm-hiq.bed',
+    resources:
+        mem_mb = mem_mb = lambda wildcards, attempt: 2048 * attempt,
+    params:
+        min_score_t = lambda wildcards: SCORE_THRESHOLDS_MOTIF[wildcards.motif]
+    run:
+        import pandas as pd
+
+        query_length = get_fasta_seq_length(input.motif)[wildcards.motif]
+
+        df = pd.read_csv(
+            input.table,
+            delimiter=r"\s+",
+            header=None,
+            skip_blank_lines=True,
+            comment='#',
+            names=HMMER_TABLE_NAMES,
+            usecols=HMMER_TABLE_USE_COLS
+        )
+        df['query_length'] = query_length
+        df['query_hit_pct'] = (df['query_hit_end'] - (df['query_hit_start'] - 1)) / df['query_length'] * 100
+        df['query_hit_pct'] = df['query_hit_pct'].round(2)
+        df['hit_hiq'] = 0
+        df.loc[df['bit_score'] > params.min_score_t, 'hit_hiq'] = 1
+
+        df.to_csv(output.table, sep='\t', header=True, index=False)
+        bed_columns = ['target', 'target_hit_start', 'target_hit_end', 'query', 'bit_score', 'target_strand', 'hit_hiq']
+        df = df[bed_columns]
+        df['target_hit_start'] -= 1
+        df.sort_values(['target', 'target_hit_start', 'target_hit_end'], inplace=True)
+        df.to_csv(output.bed_all, sep='\t', header=False, index=False, columns=bed_columns[:-1])
+
+        df = df.loc[df['hit_hiq'] > 0, :]
+        df.to_csv(output.bed_hiq, sep='\t', header=False, index=False, columns=bed_columns[:-1])
+    # END OF RUN BLOCK
+
+
+rule aggregate_motif_hits_by_target:
+    input:
+        table = 'output/motif_search/10_norm/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.{motif}.norm.tsv',
+    output:
+        table = 'output/motif_search/20_target_agg/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.{motif}.agg-trg.tsv',
+    resources:
+        mem_mb = mem_mb = lambda wildcards, attempt: 2048 * attempt,
+    run:
+        import pandas as pd
+        import collections as col
+
+        df = pd.read_csv(input.table, sep='\t', header=0)
+
+        records = []
+        for trg, hits in df.groupby('target'):
+            record = col.OrderedDict({
+                'target': trg,
+                'query': wildcards.motif,
+                'target_length': hits.at[hits.index[0], 'target_length'],
+                'num_hits_total': hits.shape[0],
+                'num_hits_hiq': hits.loc[hits['hit_hiq'] > 0, :].shape[0],
+                'num_hits_loq': hits.loc[hits['hit_hiq'] < 1, :].shape[0],
+            })
+            if record['num_hits_hiq'] == 0:
+                records.append(record)
+                continue
+            record['pct_hits_hiq'] = round(record['num_hits_hiq'] / record['num_hits_total'] * 100, 2)
+            hiq_subset = hits.loc[hits['hit_hiq'] > 0, :].copy()
+            record['num_bp_hiq'] = (hiq_subset['target_hit_end'] - (hiq_subset['target_hit_start'] - 1)).sum()
+            record['pct_bp_hiq'] = round(record['num_bp_hit'] / record['target_length'] * 100, 2)
+            record['mean_pct_len_hiq'] = hiq_subset['query_hit_pct'].mean()
+            record['median_pct_len_hiq'] = hiq_subset['query_hit_pct'].median()
+            record['mean_score_hiq'] = hiq_subset['bit_score'].mean()
+            record['median_score_hiq'] = hiq_subset['bit_score'].median()
+            records.append(record)
+
+        agg = pd.DataFrame.from_records(records).fillna(0, inplace=False)
+        agg.sort_values('target', inplace=True)
+        agg.to_csv(output.table, sep='\t', header=True, index=False)
+    # END OF RUN BLOCK

@@ -19,7 +19,7 @@ def find_script_path(script_name):
 
 def rsync(source, target):
 
-    cmd = 'rsync --checksum {source} {target}'
+    cmd = f'rsync --checksum {source} {target}'
     _ = subprocess.check_call(cmd, shell='/usr/bin/bash')
     return
 

@@ -2,31 +2,18 @@ import pathlib
 import json
 
 
-def find_script_path(script_name, subfolder=''):
-    import os
+def find_script_path(script_name):
 
-    current_root = workflow.basedir
-    last_root = ''
+    current_root = workflow.basedir  # location of main Snakefile
+    assert current_root.name == 'workflow'
 
-    script_path = None
+    script_folder = (current_root / pathlib.Path('scripts')).resolve(strict=True)
 
-    for _ in range(workflow.basedir.count('/')):
-        if last_root.endswith('project-male-assembly'):
-            raise RuntimeError('Leaving project directory tree (next: {}). '
-                               'Cannot find script {} (subfolder: {}).'.format(current_root, script_name, subfolder))
-        check_path = os.path.join(current_root, 'scripts', subfolder).rstrip('/')  # if subfolder is empty string
-        if os.path.isdir(check_path):
-            check_script = os.path.join(check_path, script_name)
-            if os.path.isfile(check_script):
-                script_path = check_script
-                break
-        last_root = current_root
-        current_root = os.path.split(current_root)[0]
-
-    if script_path is None:
-        raise RuntimeError('Could not find script {} (subfolder {}). '
-                           'Started at path: {}'.format(script_name, subfolder, workflow.basedir))
-    return script_path
+    all_py_scripts = script_folder.glob('**/*.py')
+    this_py_script = [s for s in all_py_scripts if s.name == script_name]
+    if len(this_py_script) != 1:
+        raise RuntimeError(f'Cannot find requested script {script_name} starting at {script_folder}: {this_py_script}')
+    return this_py_script[0]
 
 
 def select_alignment_cache_file(wildcards):

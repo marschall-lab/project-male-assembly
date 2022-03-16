@@ -20,6 +20,7 @@ include: 'rules/30_hybrid_assembly.smk'
 include: 'rules/35_motif_search.smk'
 include: 'rules/40_align_contigs.smk'
 include: 'rules/50_align_reads.smk'
+include: 'rules/55_subset_wg.smk'
 include: 'rules/60_eval_contig_align.smk'
 include: 'rules/99_pop_share.smk'
 
@@ -28,6 +29,8 @@ localrules: run_all
 COMPLETE_SAMPLES = sorted(set(ONTUL_SAMPLES).intersection(set(HIFIRW_SAMPLES)))
 if 'NA19317' in COMPLETE_SAMPLES and 'NA19347' in COMPLETE_SAMPLES:
     COMPLETE_SAMPLES.append('NA193N7')
+
+CURRENT_ERROR_SAMPLES = ['HC19384']
 
 if bool(config.get('mnml_test', False)):
     COMPLETE_SAMPLES = ['HC02666', 'HC18989']
@@ -40,8 +43,9 @@ elif bool(config.get('batch1', False)):
 else:
     pass
 
+COMPLETE_SAMPLES = [s for s in COMPLETE_SAMPLES if s not in CURRENT_ERROR_SAMPLES]
 
-# HPRC test sample: HG03579
+
 rule run_all:
     input:
         run_wg = expand(
@@ -61,6 +65,35 @@ rule run_all:
         ),
         motifs_wg = expand(
             'output/motif_search/20_target_agg/{sample_long}.{hifi_type}.{ont_type}.na.wg.{motif}.agg-trg.tsv',
+            sample_long=[SAMPLE_INFOS[sample]['long_id'] for sample in COMPLETE_SAMPLES if SAMPLE_INFOS[sample]['sex'] == 'M'],
+            hifi_type=['HIFIRW'],
+            ont_type=['ONTUL'],
+            motif=config['motif_search']
+        ),
+        subset_assm = expand(
+            'output/subset_wg/20_extract_contigs/{sample_long}.{hifi_type}.{ont_type}.na.chrY.fasta',
+            sample_long=[SAMPLE_INFOS[sample]['long_id'] for sample in COMPLETE_SAMPLES if SAMPLE_INFOS[sample]['sex'] == 'M'],
+            hifi_type=['HIFIRW'],
+            ont_type=['ONTUL'],
+        ),
+        subset_ctg_aln = expand(
+            'output/subset_wg/30_extract_ctgaln/{sample_long}.{hifi_type}.{ont_type}.na.chrY_aln-to_{reference}.{ext}',
+            sample_long=[SAMPLE_INFOS[sample]['long_id'] for sample in COMPLETE_SAMPLES if SAMPLE_INFOS[sample]['sex'] == 'M'],
+            hifi_type=['HIFIRW'],
+            ont_type=['ONTUL'],
+            reference=['T2TXY', 'GRCh38'],
+            ext=['sort.bam.bai', 'paf.gz']
+        ),
+        subset_read_aln = expand(
+            'output/subset_wg/40_extract_rdaln/{sample_long}.{other_reads}_aln-to_{hifi_type}.{ont_type}.na.chrY.{ext}',
+            sample_long=[SAMPLE_INFOS[sample]['long_id'] for sample in COMPLETE_SAMPLES if SAMPLE_INFOS[sample]['sex'] == 'M'],
+            hifi_type=['HIFIRW'],
+            ont_type=['ONTUL'],
+            other_reads=['ONTUL', 'HIFIRW'],
+            ext=['bam.bai', 'paf.gz']
+        ),
+        subset_motif_seq = expand(
+            'output/subset_wg/50_subset_motif/{sample_long}.{hifi_type}.{ont_type}.na.chrY.{motif}.hiq-seq.fasta',
             sample_long=[SAMPLE_INFOS[sample]['long_id'] for sample in COMPLETE_SAMPLES if SAMPLE_INFOS[sample]['sex'] == 'M'],
             hifi_type=['HIFIRW'],
             ont_type=['ONTUL'],

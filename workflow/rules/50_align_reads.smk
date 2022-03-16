@@ -21,6 +21,7 @@ MINIMAP_PRESETS = {
 def select_input_reads(wildcards):
 
     if wildcards.other_reads == 'HIFIEC':
+        raise ValueError('Cannot align HPC reads')
         reads = 'output/hybrid/verkko/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.{chrom}/hifi-corrected.fasta'.format(**dict(wildcards))
     else:
         reads = SAMPLE_INFOS[wildcards.sample][wildcards.other_reads]
@@ -47,7 +48,7 @@ rule align_reads_to_assembly_paf:
         '../envs/biotools.yaml'
     resources:
         mem_mb = lambda wildcards, attempt: 65536 + 48576 * attempt,
-        walltime = lambda wildcards, attempt: f'{47*attempt}:59:00'
+        walltime = lambda wildcards, attempt: f'{71*attempt}:59:00'
     params:
         preset = lambda wildcards: MINIMAP_PRESETS[wildcards.other_reads]
     shell:
@@ -74,8 +75,8 @@ rule align_reads_to_assembly_bam:
         '../envs/biotools.yaml'
     resources:
         mem_mb = lambda wildcards, attempt: 65536 + 48576 * attempt,
-        walltime = lambda wildcards, attempt: f'{47*attempt}:59:00',
-        sort_mem = lambda wildcards, attempt: 2048 * attempt
+        walltime = lambda wildcards, attempt: f'{71*attempt}:59:00',
+        sort_mem = lambda wildcards, attempt: 4096 * attempt
     params:
         preset = lambda wildcards: MINIMAP_PRESETS[wildcards.other_reads]
     shell:

@@ -36,10 +36,30 @@ rule align_contigs_to_reference_bam:
         'rsrc/output/alignments/contigs-to-ref/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}_aln-to_{reference}.bam.mmap.rsrc'
     conda:
         '../envs/biotools.yaml'
-    threads: config['num_cpu_low']
+    threads: config['num_cpu_medium']
     resources:
         mem_mb = lambda wildcards, attempt: 32768 + 24576 * attempt,
-        walltime = lambda wildcards, attempt: f'{attempt * attempt:02}:59:00',
+        walltime = lambda wildcards, attempt: f'{23 * attempt}:59:00',
         sort_mem = lambda wildcards, attempt: 4096 * attempt
     shell:
         MINIMAP_CTG_REF_BAM
+
+
+rule aggregate_contig_alignments:
+    """
+    This rule is essentially a preprocessing rule for subsetting
+    the whole-genome assemblies to just chrY. This rule computes
+    some basic statistics for all assembly contigs.
+    """
+    input:
+        paf = 'output/alignments/contigs-to-ref/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}_aln-to_{reference}.paf.gz'
+    output:
+        tsv = 'output/alignments/contigs-to-ref/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}_aln-to_{reference}.ctg-agg.tsv'
+    conda:
+        '../envs/pyscript.yaml'
+    resources:
+        mem_mb = lambda wildcards, attempt: 1024 * attempt
+    params:
+        script_exec = find_script_path('aggregate_contig_aln.py')
+    shell:
+        '{params.script_exec} --paf {input.paf} --output {output.tsv}'

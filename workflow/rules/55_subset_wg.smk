@@ -14,7 +14,7 @@ rule determine_chry_contigs:
         ),
         agg_motifs = expand(
             'output/motif_search/20_target_agg/{{sample_info}}_{{sample}}.{{hifi_type}}.{{ont_type}}.{mapq}.{chrom}.{motif}.agg-trg.tsv',
-            motif=contig['motif_search'],
+            motif=config['motif_search'],
             chrom='wg',
             mapq='na'
         )
@@ -44,7 +44,7 @@ rule extract_y_contigs:
     resources:
         mem_mb = lambda wildcards, attempt: 1024 * attempt
     shell:
-        'seqtk subseq {input.wg_assm} {input.names} > {output.fasta}'
+        'seqtk subseq {input.wg_assm} {input.names} > {output.sub_assm}'
 
 
 rule extract_contig_alignments_paf:
@@ -68,7 +68,7 @@ rule extract_contig_alignments_bam:
     input:
         bam = 'output/alignments/contigs-to-ref/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.wg_aln-to_{reference}.sort.bam',
         bai = 'output/alignments/contigs-to-ref/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.wg_aln-to_{reference}.sort.bam.bai',
-        bed = 'output/subset_wg/10_find_contigs/{sample_info}_{sample}.{hifi_type}.{ont_type}.chrY.bed',
+        names = 'output/subset_wg/10_find_contigs/{sample_info}_{sample}.{hifi_type}.{ont_type}.chrY.names.txt',
     output:
         bam = 'output/subset_wg/30_extract_ctgaln/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.chrY_aln-to_{reference}.sort.bam'
     conda:
@@ -76,7 +76,7 @@ rule extract_contig_alignments_bam:
     resources:
         mem_mb = lambda wildcards, attempt: 8192 * attempt
     shell:
-        'samtools view -u -L {input.bed} {input.bam} | samtools sort -m 2048M -l 9 -@ 2 -o {output.bam} /dev/stdin'
+        'samtools view -u --qname-file {input.names} {input.bam} | samtools sort -m 2048M -l 9 -@ 2 -o {output.bam} /dev/stdin'
 
 
 rule extract_read_alignments_paf:

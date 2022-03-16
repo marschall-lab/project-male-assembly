@@ -89,6 +89,9 @@ rule copy_verkko_assemblies:
         linear = 'output/hybrid/verkko/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}/assembly.fasta',
     output:
         ok = 'output/share/assemblies/verkko_{major}_{minor}/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.copied.ok'
+    wildcard_constraints:
+        mapq = 'na',
+        chrom = 'wg'
     run:
         import pathlib as pl
         import shutil as sh
@@ -113,6 +116,37 @@ rule copy_verkko_assemblies:
             dest_file = verkko_subfolder / new_name
             sh.copy2(assm_file, dest_file)
             check_file += f'{assm_file}\t{dest_file}\n'
+
+        with open(output.ok, 'w') as dump:
+            _ = dump.write(check_file)
+    # END OF RUN BLOCK
+
+
+rule copy_verkko_subset_assembly:
+    input:
+        version = 'output/hybrid/verkko/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.verkko.info',
+        linear = 'output/subset_wg/20_extract_contigs/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.fasta',
+    output:
+        ok = 'output/share/assemblies/verkko_{major}_{minor}/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.copied.ok'
+    wildcard_constraints:
+        mapq = 'na',
+        chrom = 'chrY'
+    run:
+        import pathlib as pl
+        import shutil as sh
+
+        verkko_subfolder, assembly_id = determine_verkko_subfolder(
+            input.version,
+            'assemblies',
+            wildcards.chrom
+        )
+
+        check_file = ''
+        for source in [input.linear]:
+            source_path = pl.Path(source)
+            dest_path = verkko_subfolder / source_path.name
+            sh.copy2(source_path, dest_path)
+            check_file += f'{source_path}\t{dest_path}\n'
 
         with open(output.ok, 'w') as dump:
             _ = dump.write(check_file)

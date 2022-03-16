@@ -5,7 +5,7 @@ import json
 def find_script_path(script_name):
 
     current_root = workflow.basedir  # location of main Snakefile
-    assert current_root.name == 'workflow'
+    assert current_root.endswith('workflow')
 
     script_folder = (current_root / pathlib.Path('scripts')).resolve(strict=True)
 

@@ -46,6 +46,8 @@ rule copy_verkko_assemblies:
     wildcard_constraints:
         mapq = 'na',
         chrom = 'wg'
+    resources:
+        mem_mb = lambda wildcards, attempt: 2048 * attempt
     run:
         import pathlib as pl
 
@@ -77,7 +79,7 @@ rule copy_verkko_assemblies:
 
 rule copy_verkko_subset_assembly:
     input:
-        version = 'output/hybrid/verkko/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.verkko.info',
+        version = 'output/hybrid/verkko/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.wg.verkko.info',
         linear = 'output/subset_wg/20_extract_contigs/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.fasta',
     output:
         ok = 'output/share/assemblies/verkko_{major}_{minor}/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.copied.ok'
@@ -118,6 +120,8 @@ rule copy_contig_to_ref_alignments:
     wildcard_constraints:
         mapq = 'na',
         chrom = 'wg'
+    resources:
+        mem_mb = lambda wildcards, attempt: 2048 * attempt
     run:
         import pathlib as pl
 
@@ -149,6 +153,8 @@ rule copy_subset_contig_to_ref_alignments:
     wildcard_constraints:
         mapq = 'na',
         chrom = 'chrY'
+    resources:
+        mem_mb = lambda wildcards, attempt: 2048 * attempt
     run:
         import pathlib as pl
 
@@ -187,7 +193,8 @@ rule copy_reads_to_assm_alignments:
     output:
         ok = 'output/share/alignments/reads-to-assm/verkko_{major}_{minor}/{sample_info}_{sample}.{other_reads}_aln-to_{hifi_type}.{ont_type}.{mapq}.{chrom}.copied.ok'
     resources:
-        walltime = lambda wildcards, attempt: f'{attempt*attempt:02}:59:00'
+        walltime = lambda wildcards, attempt: f'{attempt*attempt:02}:59:00',
+        mem_mb = lambda wildcards, attempt: 2048 * attempt
     run:
         import pathlib as pl
 
@@ -210,11 +217,11 @@ rule copy_reads_to_assm_alignments:
 
 rule copy_motif_files:
     input:
-        version = 'output/hybrid/verkko/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.verkko.info',
-        bed = 'output/subset_wg/50_subset_motif/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.chrY.{motif}.norm-hiq.bed',
-        fasta = 'output/subset_wg/50_subset_motif/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.chrY.{motif}.hiq-seq.fasta',
+        version = 'output/hybrid/verkko/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.wg.verkko.info',
+        bed = 'output/subset_wg/50_subset_motif/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.{motif}.norm-hiq.bed',
+        fasta = 'output/subset_wg/50_subset_motif/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.{motif}.hiq-seq.fasta',
     output:
-        ok = 'output/share/motif_search/verkko_{major}_{minor}/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.chrY.{motif}.copied.ok'
+        ok = 'output/share/motif_search/verkko_{major}_{minor}/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.{motif}.copied.ok'
     resources:
         walltime = lambda wildcards, attempt: f'{attempt*attempt:02}:59:00'
     run:

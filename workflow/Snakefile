@@ -117,7 +117,7 @@ rule populate_share:
             hifi_type=['HIFIRW'],
             ont_type=['ONTUL'],
             mapq=['na'],
-            chrom=['wg'],
+            chrom=['wg', 'chrY'],
             major=config['verkko_major'].strip('"'),
             minor=config['verkko_minor'].strip('"'),
         ),

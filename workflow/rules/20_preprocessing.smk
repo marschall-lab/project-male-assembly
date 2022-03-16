@@ -167,23 +167,23 @@ rule extract_aligned_chry_read_names:
                 _ = dump.write('\n'.join(sorted(all_reads)) + '\n')
 
 
-rule extract_aligned_chrom_read_sequences:
-    input:
-        names = 'output/read_subsets/{chrom}/{sample_info}_{sample}_{read_type}.{chrom}-reads.{mapq}.txt',
-        reads = lambda wildcards: SAMPLE_INFOS[wildcards.sample][wildcards.read_type],
-    output:
-        'output/read_subsets/{chrom}/{sample_info}_{sample}_{read_type}.{chrom}-reads.{mapq}.fasta.gz',
-    conda:
-        '../envs/biotools.yaml'
-    wildcard_constraints:
-        sample = CONSTRAINT_REGULAR_SAMPLES,
-        read_type = '(HIFIEC|HIFIAF|ONTUL|ONTEC)',
-        chrom = '(chrX|chrY)'
-    threads: config['num_cpu_low']
-    resources:
-        walltime = lambda wildcards, attempt: f'{4 * attempt:02}:00:00',
-    shell:
-        'seqtk subseq {input.reads} {input.names} | seqtk seq -A -C | pigz -p {threads} --best > {output}'
+# rule extract_aligned_chrom_read_sequences:
+#     input:
+#         names = 'output/read_subsets/{chrom}/{sample_info}_{sample}_{read_type}.{chrom}-reads.{mapq}.txt',
+#         reads = lambda wildcards: SAMPLE_INFOS[wildcards.sample][wildcards.read_type],
+#     output:
+#         'output/read_subsets/{chrom}/{sample_info}_{sample}_{read_type}.{chrom}-reads.{mapq}.fasta.gz',
+#     conda:
+#         '../envs/biotools.yaml'
+#     wildcard_constraints:
+#         sample = CONSTRAINT_REGULAR_SAMPLES,
+#         read_type = '(HIFIEC|HIFIAF|ONTUL|ONTEC)',
+#         chrom = '(chrX|chrY)'
+#     threads: config['num_cpu_low']
+#     resources:
+#         walltime = lambda wildcards, attempt: f'{4 * attempt:02}:00:00',
+#     shell:
+#         'seqtk subseq {input.reads} {input.names} | seqtk seq -A -C | pigz -p {threads} --best > {output}'
 
 
 rule merge_sex_chrom_reads:

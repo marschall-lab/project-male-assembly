@@ -140,7 +140,7 @@ rule copy_contig_to_ref_alignments:
 
 rule copy_subset_contig_to_ref_alignments:
     input:
-        version = 'output/hybrid/verkko/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.verkko.info',
+        version = 'output/hybrid/verkko/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.wg.verkko.info',
         bam = 'output/subset_wg/30_extract_ctgaln/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}_aln-to_{reference}.sort.bam',
         bai = 'output/subset_wg/30_extract_ctgaln/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}_aln-to_{reference}.sort.bam.bai',
         paf = 'output/subset_wg/30_extract_ctgaln/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}_aln-to_{reference}.paf.gz',
@@ -175,7 +175,10 @@ READ_ALN_SUBFOLDER = {
 }
 rule copy_reads_to_assm_alignments:
     input:
-        version = 'output/hybrid/verkko/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.verkko.info',
+        version = lambda wildcards: expand(
+            'output/hybrid/verkko/{{sample_info}}_{{sample}}.{{hifi_type}}.{{ont_type}}.{{mapq}}.{chrom}.verkko.info',
+            chrom='wg'
+        ),
         aln_files = lambda wildcards: expand(
             'output/{subfolder}/{{sample_info}}_{{sample}}.{{other_reads}}_aln-to_{{hifi_type}}.{{ont_type}}.{{mapq}}.{{chrom}}.{ext}',
             subfolder=READ_ALN_SUBFOLDER[wildcards.chrom],

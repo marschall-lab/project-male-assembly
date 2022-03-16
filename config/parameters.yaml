@@ -29,8 +29,6 @@ motif_search:
 verkko_major: "1.0"
 verkko_minor: "beta2"
 
-populate_share_skip_size: true
-
 mbg_init_kmer:
   - 501
   - 501

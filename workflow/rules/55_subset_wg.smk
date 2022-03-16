@@ -73,10 +73,11 @@ rule extract_contig_alignments_bam:
         bam = 'output/subset_wg/30_extract_ctgaln/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.chrY_aln-to_{reference}.sort.bam'
     conda:
         '../envs/biotools.yaml'
+    threads: 2
     resources:
         mem_mb = lambda wildcards, attempt: 8192 * attempt
     shell:
-        'samtools view -u --qname-file {input.names} {input.bam} | samtools sort -m 2048M -l 9 -@ 2 -o {output.bam} /dev/stdin'
+        'samtools view -u --qname-file {input.names} {input.bam} | samtools sort -m 2048M -l 9 --threads 4 -o {output.bam} /dev/stdin'
 
 
 rule extract_read_alignments_paf:

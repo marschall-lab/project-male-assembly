@@ -1,5 +1,6 @@
 import pathlib
 import json
+import subprocess
 
 
 def find_script_path(script_name):
@@ -14,6 +15,13 @@ def find_script_path(script_name):
     if len(this_py_script) != 1:
         raise RuntimeError(f'Cannot find requested script {script_name} starting at {script_folder}: {this_py_script}')
     return this_py_script[0]
+
+
+def rsync(source, target):
+
+    cmd = 'rsync --checksum {source} {target}'
+    _ = subprocess.check_call(cmd, shell='/usr/bin/bash')
+    return
 
 
 def select_alignment_cache_file(wildcards):

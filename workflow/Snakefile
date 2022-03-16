@@ -32,6 +32,9 @@ if 'NA19317' in COMPLETE_SAMPLES and 'NA19347' in COMPLETE_SAMPLES:
 
 CURRENT_ERROR_SAMPLES = ['HC19384']
 
+batch1 = ['HC02666', 'HC18989', 'HC01457', 'HC19384', 'HG01890', 'HG00358', 'HG03579', 'HG01243', 'HG01952']
+batch2 = ['HG03248', 'NA19317', 'NA19347', 'HG02554', 'HG02953', 'NA19331']
+
 if bool(config.get('mnml_test', False)):
     COMPLETE_SAMPLES = ['HC02666', 'HC18989']
 elif bool(config.get('ext_test', False)):
@@ -39,7 +42,11 @@ elif bool(config.get('ext_test', False)):
 elif bool(config.get('hprc_test', False)):
     COMPLETE_SAMPLES = ['HG03579']
 elif bool(config.get('batch1', False)):
-    COMPLETE_SAMPLES = ['HC02666', 'HC18989', 'HC01457', 'HC19384', 'HG01890', 'HG00358', 'HG03579', 'HG01243', 'HG01952']
+    COMPLETE_SAMPLES = batch1
+elif bool(config.get('batch2', False)):
+    COMPLETE_SAMPLES = batch2
+elif bool(config.get('batchN', False)):
+    COMPLETE_SAMPLES = batch1 + batch2
 else:
     pass
 
@@ -136,8 +143,17 @@ rule populate_share:
             reference=['T2TXY', 'GRCh38'],
             major=config['verkko_major'].strip('"'),
             minor=config['verkko_minor'].strip('"'),
-
+        ),
+        motif_sub = expand(
+            'output/share/motif_search/verkko_{major}_{minor}/{sample_long}.{hifi_type}.{ont_type}.na.chrY.{motif}.copied.ok',
+            sample_long=[SAMPLE_INFOS[sample]['long_id'] for sample in COMPLETE_SAMPLES if SAMPLE_INFOS[sample]['sex'] == 'M'],
+            hifi_type=['HIFIRW'],
+            ont_type=['ONTUL'],
+            motif=config['motif_search'],
+            major=config['verkko_major'].strip('"'),
+            minor=config['verkko_minor'].strip('"'),
         )
+
         # DEPRECATED: whole-genome runs by default
         # readsets = expand(
         #     'output/share/read_subsets/{sample_long}_{read_type}.{chrom}-reads.{mapq}.copied.ok',

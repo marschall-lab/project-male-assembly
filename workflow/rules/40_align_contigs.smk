@@ -40,7 +40,7 @@ rule align_contigs_to_reference_bam:
     resources:
         mem_mb = lambda wildcards, attempt: 32768 + 24576 * attempt,
         walltime = lambda wildcards, attempt: f'{23 * attempt}:59:00',
-        sort_mem = lambda wildcards, attempt: 4096 * attempt
+        sort_mem = lambda wildcards, attempt: 1024 * attempt
     shell:
         MINIMAP_CTG_REF_BAM
 

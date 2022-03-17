@@ -76,7 +76,7 @@ rule align_reads_to_assembly_bam:
     resources:
         mem_mb = lambda wildcards, attempt: 65536 + 48576 * attempt,
         walltime = lambda wildcards, attempt: f'{71*attempt}:59:00',
-        sort_mem = lambda wildcards, attempt: 4096 * attempt
+        sort_mem = lambda wildcards, attempt: 1024 * attempt
     params:
         preset = lambda wildcards: MINIMAP_PRESETS[wildcards.other_reads]
     shell:

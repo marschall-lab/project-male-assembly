@@ -33,7 +33,7 @@ rule hmmer_motif_search:
     params:
         evalue = '1.60E-150'
     shell:
-        'nhmmer --cpu {threads} -o {output.txt} --tblout {output.table} -E {params.evalue} {input.qry} {input.assm} &> {log}'
+        'nhmmer --cpu {threads} --dna -o {output.txt} --tblout {output.table} -E {params.evalue} {input.qry} {input.assm} &> {log}'
 
 
 HMMER_TABLE_COLUMNS = [

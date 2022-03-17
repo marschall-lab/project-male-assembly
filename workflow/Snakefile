@@ -32,8 +32,13 @@ if 'NA19317' in COMPLETE_SAMPLES and 'NA19347' in COMPLETE_SAMPLES:
 
 CURRENT_ERROR_SAMPLES = ['HC19384']
 
-batch1 = ['HC02666', 'HC18989', 'HC01457', 'HC19384', 'HG01890', 'HG00358', 'HG03579', 'HG01243', 'HG01952']
-batch2 = ['HG03248', 'NA19317', 'NA19347', 'HG02554', 'HG02953', 'NA19331']
+batches = {
+    'batch1': ['HC02666', 'HC18989', 'HC01457', 'HC19384', 'HG01890', 'HG00358', 'HG03579', 'HG01243', 'HG01952'],
+    'batch2': ['HG03248', 'NA19347', 'HG02554', 'HG02953', 'NA19331'],
+    'batch3': [],
+    'batch4': [],
+    'batch5': ['HG02666', 'NA18989', 'HG01457', 'NA19384']  # batch5: only contains yr2 samples that also exist as high-coverage version
+}
 
 if bool(config.get('mnml_test', False)):
     COMPLETE_SAMPLES = ['HC02666', 'HC18989']
@@ -41,14 +46,19 @@ elif bool(config.get('ext_test', False)):
     COMPLETE_SAMPLES = ['HC02666', 'HC18989', 'HC01457', 'HC19384']
 elif bool(config.get('hprc_test', False)):
     COMPLETE_SAMPLES = ['HG03579']
-elif bool(config.get('batch1', False)):
-    COMPLETE_SAMPLES = batch1
-elif bool(config.get('batch2', False)):
-    COMPLETE_SAMPLES = batch2
-elif bool(config.get('batchN', False)):
-    COMPLETE_SAMPLES = batch1 + batch2
 else:
-    pass
+    # check if any batches are set
+    batch_keys = [k for k in config.keys() if k.startswith('batch')]
+    if batch_keys:
+        COMPLETE_SAMPLES = []
+        for bk in batch_keys:
+            if bk.endswith('N'):
+                for samples in batches.values():
+                    COMPLETE_SAMPLES.extend(samples)
+                    break
+            else:
+                samples = batches[bk]
+                COMPLETE_SAMPLES.extend(samples)
 
 COMPLETE_SAMPLES = [s for s in COMPLETE_SAMPLES if s not in CURRENT_ERROR_SAMPLES]
 

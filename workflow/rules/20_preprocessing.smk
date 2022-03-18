@@ -116,9 +116,14 @@ rule extract_grch38_chrom_y:
 
 
 rule create_reference_bed_file:
+    """
+    This rule adds the chrY sequence classes (PAR, XDR etc.) to the main
+    chromosomes in the resulting BED file. This can be used to summarize
+    coverages per region etc.
+    """
     input:
         fai = lambda wildcards: select_reference_genome(wildcards.reference, True),
-        seq_classes = lambda wildcards: ancient(config['reference_y_seq_classes'][wildcards.reference])
+        seq_classes = lambda wildcards: f'references_derived/{config['reference_y_seq_classes'][wildcards.reference]}.bed'
     output:
         bed = 'references_derived/{reference}.bed'
     run:
@@ -127,6 +132,10 @@ rule create_reference_bed_file:
             for line in fasta_index:
                 chrom, chrom_size = line.strip().split()[:2]
                 if chrom == 'chrY':
+                    # note here: GRCh38 also contains an
+                    # unplaced chrY contig, that is kept
+                    # as-is b/c no sequence classes exist
+                    # for that one
                     continue
                 bed_out.append((chrom, '0', chrom_size, chrom))
 
@@ -137,10 +146,33 @@ rule create_reference_bed_file:
 
         with open(output.bed, 'w') as dump:
             _ = dump.write('\n'.join(['\t'.join(record) for record in bed_out]) + '\n')
+    # END OF RUN BLOCK
 
+
+#######################################################################
+# Special rule:
+# - sync manually created motif and annotation files from the Globus
+# share "references/" to the local reference folder to make rules
+# less bloated with path lookups etc.
+# - this mainly applies to reference files created via expert curation
+#######################################################################
+
+
+rule sync_expert_reference_file:
+    input:
+        infile = ancient(f'{config['path_root_share_references']}/' + '{file_name}')
+    output:
+        outfile = 'references_derived/{file_name}'
+    wildcard_constraints:
+        file_name = '(' + '|'.join(config['expert_annotations']) + ')'
+    shell:
+        'rsync --checksum {input.infile} {output.outfile}'
+            ' && '
+        'md5sum {output.outfile} > {output.outfile}.md5'
 
 
 ###################################################################
+# ------------- DEPRECATED --------------
 # Below: extract subsets of reads aligning to specific chromosomes
 # here: T2T/chrX and T2T/chrY are relevant
 # NB: the whole-genome alignment step including the generation of

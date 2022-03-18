@@ -15,11 +15,22 @@ reference_genomes:
   hg38: ''  # placeholder for "only main chromosomes"
 
 # chrY sequence classes: custom annotation created by Pille H.
-# i.e. need to be placed manually somewhere; if stable, should
-# be included in project repository
+# When stable, should be included in project repository
 reference_y_seq_classes:
-  T2TXY: /gpfs/project/projects/medbioinf/data/share/globus/sig_chrY/references/T2T.chrY-seq-classes.bed
-  GRCh38: /gpfs/project/projects/medbioinf/data/share/globus/sig_chrY/references/GRCh38.chrY-seq-classes.bed
+  T2TXY: T2T.chrY-seq-classes
+  GRCh38: GRCh38_chrY-seq-classes_coord_plus_repeats
+
+expert_annotations:
+  - T2T.chrY-seq-classes.bed
+  - GRCh38.chrY-seq-classes.bed
+  - GRCh38_chrY-seq-classes_coord_plus_repeats.bed
+  - DYZ18_Yq.fasta
+  - DYZ19_Yq.fasta
+  - DYZ1_Yq.fasta
+  - DYZ2_Yq.fasta
+  - DYZ3-prim_Ycentro.fasta
+  - DYZ3-sec_Ycentro.fasta
+  - GRCh38_chrY-seq-classes_coord_plus_repeats.fasta
 
 motif_search:
   - DYZ18_Yq
@@ -35,9 +46,14 @@ contig_id_motifs:
   - DYZ2_Yq
   - DYZ3-sec_Ycentro
 
-
 verkko_major: "1.0"
 verkko_minor: "beta2"
+
+
+
+###
+# DEPRECATED CONFIG ENTRIES
+##
 
 mbg_init_kmer:
   - 501

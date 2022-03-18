@@ -1,17 +1,25 @@
 
 """
-DYZ1 (Y-specific), DYZ18 (Y-specific, but found only at the AMPL7 and Yqhet boundary) and DYZ2 (found on Y and elsewhere). 
+Only motifs that are used for Y contig identification are thresholded;
+for all other motifs, all chrY hits are retained
 
-I filter the nhmmer_out_parse.txt based on the 'score' column (column 14):
 - DYZ1 - score >2500
 - DYZ2 - score >1700
 - DYZ18 - score >2100
+- DYZ3-sec_Ycentro - score >1700
 """
 
 RUNTIME_MOTIF_FACTOR = {
     'DYZ2_Yq': 10,
 }
 
+CPU_MOTIF_FACTOR = {
+    'DYZ2_Yq': config['num_cpu_high'],
+}
+
+BONUS_MOTIF_FACTOR = {
+    'DYZ2_Yq': 100,
+}
 
 rule hmmer_motif_search:
     input:
@@ -24,12 +32,15 @@ rule hmmer_motif_search:
         'log/output/motif_search/00_detection/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.{motif}.hmmer.log',
     benchmark:
         'rsrc/output/motif_search/00_detection/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.{motif}.hmmer.rsrc',
+#    singularity:
+#        'hmmer.sif'
     conda:
         '../envs/biotools.yaml'
-    threads: config['num_cpu_medium']
+    threads: lambda wildcards: CPU_MOTIF_FACTOR.get(wildcards.motif, config['num_cpu_medium'])
     resources:
         mem_mb = lambda wildcards, attempt: 24576 + 24576 * attempt,
         walltime = lambda wildcards, attempt: f'{attempt*RUNTIME_MOTIF_FACTOR.get(wildcards.motif, 1):02}:59:00',
+        bonus = lambda wildcards, attempt: BONUS_MOTIF_FACTOR.get(wildcards.motif, 0)
     params:
         evalue = '1.60E-150'
     shell:
@@ -62,6 +73,7 @@ SCORE_THRESHOLDS_MOTIF = {
     'DYZ1_Yq': 2500,
     'DYZ18_Yq': 2100,
     'DYZ2_Yq': 1700,
+    'DYZ3-sec_Ycentro': 1700
 }
 
 rule normalize_motif_hits:
@@ -75,7 +87,7 @@ rule normalize_motif_hits:
     resources:
         mem_mb = lambda wildcards, attempt: 2048 * attempt,
     params:
-        min_score_t = lambda wildcards: SCORE_THRESHOLDS_MOTIF[wildcards.motif]
+        min_score_t = lambda wildcards: SCORE_THRESHOLDS_MOTIF.get(wildcards.motif, 0)
     run:
         import pandas as pd
 

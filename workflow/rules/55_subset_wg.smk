@@ -14,7 +14,7 @@ rule determine_chry_contigs:
         ),
         agg_motifs = expand(
             'output/motif_search/20_target_agg/{{sample_info}}_{{sample}}.{{hifi_type}}.{{ont_type}}.{mapq}.{chrom}.{motif}.agg-trg.tsv',
-            motif=config['motif_search'],
+            motif=config['contig_id_motifs'],
             chrom='wg',
             mapq='na'
         )

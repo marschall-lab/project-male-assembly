@@ -25,6 +25,16 @@ motif_search:
   - DYZ18_Yq
   - DYZ1_Yq
   - DYZ2_Yq
+  - DYZ19_Yq
+  - DYZ3-prim_Ycentro
+  - DYZ3-sec_Ycentro
+
+contig_id_motifs:
+  - DYZ18_Yq
+  - DYZ1_Yq
+  - DYZ2_Yq
+  - DYZ3-sec_Ycentro
+
 
 verkko_major: "1.0"
 verkko_minor: "beta2"

@@ -7,9 +7,10 @@ import csv
 import pandas as pd
 
 
-Y_SPECIFIC_MOTIFS = ['DYZ1_Yq', 'DYZ18_Yq']
+Y_SPECIFIC_MOTIFS = ['DYZ1_Yq', 'DYZ18_Yq', 'DYZ3-sec_Ycentro']
 UNSPECIFIC_MOTIFS = ['DYZ2_Yq']
 UNSPECIFIC_THRESHOLD = 300
+PRIMARY_ALN_THRESHOLD_PCT = 90
 
 
 def parse_command_line():
@@ -73,14 +74,8 @@ def rule_select_y_only_alignments(table, reason):
     no_other = table[other_align_columns].sum(axis=1) < 1
 
     selector = select_y & no_other
-    if not selector.any():
-        selected_contigs = None
-        remaining_contigs = table
-    else:
-        selected_contigs = table.loc[selector, :].copy()
-        remaining_contigs = table.loc[~selector, :].copy()
-        selected_contigs['reason'] = reason
-    return selected_contigs, remaining_contigs
+    select, remain = apply_selector(selector, table, reason)
+    return select, remain
 
 
 def rule_select_y_specific_motif_hits(table, motif, reason):
@@ -92,14 +87,8 @@ def rule_select_y_specific_motif_hits(table, motif, reason):
     motif_hit = table[motif_hit_column] > 0
 
     selector = select_y & motif_hit
-    if not selector.any():
-        selected_contigs = None
-        remaining_contigs = table
-    else:
-        selected_contigs = table.loc[selector, :].copy()
-        remaining_contigs = table.loc[~selector, :].copy()
-        selected_contigs['reason'] = reason
-    return selected_contigs, remaining_contigs
+    select, remain = apply_selector(selector, table, reason)
+    return select, remain
 
 
 def rule_select_many_unspecific_motif_hits(table, motif, reason):
@@ -111,14 +100,8 @@ def rule_select_many_unspecific_motif_hits(table, motif, reason):
     motif_hit = table[motif_hit_column] > UNSPECIFIC_THRESHOLD
 
     selector = select_y & motif_hit
-    if not selector.any():
-        selected_contigs = None
-        remaining_contigs = table
-    else:
-        selected_contigs = table.loc[selector, :].copy()
-        remaining_contigs = table.loc[~selector, :].copy()
-        selected_contigs['reason'] = reason
-    return selected_contigs, remaining_contigs
+    select, remain = apply_selector(selector, table, reason)
+    return select, remain
 
 
 def rule_select_unaligned_specific_hits(table, motif, reason):
@@ -130,6 +113,20 @@ def rule_select_unaligned_specific_hits(table, motif, reason):
     motif_hit = table[motif_hit_column] > 0
 
     selector = select_y & motif_hit
+    select, remain = apply_selector(selector, table, reason)
+    return select, remain
+
+
+def rule_select_majority_primary_alignment(table, reason):
+
+    chry_primary_column = 'pct_aln_chrY_PRI'
+    selector = table[chry_primary_column] > PRIMARY_ALN_THRESHOLD_PCT
+    select, remain = apply_selector(selector, table, reason)
+    return select, remain
+
+
+def apply_selector(selector, table, reason):
+
     if not selector.any():
         selected_contigs = None
         remaining_contigs = table
@@ -216,6 +213,13 @@ def select_chry_contigs(table):
         if subset is not None:
             print(reason, ': ', subset.shape[0])
             selected.append(subset)
+
+    reason = f"Rule 5: majority (>{PRIMARY_ALN_THRESHOLD_PCT}% bp) of contig primary alignments to chrY"
+    subset, remaining = rule_select_majority_primary_alignment(remaining, reason)
+    if subset is not None:
+        print(reason, ': ', subset.shape[0])
+        selected.append(subset)
+
     if not selected:
         raise RuntimeError('No chromosome Y contigs selected')
     selected = pd.concat(selected, axis=0, ignore_index=False)

@@ -153,7 +153,8 @@ rule create_reference_bed_file:
 # Special rule:
 # - sync manually created motif and annotation files from the Globus
 # share "references/" to the local reference folder to make rules
-# less bloated with path lookups etc.
+# less bloated with path lookups etc. and to avoid that a Globus mess
+# triggers a pipeline rerun
 # - this mainly applies to reference files created via expert curation
 #######################################################################
 

@@ -138,7 +138,7 @@ def parse_command_line():
         nargs='*',
         default=None,
         dest='dump_maps',
-        choices=['tsv', 'TSV', 'json', 'JSON'],
+        choices=['tsv', 'TSV', 'json', 'JSON', 'sed', 'SED'],
         help='If specified, dump files mapping old-to-new/new-to-old contig names. '
              'This will strip off the file extension of "--output" and use that as '
              'base name with extension "otn-map.[EXT]" and "nto-map.[EXT]".'
@@ -187,17 +187,16 @@ def load_sequence_class_coverage(file_path, y_contigs, seq_class_to_order):
 
 def load_alignment_file(file_path, y_contigs):
     """
-    Loads PAF contig-to-reference alignment file.
-    NB: this assumes the PAF file has already been
-    subsetted to just chrY alignments.
     """
     df = pd.read_csv(
         file_path, sep='\t',
         index_col=False, header=None,
         names=PAF_INPUT_COLUMNS, usecols=KEEP_PAF_COLUMNS
     )
+    # drop everything not aligned to chrY
+    df.drop(df.index[df['target'] != 'chrY'], axis=0, inplace=True)
     # consider only primary alignments
-    df = df.loc[df['tag_tp'].isin(['tp:A:P', 'tp:A:p']), :].copy()
+    df.drop(df.index[~df['tag_tp'].isin(['tp:A:P', 'tp:A:p'])], axis=0, inplace=True)
     df.drop('tag_tp', inplace=True, axis=1)
 
     paf_contigs = set(df['query'].unique())
@@ -274,6 +273,16 @@ def dump_output_files(new_contig_names, output_file, output_maps):
         nto_map = dict(new_contig_names)
         with open(nto_file, 'w') as nto:
             json.dump(nto_map, nto, indent=1)
+
+    if 'sed' in output_maps:
+        otn_file = output_file.with_suffix('.otn-map.sed')
+        nto_file = output_file.with_suffix('.nto-map.sed')
+        with open(otn_file, 'w') as otn:
+            with open(nto_file, 'w') as nto:
+                for new_name, old_name in new_contig_names:
+                    _ = otn.write(f's/\\b{old_name}\\b/{new_name}/g\n')
+                    _ = nto.write(f's/\\b{new_name}\\b/{old_name}/g\n')
+
     return
 
 

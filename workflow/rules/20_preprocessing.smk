@@ -123,7 +123,7 @@ rule create_reference_bed_file:
     """
     input:
         fai = lambda wildcards: select_reference_genome(wildcards.reference, True),
-        seq_classes = lambda wildcards: f'references_derived/{config['reference_y_seq_classes'][wildcards.reference]}.bed'
+        seq_classes = lambda wildcards: f'references_derived/{config["reference_y_seq_classes"][wildcards.reference]}.bed'
     output:
         bed = 'references_derived/{reference}.bed'
     run:
@@ -161,7 +161,7 @@ rule create_reference_bed_file:
 
 rule sync_expert_reference_file:
     input:
-        infile = ancient(f'{config['path_root_share_references']}/' + '{file_name}')
+        infile = ancient(f'{config["path_root_share_references"]}/' + '{file_name}')
     output:
         outfile = 'references_derived/{file_name}'
     wildcard_constraints:

@@ -8,6 +8,17 @@ MINIMAP_READ_ASSM_BAM += 'samtools sort --threads {resources.sort_threads} -m {r
 
 MINIMAP_READ_ASSM_PAF = MINIMAP_READ_ASSM_BASE + '--cs -c --paf-no-hit {input.ctg} {input.reads} | pigz -p {threads} --best > {output}'
 
+
+# slightly adapted call for read-to-ref alignment b/c of different wildcards
+MINIMAP_READ_REF_BASE = 'minimap2 -t {threads} -x {params.preset} -Y {params.sec_aln} --cap-kalloc=1g -K4g -I8g '
+
+MINIMAP_READ_REF_BAM = MINIMAP_READ_ASSM_BASE + '-a -L --MD --eqx '
+MINIMAP_READ_REF_BAM += '-R "@RG\\tID:{wildcards.sample}_{wildcards.other_reads}\\tSM:{wildcards.sample}" '
+MINIMAP_READ_REF_BAM += '{input.ctg} {input.reads} | samtools view -u -F 4 | '
+MINIMAP_READ_REF_BAM += 'samtools sort --threads {resources.sort_threads} -m {resources.sort_mem}M -l 9 -o {output} /dev/stdin'
+
+MINIMAP_READ_REF_PAF = MINIMAP_READ_ASSM_BASE + '--cs -c --paf-no-hit {input.ctg} {input.reads} | pigz -p {threads} --best > {output}'
+
 MINIMAP_PRESETS = {
     'HIFIRW': 'map-hifi',
     'HIFIAF': 'map-hifi',

@@ -41,7 +41,7 @@ rule determine_contig_order:
     input:
         ctg_names = 'output/subset_wg/10_find_contigs/{sample_info}_{sample}.{hifi_type}.{ont_type}.chrY.names.txt',
         ctg_aln = 'output/alignments/contigs-to-ref/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.wg_aln-to_T2TXY.paf.gz',
-        seq_classes = lambda wildcards: f'references_derived/{config['reference_y_seq_classes']['T2TXY']}.bed',
+        seq_classes = lambda wildcards: f'references_derived/{config["reference_y_seq_classes"]["T2TXY"]}.bed',
         ref_cov = 'output/eval/contigs-to-ref/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.wg_aln-to_T2TXY.ref-cov.tsv',
     output:
         new_names = 'output/subset_wg/15_order_contigs/{sample_info}_{sample}.{hifi_type}.{ont_type}.chrY.names.txt',

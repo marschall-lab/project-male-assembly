@@ -12,3 +12,5 @@ dependencies:
   - graphaligner=1.0.15
   - mbg=1.0.9
   - hmmer=3.3.2
+  - repeatmasker=4.1.2.p1
+  - trf=4.09.1

@@ -161,7 +161,7 @@ rule extract_read_alignments_bam:
     shell:
         'samtools view -u -L {input.bed} {input.bam} | samtools sort -m {resources.sort_mem}M -l 4 -@ {threads} -o {output.tmp_bam} /dev/stdin'
             ' && '
-        'samtools view -H {input.tmp_bam} | sed -f {input.rename} | samtools reheader /dev/stdin {output.tmp_bam} > {output.bam}'
+        'samtools view -H {output.tmp_bam} | sed -f {input.rename} | samtools reheader /dev/stdin {output.tmp_bam} > {output.bam}'
 
 
 rule subset_motif_hits:
@@ -191,3 +191,39 @@ rule extract_motif_hit_sequences:
         mem_mb = lambda wildcards, attempt: 2048 * attempt,
     shell:
         'seqtk subseq {input.fasta} {input.bed} > {output.fasta}'
+
+
+REF_CHRY = {
+    'GRCh38': ['chrY', 'chrY_KI270740v1_random'],
+    'T2TXY': ['chrY']
+}
+
+rule extract_read_ref_alignments:
+    input:
+        bam = 'output/alignments/reads-to-ref/{sample_info}_{sample}.{other_reads}_aln-to_{reference}.bam',
+        bai = 'output/alignments/reads-to-ref/{sample_info}_{sample}.{other_reads}_aln-to_{reference}.bam.bai',
+    output:
+        bam = 'output/subset_wg/60_subset_rdref/{sample_info}_{sample}.{other_reads}_aln-to_{reference}.chrY.bam'
+    conda:
+        '../envs/biotools.yaml'
+    resources:
+        mem_mb = lambda wildcards, attempt: 2048 * attempt,
+    params:
+        chroms = lambda wildcards: ' '.join(REF_CHRY[wildcards.reference])
+    shell:
+        'samtools view -b {input.bam} {params.chroms} > {output.bam}'
+
+
+rule extract_read_ref_alignments:
+    input:
+        paf = 'output/alignments/reads-to-ref/{sample_info}_{sample}.{other_reads}_aln-to_{reference}.paf.gz',
+    output:
+        paf = 'output/subset_wg/60_subset_rdref/{sample_info}_{sample}.{other_reads}_aln-to_{reference}.chrY.paf.gz'
+    conda:
+        '../envs/biotools.yaml'
+    resources:
+        mem_mb = lambda wildcards, attempt: 2048 * attempt,
+    params:
+        chroms = lambda wildcards: '(' + '|'.join(REF_CHRY[wildcards.reference]) + ')'
+    shell:
+        'zgrep -E {params.chroms} {input.paf} | pigz -p 2 --best > {output.paf}'

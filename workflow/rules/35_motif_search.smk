@@ -11,6 +11,7 @@ for all other motifs, all chrY hits are retained
 
 RUNTIME_MOTIF_FACTOR = {
     'DYZ2_Yq': 10,
+    'DYZ3-sec_Ycentro': 2
 }
 
 CPU_MOTIF_FACTOR = {
@@ -38,7 +39,7 @@ rule hmmer_motif_search:
         '../envs/biotools.yaml'
     threads: lambda wildcards: CPU_MOTIF_FACTOR.get(wildcards.motif, config['num_cpu_medium'])
     resources:
-        mem_mb = lambda wildcards, attempt: 24576 + 24576 * attempt,
+        mem_mb = lambda wildcards, attempt: 24576 + 32768 * attempt,
         walltime = lambda wildcards, attempt: f'{attempt*RUNTIME_MOTIF_FACTOR.get(wildcards.motif, 1):02}:59:00',
         bonus = lambda wildcards, attempt: BONUS_MOTIF_FACTOR.get(wildcards.motif, 0)
     params:
@@ -168,3 +169,24 @@ rule aggregate_motif_hits_by_target:
         agg.sort_values('target', inplace=True)
         agg.to_csv(output.table, sep='\t', header=True, index=False)
     # END OF RUN BLOCK
+
+
+rule repmsk_chry_contigs:
+    input:
+        fasta = 'output/subset_wg/20_extract_contigs/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.chrY.fasta'
+    output:
+        run_ok = 'output/motif_search/40_repmask/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.chrY.repmask.ok',
+    log:
+        'log/output/motif_search/40_repmask/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.chrY.repmask.log',
+    conda:
+        '../envs/biotools.yaml'
+    threads: config['num_cpu_low']
+    resources:
+        mem_mb = lambda wildcards, attempt: 24576 * attempt,
+        walltime = lambda wildcards, attempt: f'{attempt*attempt:02}:59:00',
+    params:
+        out_dir = 'output/motif_search/40_repmask/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.chrY'
+    shell:
+        'RepeatMasker -pa {threads} -s -dir {params.out_dir} -species human {input.fasta} &> {log}'
+            ' && '
+        'touch {output.run_ok}'

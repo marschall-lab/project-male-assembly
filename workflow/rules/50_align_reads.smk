@@ -124,7 +124,7 @@ rule align_reads_to_reference_paf:
         preset = lambda wildcards: MINIMAP_PRESETS[wildcards.other_reads],
         sec_aln = ""
     shell:
-        MINIMAP_READ_ASSM_PAF
+        MINIMAP_READ_REF_PAF
 
 
 rule align_reads_to_reference_bam:
@@ -156,7 +156,7 @@ rule align_reads_to_reference_bam:
         preset = lambda wildcards: MINIMAP_PRESETS[wildcards.other_reads],
         sec_aln = ""
     shell:
-        MINIMAP_READ_ASSM_BAM
+        MINIMAP_READ_REF_BAM
 
 
 ###############################################

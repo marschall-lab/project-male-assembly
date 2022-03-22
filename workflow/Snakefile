@@ -30,11 +30,11 @@ COMPLETE_SAMPLES = sorted(set(ONTUL_SAMPLES).intersection(set(HIFIRW_SAMPLES)))
 if 'NA19317' in COMPLETE_SAMPLES and 'NA19347' in COMPLETE_SAMPLES:
     COMPLETE_SAMPLES.append('NA193N7')
 
-CURRENT_ERROR_SAMPLES = ['HC19384', 'HC01457', 'NA19384', 'HG01457']
+CURRENT_ERROR_SAMPLES = ['HC19384', 'NA19384']
 
 batches = {
     'batch1': ['HC02666', 'HC18989', 'HC01457', 'HC19384', 'HG01890', 'HG00358', 'HG03579', 'HG01243', 'HG01952'],
-    'batch2': ['HG03248', 'NA19347', 'HG02554', 'HG02953', 'NA19331'],
+    'batch2': ['HG03248', 'NA19347', 'HG02554', 'HG02953', 'NA19331', 'HG03009', 'NA19650', 'NA18534'],
     'batch3': [],
     'batch4': [],
     'batch5': ['HG02666', 'NA18989', 'HG01457', 'NA19384']  # batch5: only contains yr2 samples that also exist as high-coverage version
@@ -65,6 +65,13 @@ COMPLETE_SAMPLES = [s for s in COMPLETE_SAMPLES if s not in CURRENT_ERROR_SAMPLE
 
 rule run_all:
     input:
+        aln_ref = expand(
+            'output/alignments/reads-to-assm/{sample_long}.{other_reads}_aln-to_{reference}.{ext}',
+            sample_long=[SAMPLE_INFOS[sample]['long_id'] for sample in COMPLETE_SAMPLES if SAMPLE_INFOS[sample]['sex'] == 'M'],
+            other_reads=['HIFIRW'],
+            reference=['T2TXY', 'GRCh38'],
+            ext=['paf.gz', 'bam.bai']
+        ),
         run_wg = expand(
             'output/eval/contigs-to-ref/{sample_long}.{hifi_type}.{ont_type}.na.wg_aln-to_{reference}.ref-cov.tsv',
             sample_long=[SAMPLE_INFOS[sample]['long_id'] for sample in COMPLETE_SAMPLES if SAMPLE_INFOS[sample]['sex'] == 'M'],

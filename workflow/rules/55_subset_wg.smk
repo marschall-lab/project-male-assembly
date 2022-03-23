@@ -198,7 +198,7 @@ REF_CHRY = {
     'T2TXY': ['chrY']
 }
 
-rule extract_read_ref_alignments:
+rule extract_read_ref_alignments_bam:
     input:
         bam = 'output/alignments/reads-to-ref/{sample_info}_{sample}.{other_reads}_aln-to_{reference}.bam',
         bai = 'output/alignments/reads-to-ref/{sample_info}_{sample}.{other_reads}_aln-to_{reference}.bam.bai',
@@ -214,7 +214,7 @@ rule extract_read_ref_alignments:
         'samtools view -b {input.bam} {params.chroms} > {output.bam}'
 
 
-rule extract_read_ref_alignments:
+rule extract_read_ref_alignments_paf:
     input:
         paf = 'output/alignments/reads-to-ref/{sample_info}_{sample}.{other_reads}_aln-to_{reference}.paf.gz',
     output:

@@ -179,17 +179,19 @@ rule repmsk_chry_contigs:
     """
     input:
         fasta = 'output/subset_wg/20_extract_contigs/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.chrY.fasta',
-        rename = 'output/subset_wg/15_order_contigs/{sample_info}_{sample}.{hifi_type}.{ont_type}.chrY.names.nto-map.sed
+        rename = 'output/subset_wg/15_order_contigs/{sample_info}_{sample}.{hifi_type}.{ont_type}.chrY.names.nto-map.sed'
     output:
         tmp_fasta = temp('output/motif_search/40_repmask/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.chrY.fasta'),
         run_ok = 'output/motif_search/40_repmask/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.chrY.repmask.ok',
     log:
         'log/output/motif_search/40_repmask/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.chrY.repmask.log',
+    benchmark:
+        'rsrc/output/motif_search/40_repmask/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.chrY.repmask.rsrc',
     conda:
         '../envs/biotools.yaml'
-    threads: config['num_cpu_low']
+    threads: config['num_cpu_medium']
     resources:
-        mem_mb = lambda wildcards, attempt: 24576 * attempt,
+        mem_mb = lambda wildcards, attempt: 12288 * attempt,
         walltime = lambda wildcards, attempt: f'{attempt*attempt:02}:59:00',
     params:
         out_dir = 'output/motif_search/40_repmask/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.chrY'

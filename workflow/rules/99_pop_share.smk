@@ -41,6 +41,7 @@ rule copy_verkko_assemblies:
     input:
         version = 'output/hybrid/verkko/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.verkko.info',
         linear = 'output/hybrid/verkko/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}/assembly.fasta',
+        index = 'output/hybrid/verkko/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}/assembly.fasta.fai',
     output:
         ok = 'output/share/assemblies/verkko_{major}_{minor}/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.copied.ok'
     wildcard_constraints:
@@ -81,6 +82,7 @@ rule copy_verkko_subset_assembly:
     input:
         version = 'output/hybrid/verkko/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.wg.verkko.info',
         linear = 'output/subset_wg/20_extract_contigs/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.fasta',
+        index = 'output/subset_wg/20_extract_contigs/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.fasta.fai',
     output:
         ok = 'output/share/assemblies/verkko_{major}_{minor}/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.copied.ok'
     wildcard_constraints:
@@ -204,6 +206,38 @@ rule copy_reads_to_assm_alignments:
         for source in input.aln_files:
             source_path = pl.Path(source)
             target = verkko_subfolder / source_path.name
+            rsync(source_path, target)
+            check_file += f'{source_path}\t{target}\n'
+
+        with open(output.ok, 'w') as dump:
+            _ = dump.write(check_file)
+    # END OF RUN BLOCK
+
+
+rule copy_reads_to_ref_alignments:
+    """
+    So far, only requested for chrY
+    """
+    input:
+        aln_files = lambda wildcards: expand(
+            'output/subset_wg/60_subset_rdref/{{sample_info}}_{{sample}}.{{other_reads}}_aln-to_{reference}.{chrom}.{ext}',
+            ext=['bam', 'bam.bai', 'paf.gz']
+        )
+    output:
+        ok = 'output/share/alignments/reads-to-ref/{sample_info}_{sample}.{other_reads}_aln-to_{reference}.{chrom}.copied.ok'
+    resources:
+        walltime = lambda wildcards, attempt: f'{attempt*attempt:02}:59:00',
+        mem_mb = lambda wildcards, attempt: 2048 * attempt
+    run:
+        import pathlib as pl
+
+        share_path = pl.Path(config['path_root_share_working']).resolve(strict=True)
+        share_subfolder = share_path / pl.Path(f'alignments/reads-to-ref/{wildcards.chrom}')
+
+        check_file = ''
+        for source in input.aln_files:
+            source_path = pl.Path(source)
+            target = share_subfolder / source_path.name
             rsync(source_path, target)
             check_file += f'{source_path}\t{target}\n'
 

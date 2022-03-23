@@ -165,6 +165,10 @@ rule extract_read_alignments_bam:
 
 
 rule subset_motif_hits:
+    """
+    If the input BED is empty (no hits above threshold),
+    touch the output file
+    """
     input:
         names = 'output/subset_wg/10_find_contigs/{sample_info}_{sample}.{hifi_type}.{ont_type}.chrY.names.txt',
         bed = 'output/motif_search/10_norm/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.wg.{motif}.norm-hiq.bed',
@@ -172,13 +176,19 @@ rule subset_motif_hits:
     output:
         bed = 'output/subset_wg/50_subset_motif/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.chrY.{motif}.norm-hiq.bed',
     shell:
-        'grep -w -F -f {input.names} {input.bed} | sed -f {input.rename} | sort -V -k1 -k2n,3n > {output.bed}'
+        'if [ -s {input.bed} ]; then '
+        'grep -w -F -f {input.names} {input.bed} | sed -f {input.rename} | sort -V -k1 -k2n,3n > {output.bed} ; '
+        'else '
+        'touch {output.bed} ; '
+        'fi'
 
 
 rule extract_motif_hit_sequences:
     """
     NB: all input files to this rule have been renamed before, i.e.,
     no need to rename chrY contigs here
+
+    NB: if the input BED is empty, seqtk will simply produce an empty output FASTA
     """
     input:
         fasta = 'output/subset_wg/20_extract_contigs/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.chrY.fasta',

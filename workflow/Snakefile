@@ -38,6 +38,7 @@ batches = {
     'batch3': [],
     'batch4': [],
     'batch5': ['HG02666', 'NA18989', 'HG01457', 'NA19384']  # batch5: only contains yr2 samples that also exist as high-coverage version
+    'batch6': ['HG01890', 'HG02554', 'HG02953', 'HC02666', 'NA19331', 'NA19347', 'HG03579', 'HG01952', 'HG01243', 'HC18989', 'HG00358']  # tmp debug batch
 }
 
 if bool(config.get('mnml_test', False)):
@@ -128,6 +129,13 @@ rule run_all:
 rule populate_share:
     input:
         refs = 'output/share/references.ok',
+        aln_reads_ref = expand(
+            'output/share/alignments/reads-to-ref/{sample_long}.{other_reads}_aln-to_{reference}.{chrom}.copied.ok',
+            sample_long=[SAMPLE_INFOS[sample]['long_id'] for sample in COMPLETE_SAMPLES if SAMPLE_INFOS[sample]['sex'] == 'M'],
+            other_reads=['HIFIRW'],
+            reference=['T2TXY', 'GRCh38'],
+            chrom=['chrY']
+        ),
         assemblies = expand(
             'output/share/assemblies/verkko_{major}_{minor}/{sample_long}.{hifi_type}.{ont_type}.{mapq}.{chrom}.copied.ok',
             sample_long=[SAMPLE_INFOS[sample]['long_id'] for sample in COMPLETE_SAMPLES if SAMPLE_INFOS[sample]['sex'] == 'M'],

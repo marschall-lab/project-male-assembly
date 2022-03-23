@@ -172,9 +172,16 @@ rule aggregate_motif_hits_by_target:
 
 
 rule repmsk_chry_contigs:
+    """
+    With renamed chrY contigs, RepeatMasker fails b/c of...
+    $ Fasta file contains a sequence identifier which is too long ( max id length = 50 )
+    so create a temp copy with original names, and rename output later
+    """
     input:
-        fasta = 'output/subset_wg/20_extract_contigs/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.chrY.fasta'
+        fasta = 'output/subset_wg/20_extract_contigs/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.chrY.fasta',
+        rename = 'output/subset_wg/15_order_contigs/{sample_info}_{sample}.{hifi_type}.{ont_type}.chrY.names.nto-map.sed
     output:
+        tmp_fasta = temp('output/motif_search/40_repmask/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.chrY.fasta'),
         run_ok = 'output/motif_search/40_repmask/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.chrY.repmask.ok',
     log:
         'log/output/motif_search/40_repmask/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.chrY.repmask.log',
@@ -187,6 +194,7 @@ rule repmsk_chry_contigs:
     params:
         out_dir = 'output/motif_search/40_repmask/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.chrY'
     shell:
-        'RepeatMasker -pa {threads} -s -dir {params.out_dir} -species human {input.fasta} &> {log}'
+        'sed -f {input.rename} > {output.tmp_fasta} && '
+        'RepeatMasker -pa {threads} -s -dir {params.out_dir} -species human {output.tmp_fasta} &> {log}'
             ' && '
         'touch {output.run_ok}'

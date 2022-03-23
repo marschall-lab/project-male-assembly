@@ -126,6 +126,8 @@ rule create_reference_bed_file:
         seq_classes = lambda wildcards: f'references_derived/{config["reference_y_seq_classes"][wildcards.reference]}.bed'
     output:
         bed = 'references_derived/{reference}.bed'
+    wildcard_constraints:
+        reference = '(' + '|'.join(sorted(config['reference_genomes'].keys())) + ')'
     run:
         bed_out = []
         with open(input.fai, 'r') as fasta_index:

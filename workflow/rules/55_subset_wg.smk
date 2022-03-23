@@ -112,7 +112,8 @@ rule extract_contig_alignments_bam:
         '../envs/biotools.yaml'
     threads: 2
     resources:
-        mem_mb = lambda wildcards, attempt: 8192 * attempt
+        mem_mb = lambda wildcards, attempt: 8192 * attempt,
+        walltime = lambda wildcards, attempt: f'{6 * attempt}:59:00'
     shell:
         'samtools view --with-header --qname-file {input.names} {input.bam} | '
         'sed -f {input.rename} | '
@@ -167,20 +168,29 @@ rule extract_read_alignments_bam:
 rule subset_motif_hits:
     """
     If the input BED is empty (no hits above threshold),
-    touch the output file
+    touch the output file.
+    The TSV also contains low-scoring hits, so it is unlikely
+    to be empty, but better safe than sorry.
     """
     input:
         names = 'output/subset_wg/10_find_contigs/{sample_info}_{sample}.{hifi_type}.{ont_type}.chrY.names.txt',
+        tsv = 'output/motif_search/10_norm/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.{motif}.norm.tsv',
         bed = 'output/motif_search/10_norm/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.wg.{motif}.norm-hiq.bed',
         rename = 'output/subset_wg/15_order_contigs/{sample_info}_{sample}.{hifi_type}.{ont_type}.chrY.names.otn-map.sed',
     output:
+        tsv = 'output/subset_wg/50_subset_motif/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.chrY.{motif}.norm.tsv',
         bed = 'output/subset_wg/50_subset_motif/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.chrY.{motif}.norm-hiq.bed',
     shell:
         'if [ -s {input.bed} ]; then '
         'grep -w -F -f {input.names} {input.bed} | sed -f {input.rename} | sort -V -k1 -k2n,3n > {output.bed} ; '
         'else '
         'touch {output.bed} ; '
-        'fi'
+        'fi ;'
+        'if [ -s {input.tsv} ]; then '
+        'grep -w -F -f {input.names} {input.tsv} | sed -f {input.rename} | sort -V -k1 -k5n,6n > {output.tsv} ; '
+        'else '
+        'touch {output.tsv} ; '
+        'fi ;'
 
 
 rule extract_motif_hit_sequences:
@@ -236,4 +246,4 @@ rule extract_read_ref_alignments_paf:
     params:
         chroms = lambda wildcards: '(' + '|'.join(REF_CHRY[wildcards.reference]) + ')'
     shell:
-        'zgrep -E {params.chroms} {input.paf} | pigz -p 2 --best > {output.paf}'
+        'zgrep -E "{params.chroms}" {input.paf} | pigz -p 2 --best > {output.paf}'

@@ -98,7 +98,7 @@ rule copy_verkko_subset_assembly:
         )
 
         check_file = ''
-        for source in [input.linear]:
+        for source in [input.linear, input.index]:
             source_path = pl.Path(source)
             target = verkko_subfolder / source_path.name
             rsync(source_path, target)
@@ -220,7 +220,7 @@ rule copy_reads_to_ref_alignments:
     """
     input:
         aln_files = lambda wildcards: expand(
-            'output/subset_wg/60_subset_rdref/{{sample_info}}_{{sample}}.{{other_reads}}_aln-to_{reference}.{chrom}.{ext}',
+            'output/subset_wg/60_subset_rdref/{{sample_info}}_{{sample}}.{{other_reads}}_aln-to_{{reference}}.{{chrom}}.{ext}',
             ext=['bam', 'bam.bai', 'paf.gz']
         )
     output:
@@ -249,6 +249,7 @@ rule copy_reads_to_ref_alignments:
 rule copy_motif_files:
     input:
         version = 'output/hybrid/verkko/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.wg.verkko.info',
+        tsv = 'output/subset_wg/50_subset_motif/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.{motif}.norm.tsv',
         bed = 'output/subset_wg/50_subset_motif/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.{motif}.norm-hiq.bed',
         fasta = 'output/subset_wg/50_subset_motif/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.{motif}.hiq-seq.fasta',
     output:
@@ -264,7 +265,7 @@ rule copy_motif_files:
             wildcards.chrom
         )
         check_file = ''
-        for source in [input.bed, input.fasta]:
+        for source in [input.bed, input.fasta, input.tsv]:
             source_path = pl.Path(source)
             target = verkko_subfolder / source_path.name
             rsync(source_path, target)

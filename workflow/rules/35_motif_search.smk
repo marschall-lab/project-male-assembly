@@ -22,6 +22,15 @@ BONUS_MOTIF_FACTOR = {
     'DYZ2_Yq': 100,
 }
 
+EVALUE_CUTOFF_MOTIF = {
+    'DYZ1_Yq': '1.60E-150',
+    'DYZ18_Yq': '1.60E-150',
+    'DYZ2_Yq': '1.60E-150',
+    'DYZ3-sec_Ycentro': '1.60E-150',
+    'DYZ3-prim_Ycentro': '1.60E-15',
+    'DYZ19_Yq': '1.60E-15'
+}
+
 rule hmmer_motif_search:
     input:
         assm = 'output/hybrid/verkko/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}/assembly.fasta',
@@ -43,7 +52,7 @@ rule hmmer_motif_search:
         walltime = lambda wildcards, attempt: f'{attempt*RUNTIME_MOTIF_FACTOR.get(wildcards.motif, 1):02}:59:00',
         bonus = lambda wildcards, attempt: BONUS_MOTIF_FACTOR.get(wildcards.motif, 0)
     params:
-        evalue = '1.60E-150'
+        evalue = lambda wildcards: EVALUE_CUTOFF_MOTIF[wildcards.motif]
     shell:
         'nhmmer --cpu {threads} --dna -o {output.txt} --tblout {output.table} -E {params.evalue} {input.qry} {input.assm} &> {log}'
 
@@ -74,7 +83,8 @@ SCORE_THRESHOLDS_MOTIF = {
     'DYZ1_Yq': 2500,
     'DYZ18_Yq': 2100,
     'DYZ2_Yq': 1700,
-    'DYZ3-sec_Ycentro': 1700
+    'DYZ3-sec_Ycentro': 1700,
+    'DYZ3-prim_Ycentro': 90
 }
 
 rule normalize_motif_hits:
@@ -196,7 +206,7 @@ rule repmsk_chry_contigs:
     params:
         out_dir = 'output/motif_search/40_repmask/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.chrY'
     shell:
-        'sed -f {input.rename} > {output.tmp_fasta} && '
+        'sed -f {input.rename} {input.fasta} > {output.tmp_fasta} && '
         'RepeatMasker -pa {threads} -s -dir {params.out_dir} -species human {output.tmp_fasta} &> {log}'
             ' && '
         'touch {output.run_ok}'

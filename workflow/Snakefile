@@ -125,10 +125,11 @@ rule run_all:
             motif=config['motif_search']
         ),
         repmasker = expand(
-            'output/motif_search/40_repmask/{sample_long}.{hifi_type}.{ont_type}.na.chrY.repmask.ok',
+            'output/motif_search/45_rm_norm/{sample_long}/{sample_long}.{hifi_type}.{ont_type}.na.chrY.{ext}',
             sample_long=[SAMPLE_INFOS[sample]['long_id'] for sample in COMPLETE_SAMPLES if SAMPLE_INFOS[sample]['sex'] == 'M'],
             hifi_type=['HIFIRW'],
             ont_type=['ONTUL'],
+            ext=['rm-out.tar.gz', 'rm-mask.fasta', 'matches.tsv']
         )
 
 
@@ -181,6 +182,14 @@ rule populate_share:
             hifi_type=['HIFIRW'],
             ont_type=['ONTUL'],
             motif=config['motif_search'],
+            major=config['verkko_major'].strip('"'),
+            minor=config['verkko_minor'].strip('"'),
+        ),
+        repmask_out = expand(
+            'output/share/repeatmasker/verkko_{major}_{minor}/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.chrY.copied.ok',
+            sample_long=[SAMPLE_INFOS[sample]['long_id'] for sample in COMPLETE_SAMPLES if SAMPLE_INFOS[sample]['sex'] == 'M'],
+            hifi_type=['HIFIRW'],
+            ont_type=['ONTUL'],
             major=config['verkko_major'].strip('"'),
             minor=config['verkko_minor'].strip('"'),
         )

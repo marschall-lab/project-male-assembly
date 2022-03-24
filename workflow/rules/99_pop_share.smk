@@ -276,6 +276,35 @@ rule copy_motif_files:
     # END OF RUN BLOCK
 
 
+rule copy_repeatmasker_files:
+    input:
+        version = 'output/hybrid/verkko/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.wg.verkko.info',
+        fasta = 'output/motif_search/45_rm_norm/{sample_info}_{sample}/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.rm-mask.fasta',
+        table = 'output/motif_search/45_rm_norm/{sample_info}_{sample}/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.matches.tsv',
+        tar = 'output/motif_search/45_rm_norm/{sample_info}_{sample}/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.rm-out.tar.gz',
+    output:
+        ok = 'output/share/repeatmasker/verkko_{major}_{minor}/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.copied.ok'
+    resources:
+        walltime = lambda wildcards, attempt: f'{attempt*attempt:02}:59:00'
+    run:
+        import pathlib as pl
+
+        verkko_subfolder, assembly_id = determine_verkko_subfolder(
+            input.version,
+            'repeatmasker',
+            wildcards.chrom
+        )
+        check_file = ''
+        for source in [input.fasta, input.table, input.tar]:
+            source_path = pl.Path(source)
+            target = verkko_subfolder / source_path.name
+            rsync(source_path, target)
+            check_file += f'{source_path}\t{target}\n'
+
+        with open(output.ok, 'w') as dump:
+            _ = dump.write(check_file)
+    # END OF RUN BLOCK
+
 
 # DEPRECATED
 #

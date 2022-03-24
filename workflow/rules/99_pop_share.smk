@@ -233,6 +233,7 @@ rule copy_reads_to_ref_alignments:
 
         share_path = pl.Path(config['path_root_share_working']).resolve(strict=True)
         share_subfolder = share_path / pl.Path(f'alignments/reads-to-ref/{wildcards.chrom}')
+        share_subfolder.mkdir(parents=True, exist_ok=True)
 
         check_file = ''
         for source in input.aln_files:

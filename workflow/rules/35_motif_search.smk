@@ -244,7 +244,7 @@ rule collect_repeatmasker_output:
 
 rule normalize_repeatmasker_table:
     input:
-        table_out = 'output/motif_search/40_repmask/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.chrY/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.chrY.fasta.out',
+        table = 'output/motif_search/40_repmask/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.chrY/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.chrY.fasta.out',
         rename = 'output/subset_wg/15_order_contigs/{sample_info}_{sample}.{hifi_type}.{ont_type}.chrY.names.otn-map.json',
     output:
         tsv = 'output/motif_search/45_rm_norm/{sample_info}_{sample}/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.chrY.matches.tsv',
@@ -274,7 +274,7 @@ rule normalize_repeatmasker_table:
         ]
 
         df = pd.read_csv(
-            fp/fn,
+            input.table,
             header=None,
             index_col=False,
             delimiter=r"\s+",

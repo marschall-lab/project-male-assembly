@@ -211,8 +211,6 @@ rule repmsk_chry_contigs:
     shell:
         'sed -f {input.rename} {input.fasta} > {output.tmp_fasta} && '
         'RepeatMasker -pa {threads} -s -dir {params.out_dir} -species human {output.tmp_fasta} &> {log}'
-            ' && '
-        'touch {output.run_ok}'
 
 
 rule collect_repeatmasker_output:

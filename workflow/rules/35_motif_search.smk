@@ -225,7 +225,7 @@ rule collect_repeatmasker_output:
         masked = 'output/motif_search/40_repmask/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.chrY/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.chrY.fasta.masked',
         aln = 'output/motif_search/40_repmask/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.chrY/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.chrY.fasta.cat.gz',
         table = 'output/motif_search/40_repmask/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.chrY/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.chrY.fasta.out',
-        rename = 'output/subset_wg/15_order_contigs/{sample_info}_{sample}.{hifi_type}.{ont_type}.chrY.names.otn-map.sed',
+        rename = 'output/subset_wg/15_order_contigs/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.chrY.names.otn-map.sed',
     output:
         fasta_rn = 'output/motif_search/45_rm_norm/{sample_info}_{sample}/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.chrY.rm-mask.fasta',
         result_tar = 'output/motif_search/45_rm_norm/{sample_info}_{sample}/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.chrY.rm-out.tar.gz',
@@ -249,7 +249,7 @@ rule collect_repeatmasker_output:
 rule normalize_repeatmasker_table:
     input:
         table = 'output/motif_search/40_repmask/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.chrY/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.chrY.fasta.out',
-        rename = 'output/subset_wg/15_order_contigs/{sample_info}_{sample}.{hifi_type}.{ont_type}.chrY.names.otn-map.json',
+        rename = 'output/subset_wg/15_order_contigs/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.chrY.names.otn-map.json',
     output:
         tsv = 'output/motif_search/45_rm_norm/{sample_info}_{sample}/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.chrY.matches.tsv',
     resources:

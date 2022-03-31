@@ -81,7 +81,7 @@ rule extract_y_contigs:
         ren_ont_cov = 'output/hybrid/renamed/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.wg.ont-coverage.csv',
         sub_assm = 'output/subset_wg/20_extract_contigs/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.chrY.fasta',
         sub_bed = 'output/subset_wg/20_extract_contigs/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.chrY.bed',
-        sub_names = 'output/subset_wg/20_extract_contigs/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.chrY.names.txt
+        sub_names = 'output/subset_wg/20_extract_contigs/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.chrY.names.txt'
     conda:
         '../envs/pyscript.yaml'
     resources:
@@ -105,7 +105,7 @@ rule extract_y_contigs:
 rule extract_contig_alignments_paf:
     input:
         paf = 'output/alignments/contigs-to-ref/10_renamed/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.wg_aln-to_{reference}.paf.gz',
-        names = 'output/subset_wg/20_extract_contigs/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.chrY.names.txt
+        names = 'output/subset_wg/20_extract_contigs/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.chrY.names.txt'
     output:
         paf = 'output/subset_wg/30_extract_ctgaln/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.chrY_aln-to_{reference}.paf.gz'
     conda:
@@ -127,7 +127,7 @@ rule extract_contig_alignments_bam:
     input:
         bam = 'output/alignments/contigs-to-ref/10_renamed/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.wg_aln-to_{reference}.bam',
         bai = 'output/alignments/contigs-to-ref/10_renamed/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.wg_aln-to_{reference}.bam.bai',
-        names = 'output/subset_wg/20_extract_contigs/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.chrY.names.txt
+        names = 'output/subset_wg/20_extract_contigs/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.chrY.names.txt'
     output:
         bam = 'output/subset_wg/30_extract_ctgaln/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.chrY_aln-to_{reference}.bam'
     conda:
@@ -144,7 +144,7 @@ rule extract_contig_alignments_bam:
 rule extract_read_alignments_paf:
     input:
         paf = 'output/alignments/reads-to-assm/{sample_info}_{sample}.{other_reads}_aln-to_{hifi_type}.{ont_type}.na.wg.paf.gz',
-        names = 'output/subset_wg/20_extract_contigs/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.chrY.names.txt
+        names = 'output/subset_wg/20_extract_contigs/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.chrY.names.txt'
     output:
         paf = 'output/subset_wg/40_extract_rdaln/{sample_info}_{sample}.{other_reads}_aln-to_{hifi_type}.{ont_type}.na.chrY.paf.gz'
     conda:
@@ -178,7 +178,7 @@ rule extract_read_alignments_bam:
         walltime = lambda wildcards, attempt: f'{attempt ** attempt:02}:59:00',
         sort_mem = lambda wildcards, attempt: 4096 * attempt
     shell:
-        'samtools view -u -L {input.bed} {input.bam} | samtools sort -m {resources.sort_mem}M -l 4 -@ {threads} -o {output.tmp_bam} /dev/stdin'
+        'samtools view -u -L {input.bed} {input.bam} | samtools sort -m {resources.sort_mem}M -l 4 -@ {threads} -o {output.bam} /dev/stdin'
 
 
 rule subset_motif_hits:
@@ -189,7 +189,7 @@ rule subset_motif_hits:
     to be empty, but better safe than sorry.
     """
     input:
-        names = 'output/subset_wg/20_extract_contigs/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.chrY.names.txt,
+        names = 'output/subset_wg/20_extract_contigs/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.chrY.names.txt',
         tsv = 'output/motif_search/10_norm/10_renamed/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.wg.{motif}.norm.tsv',
         bed = 'output/motif_search/10_norm/10_renamed/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.wg.{motif}.norm-hiq.bed',
     output:

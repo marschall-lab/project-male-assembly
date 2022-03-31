@@ -76,7 +76,7 @@ rule aggregate_contig_alignments:
 rule align_reference_seq_classes:
     input:
         ref = 'output/subset_wg/20_extract_contigs/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.chrY.fasta',
-        ctg = 'references/{seq_classes}.fasta'
+        ctg = 'references_derived/{seq_classes}.fasta'
     output:
         paf = 'output/alignments/seqclasses-to-assm/{seq_classes}_aln-to_{sample_info}_{sample}.{hifi_type}.{ont_type}.na.chrY.paf.gz'
     conda:

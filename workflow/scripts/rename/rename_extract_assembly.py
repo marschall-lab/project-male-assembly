@@ -66,7 +66,7 @@ def main():
 
     args = parse_command_line()
 
-    name_map = json.load(open(args.names, 'w'))
+    name_map = json.load(open(args.names, 'r'))
 
     revcomp_table = str.maketrans(COMPLEMENT_NUCLEOTIDES)
 

@@ -44,7 +44,7 @@ rule align_reads_to_assembly_paf:
     This rule only aligns whole-genome read sets
     """
     input:
-        ctg = 'output/hybrid/verkko/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.{chrom}/assembly.fasta',
+        ctg = 'output/hybrid/renamed/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.wg.fasta',
         reads = select_input_reads,
     output:
         'output/alignments/reads-to-assm/{sample_info}_{sample}.{other_reads}_aln-to_{hifi_type}.{ont_type}.na.{chrom}.paf.gz'
@@ -72,7 +72,7 @@ rule align_reads_to_assembly_bam:
     This rule only aligns whole-genome read sets
     """
     input:
-        ctg = 'output/hybrid/verkko/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.{chrom}/assembly.fasta',
+        ctg = 'output/hybrid/renamed/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.wg.fasta',
         reads = select_input_reads,
     output:
         'output/alignments/reads-to-assm/{sample_info}_{sample}.{other_reads}_aln-to_{hifi_type}.{ont_type}.na.{chrom}.bam'

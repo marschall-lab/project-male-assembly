@@ -4,24 +4,28 @@ rule determine_chry_contigs:
     """
     This makes only sense relative to a complete chrY, i.e. T2T,
     hence reference is hard-coded
+
+    NB: this rule is only executed on the raw Verkko output, i.e.,
+    it it a prerequisite for identifying and renaming the assembled
+    chrY contigs, but its output is not used afterwards
     """
     input:
         agg_ctg_aln = expand(
-            'output/alignments/contigs-to-ref/{{sample_info}}_{{sample}}.{{hifi_type}}.{{ont_type}}.{mapq}.{chrom}_aln-to_{reference}.ctg-agg.tsv',
+            'output/alignments/contigs-to-ref/00_raw/{{sample_info}}_{{sample}}.{{hifi_type}}.{{ont_type}}.{mapq}.{chrom}_aln-to_{reference}.ctg-agg.tsv',
             reference='T2TXY',
             chrom='wg',
             mapq='na'
         ),
         agg_motifs = expand(
-            'output/motif_search/20_target_agg/{{sample_info}}_{{sample}}.{{hifi_type}}.{{ont_type}}.{mapq}.{chrom}.{motif}.agg-trg.tsv',
+            'output/motif_search/20_target_agg/00_raw/{{sample_info}}_{{sample}}.{{hifi_type}}.{{ont_type}}.{mapq}.{chrom}.{motif}.agg-trg.tsv',
             motif=config['contig_id_motifs'],
             chrom='wg',
             mapq='na'
         )
     output:
-        table = 'output/subset_wg/10_find_contigs/{sample_info}_{sample}.{hifi_type}.{ont_type}.chrY.stats.tsv',
-        names = 'output/subset_wg/10_find_contigs/{sample_info}_{sample}.{hifi_type}.{ont_type}.chrY.names.txt',
-        bed = 'output/subset_wg/10_find_contigs/{sample_info}_{sample}.{hifi_type}.{ont_type}.chrY.bed',
+        table = 'output/subset_wg/10_find_contigs/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.chrY.stats.tsv',
+        names = 'output/subset_wg/10_find_contigs/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.chrY.names.txt',
+        bed = 'output/subset_wg/10_find_contigs/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.chrY.bed',
     conda:
         '../envs/pyscript.yaml'
     resources:
@@ -39,14 +43,14 @@ rule determine_contig_order:
     makes only sense for a complete assembly, i.e. T2T
     """
     input:
-        ctg_names = 'output/subset_wg/10_find_contigs/{sample_info}_{sample}.{hifi_type}.{ont_type}.chrY.names.txt',
-        ctg_aln = 'output/alignments/contigs-to-ref/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.wg_aln-to_T2TXY.paf.gz',
+        ctg_names = 'output/subset_wg/10_find_contigs/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.chrY.names.txt',
+        ctg_aln = 'output/alignments/contigs-to-ref/00_raw/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.wg_aln-to_T2TXY.paf.gz',
         seq_classes = lambda wildcards: f'references_derived/{config["reference_y_seq_classes"]["T2TXY"]}.bed',
-        ref_cov = 'output/eval/contigs-to-ref/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.wg_aln-to_T2TXY.ref-cov.tsv',
+        ref_cov = 'output/eval/contigs-to-ref/00_raw/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.wg_aln-to_T2TXY.ref-cov.tsv',
     output:
-        new_names = 'output/subset_wg/15_order_contigs/{sample_info}_{sample}.{hifi_type}.{ont_type}.chrY.names.txt',
+        new_names = 'output/subset_wg/15_order_contigs/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.chrY.names.txt',
         name_maps = multiext(
-            'output/subset_wg/15_order_contigs/{sample_info}_{sample}.{hifi_type}.{ont_type}.chrY.names',
+            'output/subset_wg/15_order_contigs/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.chrY.names',
             '.otn-map.tsv', '.otn-map.json', '.otn-map.sed',
             '.nto-map.tsv', '.nto-map.json', '.nto-map.sed'
         )
@@ -66,23 +70,42 @@ rule determine_contig_order:
 rule extract_y_contigs:
     input:
         wg_assm = 'output/hybrid/verkko/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.wg/assembly.fasta',
-        names = 'output/subset_wg/10_find_contigs/{sample_info}_{sample}.{hifi_type}.{ont_type}.chrY.names.txt',
-        rename = 'output/subset_wg/15_order_contigs/{sample_info}_{sample}.{hifi_type}.{ont_type}.chrY.names.otn-map.sed',
+        wg_hifi_cov = 'output/hybrid/verkko/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.wg/assembly.hifi-coverage.csv',
+        wg_ont_cov = 'output/hybrid/verkko/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.wg/assembly.ont-coverage.csv',
+        ren_json = 'output/subset_wg/15_order_contigs/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.chrY.names.otn-map.json',
+        ren_sed = 'output/subset_wg/15_order_contigs/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.chrY.names.otn-map.sed',
+        sub_bed = 'output/subset_wg/10_find_contigs/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.chrY.bed',
     output:
-        sub_assm = 'output/subset_wg/20_extract_contigs/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.chrY.fasta'
+        ren_assm = 'output/hybrid/renamed/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.wg.fasta',
+        ren_hifi_cov = 'output/hybrid/renamed/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.wg.hifi-coverage.csv',
+        ren_ont_cov = 'output/hybrid/renamed/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.wg.ont-coverage.csv',
+        sub_assm = 'output/subset_wg/20_extract_contigs/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.chrY.fasta',
+        sub_bed = 'output/subset_wg/20_extract_contigs/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.chrY.bed',
+        sub_names = 'output/subset_wg/20_extract_contigs/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.chrY.names.txt
     conda:
-        '../envs/biotools.yaml'
+        '../envs/pyscript.yaml'
     resources:
-        mem_mb = lambda wildcards, attempt: 1024 * attempt
+        walltime = lambda wildcards, attempt: f'{attempt*attempt}:59:59',
+        mem_mb = lambda wildcards, attempt: 4096 * attempt
+    params:
+        script_exec = find_script_path('rename_extract_assembly.py')
     shell:
-        'seqtk subseq {input.wg_assm} {input.names} | sed -f {input.rename} > {output.sub_assm}'
+        '{params.script_exec} --input-fasta {input.wg_assm} --name-map {input.ren_json} '
+        '--out-wg {output.ren_assm} --out-sub {output.sub_assm}'
+            ' && '
+        'sed -f {input.ren_sed} {input.wg_ont_cov} > {output.ren_ont_cov}'
+            ' && '
+        'sed -f {input.ren_sed} {input.wg_hifi_cov} > {output.ren_hifi_cov}'
+            ' && '
+        'sed -f {input.ren_sed} {input.sub_bed} > {output.sub_bed}'
+            ' && '
+        'cut -f 1 {output.sub_bed} | sort > {output.sub_names}'
 
 
 rule extract_contig_alignments_paf:
     input:
-        paf = 'output/alignments/contigs-to-ref/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.wg_aln-to_{reference}.paf.gz',
-        names = 'output/subset_wg/10_find_contigs/{sample_info}_{sample}.{hifi_type}.{ont_type}.chrY.names.txt',
-        rename = 'output/subset_wg/15_order_contigs/{sample_info}_{sample}.{hifi_type}.{ont_type}.chrY.names.otn-map.sed',
+        paf = 'output/alignments/contigs-to-ref/10_renamed/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.wg_aln-to_{reference}.paf.gz',
+        names = 'output/subset_wg/20_extract_contigs/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.chrY.names.txt
     output:
         paf = 'output/subset_wg/30_extract_ctgaln/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.chrY_aln-to_{reference}.paf.gz'
     conda:
@@ -90,7 +113,7 @@ rule extract_contig_alignments_paf:
     resources:
         mem_mb = lambda wildcards, attempt: 1024 * attempt
     shell:
-        'zgrep -w -F -f {input.names} {input.paf} | sed -f {input.rename} | sort -k1 -k3n,4n | gzip > {output.paf}'
+        'zgrep -w -F -f {input.names} {input.paf} | sort -k1 -k3n,4n | gzip > {output.paf}'
 
 
 rule extract_contig_alignments_bam:
@@ -102,12 +125,11 @@ rule extract_contig_alignments_bam:
     to BAM.
     """
     input:
-        bam = 'output/alignments/contigs-to-ref/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.wg_aln-to_{reference}.sort.bam',
-        bai = 'output/alignments/contigs-to-ref/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.wg_aln-to_{reference}.sort.bam.bai',
-        names = 'output/subset_wg/10_find_contigs/{sample_info}_{sample}.{hifi_type}.{ont_type}.chrY.names.txt',
-        rename = 'output/subset_wg/15_order_contigs/{sample_info}_{sample}.{hifi_type}.{ont_type}.chrY.names.otn-map.sed',
+        bam = 'output/alignments/contigs-to-ref/10_renamed/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.wg_aln-to_{reference}.bam',
+        bai = 'output/alignments/contigs-to-ref/10_renamed/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.wg_aln-to_{reference}.bam.bai',
+        names = 'output/subset_wg/20_extract_contigs/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.chrY.names.txt
     output:
-        bam = 'output/subset_wg/30_extract_ctgaln/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.chrY_aln-to_{reference}.sort.bam'
+        bam = 'output/subset_wg/30_extract_ctgaln/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.chrY_aln-to_{reference}.bam'
     conda:
         '../envs/biotools.yaml'
     threads: 2
@@ -115,16 +137,14 @@ rule extract_contig_alignments_bam:
         mem_mb = lambda wildcards, attempt: 8192 * attempt,
         walltime = lambda wildcards, attempt: f'{6 * attempt}:59:00'
     shell:
-        'samtools view --with-header --qname-file {input.names} {input.bam} | '
-        'sed -f {input.rename} | '
+        'samtools view -u --qname-file {input.names} {input.bam} | '
         'samtools sort -m 2048M -l 9 --output-fmt BAM --threads 4 -o {output.bam} /dev/stdin'
 
 
 rule extract_read_alignments_paf:
     input:
         paf = 'output/alignments/reads-to-assm/{sample_info}_{sample}.{other_reads}_aln-to_{hifi_type}.{ont_type}.na.wg.paf.gz',
-        names = 'output/subset_wg/10_find_contigs/{sample_info}_{sample}.{hifi_type}.{ont_type}.chrY.names.txt',
-        rename = 'output/subset_wg/15_order_contigs/{sample_info}_{sample}.{hifi_type}.{ont_type}.chrY.names.otn-map.sed',
+        names = 'output/subset_wg/20_extract_contigs/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.chrY.names.txt
     output:
         paf = 'output/subset_wg/40_extract_rdaln/{sample_info}_{sample}.{other_reads}_aln-to_{hifi_type}.{ont_type}.na.chrY.paf.gz'
     conda:
@@ -133,7 +153,7 @@ rule extract_read_alignments_paf:
     resources:
         mem_mb = lambda wildcards, attempt: 1024 * attempt
     shell:
-        'zgrep -w -F -f {input.names} {input.paf} | sed -f {input.rename} | pigz -p 4 --best > {output.paf}'
+        'zgrep -w -F -f {input.names} {input.paf} | pigz -p 4 --best > {output.paf}'
 
 
 rule extract_read_alignments_bam:
@@ -147,10 +167,8 @@ rule extract_read_alignments_bam:
     input:
         bam = 'output/alignments/reads-to-assm/{sample_info}_{sample}.{other_reads}_aln-to_{hifi_type}.{ont_type}.na.wg.bam',
         bai = 'output/alignments/reads-to-assm/{sample_info}_{sample}.{other_reads}_aln-to_{hifi_type}.{ont_type}.na.wg.bam.bai',
-        bed = 'output/subset_wg/10_find_contigs/{sample_info}_{sample}.{hifi_type}.{ont_type}.chrY.bed',
-        rename = 'output/subset_wg/15_order_contigs/{sample_info}_{sample}.{hifi_type}.{ont_type}.chrY.names.otn-map.sed',
+        bed = 'output/subset_wg/20_extract_contigs/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.chrY.bed',
     output:
-        tmp_bam = temp('output/subset_wg/40_extract_rdaln/tmp/{sample_info}_{sample}.{other_reads}_aln-to_{hifi_type}.{ont_type}.na.chrY.bam'),
         bam = 'output/subset_wg/40_extract_rdaln/{sample_info}_{sample}.{other_reads}_aln-to_{hifi_type}.{ont_type}.na.chrY.bam',
     conda:
         '../envs/biotools.yaml'
@@ -161,8 +179,6 @@ rule extract_read_alignments_bam:
         sort_mem = lambda wildcards, attempt: 4096 * attempt
     shell:
         'samtools view -u -L {input.bed} {input.bam} | samtools sort -m {resources.sort_mem}M -l 4 -@ {threads} -o {output.tmp_bam} /dev/stdin'
-            ' && '
-        'samtools view -H {output.tmp_bam} | sed -f {input.rename} | samtools reheader /dev/stdin {output.tmp_bam} > {output.bam}'
 
 
 rule subset_motif_hits:
@@ -173,21 +189,20 @@ rule subset_motif_hits:
     to be empty, but better safe than sorry.
     """
     input:
-        names = 'output/subset_wg/10_find_contigs/{sample_info}_{sample}.{hifi_type}.{ont_type}.chrY.names.txt',
-        tsv = 'output/motif_search/10_norm/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.wg.{motif}.norm.tsv',
-        bed = 'output/motif_search/10_norm/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.wg.{motif}.norm-hiq.bed',
-        rename = 'output/subset_wg/15_order_contigs/{sample_info}_{sample}.{hifi_type}.{ont_type}.chrY.names.otn-map.sed',
+        names = 'output/subset_wg/20_extract_contigs/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.chrY.names.txt,
+        tsv = 'output/motif_search/10_norm/10_renamed/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.wg.{motif}.norm.tsv',
+        bed = 'output/motif_search/10_norm/10_renamed/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.wg.{motif}.norm-hiq.bed',
     output:
         tsv = 'output/subset_wg/50_subset_motif/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.chrY.{motif}.norm.tsv',
         bed = 'output/subset_wg/50_subset_motif/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.chrY.{motif}.norm-hiq.bed',
     shell:
         'if [ -s {input.bed} ]; then '
-        'grep -w -F -f {input.names} {input.bed} | sed -f {input.rename} | sort -V -k1 -k2n,3n > {output.bed} ; '
+        'grep -w -F -f {input.names} {input.bed} | sort -V -k1 -k2n,3n > {output.bed} ; '
         'else '
         'touch {output.bed} ; '
         'fi ;'
         'if [ -s {input.tsv} ]; then '
-        'grep -w -F -f {input.names} {input.tsv} | sed -f {input.rename} | sort -V -k1 -k5n,6n > {output.tsv} ; '
+        'grep -w -F -f {input.names} {input.tsv} | sort -V -k1 -k5n,6n > {output.tsv} ; '
         'else '
         'touch {output.tsv} ; '
         'fi ;'

@@ -297,6 +297,19 @@ def select_reference_genome(ref_name, fasta_index=False):
     return ref_genome
 
 
+def select_whole_genome_assembly(wildcards):
+
+    assert hasattr(wildcards, 'sub_folder'), f'no sub_folder wildcard: {wildcards}'
+    formatter = dict(wildcards)
+    if wildcards.sub_folder == '00_raw':
+        assm = 'output/hybrid/verkko/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.wg/assembly.fasta'.format(**formatter)
+    elif wildcards.sub_folder == '10_renamed':
+        assm = 'output/hybrid/renamed/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.wg.fasta'.format(**formatter)
+    else:
+        raise ValueError(wildcards)
+    return assm
+
+
 def parse_verkko_version(file_path):
 
     major = None

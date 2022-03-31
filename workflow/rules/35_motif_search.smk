@@ -33,15 +33,17 @@ EVALUE_CUTOFF_MOTIF = {
 
 rule hmmer_motif_search:
     input:
-        assm = 'output/hybrid/verkko/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}/assembly.fasta',
+        assm = select_whole_genome_assembly,
         qry = 'references_derived/{motif}.fasta'
     output:
-        txt = 'output/motif_search/00_detection/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.{motif}.txt',
-        table = 'output/motif_search/00_detection/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.{motif}.table.txt',
+        txt = 'output/motif_search/00_detection/{sub_folder}/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.{motif}.txt',
+        table = 'output/motif_search/00_detection/{sub_folder}/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.{motif}.table.txt',
     log:
-        'log/output/motif_search/00_detection/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.{motif}.hmmer.log',
+        'log/output/motif_search/00_detection/{sub_folder}/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.{motif}.hmmer.log',
     benchmark:
-        'rsrc/output/motif_search/00_detection/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.{motif}.hmmer.rsrc',
+        'rsrc/output/motif_search/00_detection/{sub_folder}/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.{motif}.hmmer.rsrc',
+    wildcard_constraints:
+        sub_folder = '(00_raw|10_renamed)'
 #    singularity:
 #        'hmmer.sif'
     conda:
@@ -89,12 +91,14 @@ SCORE_THRESHOLDS_MOTIF = {
 
 rule normalize_motif_hits:
     input:
-        table = 'output/motif_search/00_detection/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.{motif}.table.txt',
+        table = 'output/motif_search/00_detection/{sub_folder}/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.{motif}.table.txt',
         motif = 'references_derived/{motif}.fasta',
     output:
-        table = 'output/motif_search/10_norm/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.{motif}.norm.tsv',
-        bed_all = 'output/motif_search/10_norm/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.{motif}.norm.bed',
-        bed_hiq = 'output/motif_search/10_norm/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.{motif}.norm-hiq.bed',
+        table = 'output/motif_search/10_norm/{sub_folder}/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.{motif}.norm.tsv',
+        bed_all = 'output/motif_search/10_norm/{sub_folder}/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.{motif}.norm.bed',
+        bed_hiq = 'output/motif_search/10_norm/{sub_folder}/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.{motif}.norm-hiq.bed',
+    wildcard_constraints:
+        sub_folder = '(00_raw|10_renamed)'
     resources:
         mem_mb = lambda wildcards, attempt: 2048 * attempt,
     params:
@@ -140,9 +144,11 @@ rule normalize_motif_hits:
 
 rule aggregate_motif_hits_by_target:
     input:
-        table = 'output/motif_search/10_norm/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.{motif}.norm.tsv',
+        table = 'output/motif_search/10_norm/{sub_folder}/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.{motif}.norm.tsv',
     output:
-        table = 'output/motif_search/20_target_agg/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.{motif}.agg-trg.tsv',
+        table = 'output/motif_search/20_target_agg/{sub_folder}/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.{motif}.agg-trg.tsv',
+    wildcard_constraints:
+        sub_folder = '(00_raw|10_renamed)'
     resources:
         mem_mb = lambda wildcards, attempt: 2048 * attempt,
     run:
@@ -189,7 +195,7 @@ rule repmsk_chry_contigs:
     """
     input:
         fasta = 'output/subset_wg/20_extract_contigs/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.chrY.fasta',
-        rename = 'output/subset_wg/15_order_contigs/{sample_info}_{sample}.{hifi_type}.{ont_type}.chrY.names.nto-map.sed'
+        rename = 'output/subset_wg/15_order_contigs/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.chrY.names.nto-map.sed'
     output:
         tmp_fasta = temp('output/motif_search/40_repmask/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.chrY.fasta'),
         repmask_output = multiext(

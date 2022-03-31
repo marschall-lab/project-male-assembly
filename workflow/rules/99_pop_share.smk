@@ -40,8 +40,10 @@ rule copy_verkko_assemblies:
     """
     input:
         version = 'output/hybrid/verkko/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.verkko.info',
-        linear = 'output/hybrid/verkko/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}/assembly.fasta',
-        index = 'output/hybrid/verkko/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}/assembly.fasta.fai',
+        linear = 'output/hybrid/renamed/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.wg.fasta',
+        index = 'output/hybrid/renamed/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.wg.fasta.fai',
+        hifi_cov = 'output/hybrid/renamed/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.wg.hifi-coverage.csv',
+        ont_cov = 'output/hybrid/renamed/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.wg.ont-coverage.csv',
     output:
         ok = 'output/share/assemblies/verkko_{major}_{minor}/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.copied.ok'
     wildcard_constraints:
@@ -52,8 +54,6 @@ rule copy_verkko_assemblies:
     run:
         import pathlib as pl
 
-        skip_hpc_outputs = True
-
         verkko_subfolder, assembly_id = determine_verkko_subfolder(
             input.version,
             'assemblies',
@@ -61,17 +61,11 @@ rule copy_verkko_assemblies:
         )
 
         check_file = ''
-
-        assembly_pattern = pl.Path(input.linear).with_suffix('').name
-        assembly_files = pl.Path(input.linear).parent.glob(f'./{assembly_pattern}*')
-
-        for assm_file in assembly_files:
-            new_name = pl.Path(assembly_id + '.' + assm_file.name)
-            if 'compressed' in str(new_name) and skip_hpc_outputs:
-                continue
-            target = verkko_subfolder / new_name
-            rsync(assm_file, target)
-            check_file += f'{assm_file}\t{target}\n'
+        for source in [input.linear, input.index, input.hifi_cov, input.ont_cov]:
+            source_path = pl.Path(source)
+            target = verkko_subfolder / source_path.name
+            rsync(source_path, target)
+            check_file += f'{source_path}\t{target}\n'
 
         with open(output.ok, 'w') as dump:
             _ = dump.write(check_file)
@@ -112,11 +106,11 @@ rule copy_verkko_subset_assembly:
 rule copy_contig_to_ref_alignments:
     input:
         version = 'output/hybrid/verkko/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.verkko.info',
-        bam = 'output/alignments/contigs-to-ref/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}_aln-to_{reference}.sort.bam',
-        bai = 'output/alignments/contigs-to-ref/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}_aln-to_{reference}.sort.bam.bai',
-        paf = 'output/alignments/contigs-to-ref/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}_aln-to_{reference}.paf.gz',
-        bed = 'output/eval/contigs-to-ref/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}_aln-to_{reference}.bed',
-        cov = 'output/eval/contigs-to-ref/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.wg_aln-to_{reference}.ref-cov.tsv',
+        bam = 'output/alignments/contigs-to-ref/10_renamed/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}_aln-to_{reference}.bam',
+        bai = 'output/alignments/contigs-to-ref/10_renamed/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}_aln-to_{reference}.bam.bai',
+        paf = 'output/alignments/contigs-to-ref/10_renamed/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}_aln-to_{reference}.paf.gz',
+        bed = 'output/eval/contigs-to-ref/10_renamed/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}_aln-to_{reference}.bed',
+        cov = 'output/eval/contigs-to-ref/10_renamed/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.wg_aln-to_{reference}.ref-cov.tsv',
     output:
         ok = 'output/share/alignments/contigs-to-ref/verkko_{major}_{minor}/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}_aln-to_{reference}.copied.ok'
     wildcard_constraints:
@@ -147,8 +141,8 @@ rule copy_contig_to_ref_alignments:
 rule copy_subset_contig_to_ref_alignments:
     input:
         version = 'output/hybrid/verkko/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.wg.verkko.info',
-        bam = 'output/subset_wg/30_extract_ctgaln/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}_aln-to_{reference}.sort.bam',
-        bai = 'output/subset_wg/30_extract_ctgaln/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}_aln-to_{reference}.sort.bam.bai',
+        bam = 'output/subset_wg/30_extract_ctgaln/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}_aln-to_{reference}.bam',
+        bai = 'output/subset_wg/30_extract_ctgaln/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}_aln-to_{reference}.bam.bai',
         paf = 'output/subset_wg/30_extract_ctgaln/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}_aln-to_{reference}.paf.gz',
     output:
         ok = 'output/share/alignments/contigs-to-ref/verkko_{major}_{minor}/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}_aln-to_{reference}.copied.ok'

@@ -137,6 +137,22 @@ rule run_all:
             sample_long=[SAMPLE_INFOS[sample]['long_id'] for sample in COMPLETE_SAMPLES if SAMPLE_INFOS[sample]['sex'] == 'M'],
             hifi_type=['HIFIRW'],
             ont_type=['ONTUL'],
+        ),
+        snv_calls_dv = expand(
+            'output/variant_calls/10_filter_{other_reads}/{sample_long}/{sample_long}.{hifi_type}.{ont_type}.na.chrY.{caller}-HET-SNV.stats',
+            sample_long=[SAMPLE_INFOS[sample]['long_id'] for sample in COMPLETE_SAMPLES if SAMPLE_INFOS[sample]['sex'] == 'M'],
+            hifi_type=['HIFIRW'],
+            ont_type=['ONTUL'],
+            other_reads=['HIFIRW'],
+            caller=['dv']
+        ),
+        snv_calls_pr = expand(
+            'output/variant_calls/10_filter_{other_reads}/{sample_long}/{sample_long}.{hifi_type}.{ont_type}.na.chrY.{caller}-HET-SNV.stats',
+            sample_long=[SAMPLE_INFOS[sample]['long_id'] for sample in COMPLETE_SAMPLES if SAMPLE_INFOS[sample]['sex'] == 'M'],
+            hifi_type=['HIFIRW'],
+            ont_type=['ONTUL'],
+            other_reads=['ONTUL'],
+            caller=['pr']
         )
 
 

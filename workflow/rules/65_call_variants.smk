@@ -15,7 +15,7 @@ rule call_variants_deepvariant_assm:
     wildcard_constraints:
         other_reads = 'HIFIRW'
     singularity:
-        f'{config['container_store']}/{config['deepvariant']}'
+        f"{config['container_store']}/{config['container']['deepvariant']}"
     threads: config['num_cpu_medium']
     resources:
         mem_mb = lambda wildcards, attempt: 24576 * attempt,
@@ -36,7 +36,7 @@ rule call_variants_pepper_assm:
         bam = 'output/subset_wg/40_extract_rdaln/{sample_info}_{sample}.{other_reads}_aln-to_{hifi_type}.{ont_type}.na.chrY.bam',
         bai = 'output/subset_wg/40_extract_rdaln/{sample_info}_{sample}.{other_reads}_aln-to_{hifi_type}.{ont_type}.na.chrY.bam.bai',
     output:
-        outdir = directory('output/variant_calls/00_pr_{other_reads}/{sample}')
+        vcf = 'output/variant_calls/00_pr_{other_reads}/{sample}/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.chrY.pr.vcf.gz'
     log:
         'log/output/variant_calls/00_pr_{other_reads}/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.chrY.pepper.log'
     benchmark:
@@ -44,15 +44,16 @@ rule call_variants_pepper_assm:
     wildcard_constraints:
         other_reads = 'ONTUL'
     singularity:
-        f'{config['container_store']}/{config['pepperdv']}'
+        f"{config['container_store']}/{config['container']['pepperdv']}"
     threads: config['num_cpu_medium']
     resources:
         mem_mb = lambda wildcards, attempt: 24576 * attempt,
         walltime = lambda wildcards, attempt: f'{attempt**3}:59:59'
     params:
-        prefix = lambda wildcards: f'{wildcards.sample_info}_{wildcards.sample}.{wildcards.hifi_type}.{wildcards.ont_type}.na.chrY.pr',
+        outdir = lambda wildcards, output: pathlib.Path(output.vcf).parent,
+        prefix = lambda wildcards, output: pathlib.Path(output.vcf).name.rsplit('.', 2)[0],
         preset = 'ont_r9_guppy5_sup'
     shell:
-        'run_pepper_margin_deepvariant call_variant --bam {input.bam} --fasta {input.assm} --output_dir {output.outdir} '
+        'run_pepper_margin_deepvariant call_variant --bam {input.bam} --fasta {input.assm} --output_dir {params.outdir} '
             '--threads {threads} --{params.preset} --sample_name {wildcards.sample} --output_prefix {params.prefix} '
             '--skip_final_phased_bam --gvcf &> {log}'

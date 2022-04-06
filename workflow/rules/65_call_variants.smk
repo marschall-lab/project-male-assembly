@@ -6,10 +6,10 @@ rule call_variants_deepvariant_assm:
         bam = 'output/subset_wg/40_extract_rdaln/{sample_info}_{sample}.{other_reads}_aln-to_{hifi_type}.{ont_type}.na.chrY.bam',
         bai = 'output/subset_wg/40_extract_rdaln/{sample_info}_{sample}.{other_reads}_aln-to_{hifi_type}.{ont_type}.na.chrY.bam.bai',
     output:
-        vcf = 'output/variant_calls/00_dv_{other_reads}/{sample}/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.chrY.dv.vcf.gz',
-        tbi = 'output/variant_calls/00_dv_{other_reads}/{sample}/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.chrY.dv.vcf.gz.tbi',
-        gvcf = 'output/variant_calls/00_dv_{other_reads}/{sample}/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.chrY.dv.g.vcf.gz',
-        tbi2 = 'output/variant_calls/00_dv_{other_reads}/{sample}/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.chrY.dv.g.vcf.gz.tbi',
+        vcf = 'output/variant_calls/00_dv_{other_reads}/{sample_info}_{sample}/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.chrY.dv.vcf.gz',
+        tbi = 'output/variant_calls/00_dv_{other_reads}/{sample_info}_{sample}/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.chrY.dv.vcf.gz.tbi',
+        gvcf = 'output/variant_calls/00_dv_{other_reads}/{sample_info}_{sample}/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.chrY.dv.g.vcf.gz',
+        tbi2 = 'output/variant_calls/00_dv_{other_reads}/{sample_info}_{sample}/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.chrY.dv.g.vcf.gz.tbi',
     log:
         'log/output/variant_calls/00_dv_{other_reads}/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.chrY.deepvariant.log'
     benchmark:

@@ -24,7 +24,7 @@ rule call_variants_deepvariant_assm:
         model = 'PACBIO'
     shell:
         '/opt/deepvariant/bin/run_deepvariant --model_type="{params.model}" --ref={input.assm} '
-            '--num_shards={threads} --reads={input.bam} '
+            '--num_shards={threads} --reads={input.bam} --sample_name={wildcards.sample} '
             '--output_vcf={output.vcf} --output_gvcf={output.gvcf} '
             '--intermediate_results_dir=$TMPDIR &> {log} '
 

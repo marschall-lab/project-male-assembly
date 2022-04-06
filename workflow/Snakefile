@@ -22,6 +22,7 @@ include: 'rules/40_align_contigs.smk'
 include: 'rules/50_align_reads.smk'
 include: 'rules/55_subset_wg.smk'
 include: 'rules/60_eval_contig_align.smk'
+include: 'rules/65_call_variants.smk'
 include: 'rules/99_pop_share.smk'
 
 localrules: run_all

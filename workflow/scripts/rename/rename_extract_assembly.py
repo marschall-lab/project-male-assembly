@@ -9,7 +9,7 @@ import json
 import dnaio
 
 
-NUCLEOTIDES = re.compile('^[ACGT]+$')
+NUCLEOTIDES = re.compile('^[ACGT]+$', flags=re.IGNORECASE)
 
 COMPLEMENT_NUCLEOTIDES = {
     'A': 'T',
@@ -76,7 +76,7 @@ def main():
     with dnaio.FastaWriter(args.out_wg) as fasta_wg:
         with dnaio.open(args.input_fasta) as fasta_in:
             for record in fasta_in:
-                if NUCLEOTIDES.match(record.sequence, flag=re.IGNORECASE) is None:
+                if NUCLEOTIDES.match(record.sequence) is None:
                     nucs = col.Counter(record.sequence.upper())
                     raise ValueError(f'Illegel characters in sequence record {record.name}: {nucs}')
                 out_name = name_map.get(record.name, record.name)

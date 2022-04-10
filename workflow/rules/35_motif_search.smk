@@ -44,10 +44,10 @@ rule hmmer_motif_search:
         'rsrc/output/motif_search/00_detection/{sub_folder}/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.{motif}.hmmer.rsrc',
     wildcard_constraints:
         sub_folder = '(00_raw|10_renamed)'
-#    singularity:
-#        'hmmer.sif'
-    conda:
-        '../envs/biotools.yaml'
+    singularity:
+        'hmmer.sif'
+#    conda:
+#        '../envs/biotools.yaml'
     threads: lambda wildcards: CPU_MOTIF_FACTOR.get(wildcards.motif, config['num_cpu_medium'])
     resources:
         mem_mb = lambda wildcards, attempt: 24576 + 32768 * attempt,

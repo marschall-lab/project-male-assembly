@@ -1,0 +1,22 @@
+Bootstrap: localimage
+From: base_env.sif
+
+%post
+    mkdir /repos
+    cd /repos
+    # Install HMMER, latest dev
+    git clone https://github.com/EddyRivasLab/hmmer
+    cd hmmer
+    git checkout 016cba0
+    git clone https://github.com/EddyRivasLab/easel
+    cd easel
+    git checkout develop
+    cd ..
+    autoconf
+    ./configure
+    make -j 8
+    make install
+    make check
+
+%labels
+    HMMER v3.3.2+dirty_016cba0

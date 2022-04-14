@@ -1,0 +1,22 @@
+Bootstrap: library
+From: ubuntu:20.04
+
+%post
+    apt-get update
+    apt-get install --assume-yes software-properties-common
+    add-apt-repository universe
+    apt-get update
+    apt-get install --assume-yes \
+        wget git build-essential \
+        tar gzip \
+        python3-h5py perl perl-base \
+        pkg-config zlib1g-dev libtool \
+        libsdsl-dev libboost-dev \
+        libboost-serialization-dev \
+        libboost-program-options-dev \
+        automake autoconf autotools-dev
+    apt-get autoremove --assume-yes
+    apt-get clean --assume-yes
+
+%environment
+    export LC_ALL=C

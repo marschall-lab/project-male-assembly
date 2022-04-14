@@ -301,6 +301,45 @@ rule copy_repeatmasker_files:
     # END OF RUN BLOCK
 
 
+rule copy_variant_calls:
+    input:
+        version = 'output/hybrid/verkko/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.wg.verkko.info',
+        dv_vcf = 'output/variant_calls/10_filter_HIFIRW/{sample_info}_{sample}/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.dv-HET-SNV.vcf.gz',
+        dv_tbi = 'output/variant_calls/10_filter_HIFIRW/{sample_info}_{sample}/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.dv-HET-SNV.vcf.gz.tbi',
+        dv_stats = 'output/variant_calls/10_filter_HIFIRW/{sample_info}_{sample}/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.dv-HET-SNV.stats',
+        pr_vcf = 'output/variant_calls/10_filter_ONTUL/{sample_info}_{sample}/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.pr-HET-SNV.vcf.gz',
+        pr_tbi = 'output/variant_calls/10_filter_ONTUL/{sample_info}_{sample}/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.pr-HET-SNV.vcf.gz.tbi',
+        pr_stats = 'output/variant_calls/10_filter_ONTUL/{sample_info}_{sample}/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.pr-HET-SNV.stats',
+    output:
+        ok = 'output/share/variant_calls/verkko_{major}_{minor}/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.copied.ok'
+    run:
+        import pathlib as pl
+
+        verkko_subfolder, assembly_id = determine_verkko_subfolder(
+            input.version,
+            'variant_calls',
+            wildcards.chrom
+        )
+        check_file = ''
+        source_files = [
+            input.dv_vcf,
+            input.dv_tbi,
+            input.dv_stats,
+            input.pr_vcf,
+            input.pr_tbi,
+            input.pr_stats
+        ]
+        for source in source_files:
+            source_path = pl.Path(source)
+            target = verkko_subfolder / source_path.name
+            rsync(source_path, target)
+            check_file += f'{source_path}\t{target}\n'
+
+        with open(output.ok, 'w') as dump:
+            _ = dump.write(check_file)
+    # END OF RUN BLOCK
+
+
 # DEPRECATED
 #
 # rule copy_chromosome_readsets:

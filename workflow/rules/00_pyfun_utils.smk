@@ -329,6 +329,12 @@ def parse_verkko_version(file_path):
             if 'bioconda' in version_info:
                 major = version_info[-2]
                 minor = version_info[-1]
+                if major == 'bioconda':
+                    # this is a release version w/o further
+                    # "minor" qualification in the version
+                    # string
+                    major = version_info[-1]
+                    minor = 'release'
             elif 'HEAD' in version_info:
                 # git dev build, has no major version,
                 # so use date timestamp

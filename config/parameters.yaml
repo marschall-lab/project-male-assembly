@@ -31,6 +31,7 @@ expert_annotations:
   - DYZ3-prim_Ycentro.fasta
   - DYZ3-sec_Ycentro.fasta
   - GRCh38_chrY-seq-classes_coord_plus_repeats.fasta
+  - T2T.chrY-seq-classes.fasta
 
 motif_search:
   - DYZ18_Yq
@@ -47,7 +48,9 @@ contig_id_motifs:
   - DYZ3-sec_Ycentro
 
 verkko_major: "1.0"
-verkko_minor: "beta2"
+verkko_minor: "release"
+#verkko_major: "1.0"
+#verkko_minor: "beta2"
 
 
 

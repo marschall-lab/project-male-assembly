@@ -1,19 +1,19 @@
 
 rule call_variants_deepvariant_assm:
     input:
-        assm = 'output/subset_wg/20_extract_contigs/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.chrY.fasta',
-        fai = 'output/subset_wg/20_extract_contigs/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.chrY.fasta.fai',
-        bam = 'output/subset_wg/40_extract_rdaln/{sample_info}_{sample}.{other_reads}_aln-to_{hifi_type}.{ont_type}.na.chrY.bam',
-        bai = 'output/subset_wg/40_extract_rdaln/{sample_info}_{sample}.{other_reads}_aln-to_{hifi_type}.{ont_type}.na.chrY.bam.bai',
+        assm = 'output/subset_wg/20_extract_contigs/{sample}.{hifi_type}.{ont_type}.na.chrY.fasta',
+        fai = 'output/subset_wg/20_extract_contigs/{sample}.{hifi_type}.{ont_type}.na.chrY.fasta.fai',
+        bam = 'output/subset_wg/40_extract_rdaln/{sample}.{other_reads}_aln-to_{hifi_type}.{ont_type}.na.chrY.bam',
+        bai = 'output/subset_wg/40_extract_rdaln/{sample}.{other_reads}_aln-to_{hifi_type}.{ont_type}.na.chrY.bam.bai',
     output:
-        vcf = 'output/variant_calls/00_dv_{other_reads}/{sample_info}_{sample}/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.chrY.dv.vcf.gz',
-        tbi = 'output/variant_calls/00_dv_{other_reads}/{sample_info}_{sample}/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.chrY.dv.vcf.gz.tbi',
-        gvcf = 'output/variant_calls/00_dv_{other_reads}/{sample_info}_{sample}/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.chrY.dv.g.vcf.gz',
-        tbi2 = 'output/variant_calls/00_dv_{other_reads}/{sample_info}_{sample}/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.chrY.dv.g.vcf.gz.tbi',
+        vcf = 'output/variant_calls/00_dv_{other_reads}/{sample}/{sample}.{hifi_type}.{ont_type}.na.chrY.dv.vcf.gz',
+        tbi = 'output/variant_calls/00_dv_{other_reads}/{sample}/{sample}.{hifi_type}.{ont_type}.na.chrY.dv.vcf.gz.tbi',
+        gvcf = 'output/variant_calls/00_dv_{other_reads}/{sample}/{sample}.{hifi_type}.{ont_type}.na.chrY.dv.g.vcf.gz',
+        tbi2 = 'output/variant_calls/00_dv_{other_reads}/{sample}/{sample}.{hifi_type}.{ont_type}.na.chrY.dv.g.vcf.gz.tbi',
     log:
-        'log/output/variant_calls/00_dv_{other_reads}/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.chrY.deepvariant.log'
+        'log/output/variant_calls/00_dv_{other_reads}/{sample}.{hifi_type}.{ont_type}.na.chrY.deepvariant.log'
     benchmark:
-        'rsrc/output/variant_calls/00_dv_{other_reads}/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.chrY.deepvariant.rsrc'
+        'rsrc/output/variant_calls/00_dv_{other_reads}/{sample}.{hifi_type}.{ont_type}.na.chrY.deepvariant.rsrc'
     wildcard_constraints:
         other_reads = 'HIFIRW'
     singularity:
@@ -33,19 +33,19 @@ rule call_variants_deepvariant_assm:
 
 rule call_variants_pepper_assm:
     input:
-        assm = 'output/subset_wg/20_extract_contigs/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.chrY.fasta',
-        fai = 'output/subset_wg/20_extract_contigs/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.chrY.fasta.fai',
-        bam = 'output/subset_wg/40_extract_rdaln/{sample_info}_{sample}.{other_reads}_aln-to_{hifi_type}.{ont_type}.na.chrY.bam',
-        bai = 'output/subset_wg/40_extract_rdaln/{sample_info}_{sample}.{other_reads}_aln-to_{hifi_type}.{ont_type}.na.chrY.bam.bai',
+        assm = 'output/subset_wg/20_extract_contigs/{sample}.{hifi_type}.{ont_type}.na.chrY.fasta',
+        fai = 'output/subset_wg/20_extract_contigs/{sample}.{hifi_type}.{ont_type}.na.chrY.fasta.fai',
+        bam = 'output/subset_wg/40_extract_rdaln/{sample}.{other_reads}_aln-to_{hifi_type}.{ont_type}.na.chrY.bam',
+        bai = 'output/subset_wg/40_extract_rdaln/{sample}.{other_reads}_aln-to_{hifi_type}.{ont_type}.na.chrY.bam.bai',
     output:
-        vcf = 'output/variant_calls/00_pr_{other_reads}/{sample_info}_{sample}/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.chrY.pr.vcf.gz',
-        tbi = 'output/variant_calls/00_pr_{other_reads}/{sample_info}_{sample}/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.chrY.pr.vcf.gz.tbi',
-        gvcf = 'output/variant_calls/00_pr_{other_reads}/{sample_info}_{sample}/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.chrY.pr.g.vcf.gz',
-        tbi2 = 'output/variant_calls/00_pr_{other_reads}/{sample_info}_{sample}/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.chrY.pr.g.vcf.gz.tbi',
+        vcf = 'output/variant_calls/00_pr_{other_reads}/{sample}/{sample}.{hifi_type}.{ont_type}.na.chrY.pr.vcf.gz',
+        tbi = 'output/variant_calls/00_pr_{other_reads}/{sample}/{sample}.{hifi_type}.{ont_type}.na.chrY.pr.vcf.gz.tbi',
+        gvcf = 'output/variant_calls/00_pr_{other_reads}/{sample}/{sample}.{hifi_type}.{ont_type}.na.chrY.pr.g.vcf.gz',
+        tbi2 = 'output/variant_calls/00_pr_{other_reads}/{sample}/{sample}.{hifi_type}.{ont_type}.na.chrY.pr.g.vcf.gz.tbi',
     log:
-        'log/output/variant_calls/00_pr_{other_reads}/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.chrY.pepper.log'
+        'log/output/variant_calls/00_pr_{other_reads}/{sample}.{hifi_type}.{ont_type}.na.chrY.pepper.log'
     benchmark:
-        'rsrc/output/variant_calls/00_pr_{other_reads}/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.chrY.pepper.rsrc'
+        'rsrc/output/variant_calls/00_pr_{other_reads}/{sample}.{hifi_type}.{ont_type}.na.chrY.pepper.rsrc'
     wildcard_constraints:
         other_reads = 'ONTUL'
     singularity:
@@ -66,12 +66,12 @@ rule call_variants_pepper_assm:
 
 rule select_hiq_het_snvs:
     input:
-        vcf = 'output/variant_calls/00_{caller}_{other_reads}/{sample_info}_{sample}/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.chrY.{caller}.vcf.gz',
-        tbi = 'output/variant_calls/00_{caller}_{other_reads}/{sample_info}_{sample}/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.chrY.{caller}.vcf.gz.tbi'
+        vcf = 'output/variant_calls/00_{caller}_{other_reads}/{sample}/{sample}.{hifi_type}.{ont_type}.na.chrY.{caller}.vcf.gz',
+        tbi = 'output/variant_calls/00_{caller}_{other_reads}/{sample}/{sample}.{hifi_type}.{ont_type}.na.chrY.{caller}.vcf.gz.tbi'
     output:
-        vcf = 'output/variant_calls/10_filter_{other_reads}/{sample_info}_{sample}/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.chrY.{caller}-HET-SNV.vcf.gz',
-        tbi = 'output/variant_calls/10_filter_{other_reads}/{sample_info}_{sample}/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.chrY.{caller}-HET-SNV.vcf.gz.tbi',
-        stats = 'output/variant_calls/10_filter_{other_reads}/{sample_info}_{sample}/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.chrY.{caller}-HET-SNV.stats',
+        vcf = 'output/variant_calls/10_filter_{other_reads}/{sample}/{sample}.{hifi_type}.{ont_type}.na.chrY.{caller}-HET-SNV.vcf.gz',
+        tbi = 'output/variant_calls/10_filter_{other_reads}/{sample}/{sample}.{hifi_type}.{ont_type}.na.chrY.{caller}-HET-SNV.vcf.gz.tbi',
+        stats = 'output/variant_calls/10_filter_{other_reads}/{sample}/{sample}.{hifi_type}.{ont_type}.na.chrY.{caller}-HET-SNV.stats',
     wildcard_constraints:
         caller = '(pr|dv)'
     conda:

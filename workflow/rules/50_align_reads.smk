@@ -33,9 +33,9 @@ def select_input_reads(wildcards):
 
     if wildcards.other_reads == 'HIFIEC':
         raise ValueError('Cannot align HPC reads')
-        reads = 'output/hybrid/verkko/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.{chrom}/hifi-corrected.fasta'.format(**dict(wildcards))
+        reads = 'output/hybrid/verkko/{sample}.{hifi_type}.{ont_type}.na.{chrom}/hifi-corrected.fasta'.format(**dict(wildcards))
     else:
-        reads = SAMPLE_INFOS[wildcards.sample][wildcards.other_reads]
+        reads = SAMPLE_DATA[wildcards.sample][wildcards.other_reads]
     return reads
 
 
@@ -44,14 +44,14 @@ rule align_reads_to_assembly_paf:
     This rule only aligns whole-genome read sets
     """
     input:
-        ctg = 'output/hybrid/renamed/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.wg.fasta',
+        ctg = 'output/hybrid/renamed/{sample}.{hifi_type}.{ont_type}.na.wg.fasta',
         reads = select_input_reads,
     output:
-        'output/alignments/reads-to-assm/{sample_info}_{sample}.{other_reads}_aln-to_{hifi_type}.{ont_type}.na.{chrom}.paf.gz'
+        'output/alignments/reads-to-assm/{sample}.{other_reads}_aln-to_{hifi_type}.{ont_type}.na.{chrom}.paf.gz'
     log:
-        'log/output/alignments/reads-to-assm/{sample_info}_{sample}.{other_reads}_aln-to_{hifi_type}.{ont_type}.na.{chrom}.mmap-paf.log'
+        'log/output/alignments/reads-to-assm/{sample}.{other_reads}_aln-to_{hifi_type}.{ont_type}.na.{chrom}.mmap-paf.log'
     benchmark:
-        'rsrc/output/alignments/reads-to-assm/{sample_info}_{sample}.{other_reads}_aln-to_{hifi_type}.{ont_type}.na.{chrom}.mmap-paf.rsrc'
+        'rsrc/output/alignments/reads-to-assm/{sample}.{other_reads}_aln-to_{hifi_type}.{ont_type}.na.{chrom}.mmap-paf.rsrc'
     wildcard_constraints:
         chrom = 'wg'
     threads: int(config['num_cpu_medium']) + int(config['num_cpu_high'])
@@ -72,14 +72,14 @@ rule align_reads_to_assembly_bam:
     This rule only aligns whole-genome read sets
     """
     input:
-        ctg = 'output/hybrid/renamed/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.wg.fasta',
+        ctg = 'output/hybrid/renamed/{sample}.{hifi_type}.{ont_type}.na.wg.fasta',
         reads = select_input_reads,
     output:
-        'output/alignments/reads-to-assm/{sample_info}_{sample}.{other_reads}_aln-to_{hifi_type}.{ont_type}.na.{chrom}.bam'
+        'output/alignments/reads-to-assm/{sample}.{other_reads}_aln-to_{hifi_type}.{ont_type}.na.{chrom}.bam'
     log:
-        'log/output/alignments/reads-to-assm/{sample_info}_{sample}.{other_reads}_aln-to_{hifi_type}.{ont_type}.na.{chrom}.mmap-bam.log'
+        'log/output/alignments/reads-to-assm/{sample}.{other_reads}_aln-to_{hifi_type}.{ont_type}.na.{chrom}.mmap-bam.log'
     benchmark:
-        'rsrc/output/alignments/reads-to-assm/{sample_info}_{sample}.{other_reads}_aln-to_{hifi_type}.{ont_type}.na.{chrom}.mmap-bam.rsrc'
+        'rsrc/output/alignments/reads-to-assm/{sample}.{other_reads}_aln-to_{hifi_type}.{ont_type}.na.{chrom}.mmap-bam.rsrc'
     wildcard_constraints:
         chrom = 'wg'
     threads: int(config['num_cpu_medium']) + int(config['num_cpu_high'])
@@ -107,11 +107,11 @@ rule align_reads_to_reference_paf:
         ctg = lambda wildcards: select_reference_genome(wildcards.reference),
         reads = select_input_reads,
     output:
-        'output/alignments/reads-to-ref/{sample_info}_{sample}.{other_reads}_aln-to_{reference}.paf.gz'
+        'output/alignments/reads-to-ref/{sample}.{other_reads}_aln-to_{reference}.paf.gz'
     log:
-        'log/output/alignments/reads-to-ref/{sample_info}_{sample}.{other_reads}_aln-to_{reference}.mmap-paf.log'
+        'log/output/alignments/reads-to-ref/{sample}.{other_reads}_aln-to_{reference}.mmap-paf.log'
     benchmark:
-        'rsrc/output/alignments/reads-to-ref/{sample_info}_{sample}.{other_reads}_aln-to_{reference}.mmap-paf.rsrc'
+        'rsrc/output/alignments/reads-to-ref/{sample}.{other_reads}_aln-to_{reference}.mmap-paf.rsrc'
     wildcard_constraints:
         other_reads = 'HIFIRW'
     threads: config['num_cpu_medium']
@@ -137,11 +137,11 @@ rule align_reads_to_reference_bam:
         ctg = lambda wildcards: select_reference_genome(wildcards.reference),
         reads = select_input_reads,
     output:
-        'output/alignments/reads-to-ref/{sample_info}_{sample}.{other_reads}_aln-to_{reference}.bam'
+        'output/alignments/reads-to-ref/{sample}.{other_reads}_aln-to_{reference}.bam'
     log:
-        'log/output/alignments/reads-to-ref/{sample_info}_{sample}.{other_reads}_aln-to_{reference}.mmap-bam.log'
+        'log/output/alignments/reads-to-ref/{sample}.{other_reads}_aln-to_{reference}.mmap-bam.log'
     benchmark:
-        'rsrc/output/alignments/reads-to-ref/{sample_info}_{sample}.{other_reads}_aln-to_{reference}.mmap-bam.rsrc'
+        'rsrc/output/alignments/reads-to-ref/{sample}.{other_reads}_aln-to_{reference}.mmap-bam.rsrc'
     wildcard_constraints:
         other_reads = 'HIFIRW'
     threads: config['num_cpu_high']
@@ -173,14 +173,14 @@ rule align_subset_reads_to_assembly_paf:
     and ONTUL
     """
     input:
-        ctg = 'output/hybrid/verkko/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}/assembly.fasta',
-        reads = 'output/read_subsets/{chrom}/{sample_info}_{sample}_{other_reads}.{chrom}-reads.{mapq}.fasta.gz',
+        ctg = 'output/hybrid/verkko/{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}/assembly.fasta',
+        reads = 'output/read_subsets/{chrom}/{sample}_{other_reads}.{chrom}-reads.{mapq}.fasta.gz',
     output:
-        'output/alignments/reads-to-assm/{sample_info}_{sample}.{other_reads}_aln-to_{hifi_type}.{ont_type}.{mapq}.{chrom}.paf.gz'
+        'output/alignments/reads-to-assm/{sample}.{other_reads}_aln-to_{hifi_type}.{ont_type}.{mapq}.{chrom}.paf.gz'
     log:
-        'log/output/alignments/reads-to-assm/{sample_info}_{sample}.{other_reads}_aln-to_{hifi_type}.{ont_type}.{mapq}.{chrom}.mmap-paf.log'
+        'log/output/alignments/reads-to-assm/{sample}.{other_reads}_aln-to_{hifi_type}.{ont_type}.{mapq}.{chrom}.mmap-paf.log'
     benchmark:
-        'rsrc/output/alignments/reads-to-assm/{sample_info}_{sample}.{other_reads}_aln-to_{hifi_type}.{ont_type}.{mapq}.{chrom}.mmap-paf.rsrc'
+        'rsrc/output/alignments/reads-to-assm/{sample}.{other_reads}_aln-to_{hifi_type}.{ont_type}.{mapq}.{chrom}.mmap-paf.rsrc'
     wildcard_constraints:
         mapq = 'mq00',
         chrom = '(chrY|chrX|chrXY)'
@@ -205,14 +205,14 @@ rule align_subset_reads_to_assembly_bam:
     and ONTUL
     """
     input:
-        ctg = 'output/hybrid/verkko/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}/assembly.fasta',
-        reads = 'output/read_subsets/{chrom}/{sample_info}_{sample}_{other_reads}.{chrom}-reads.{mapq}.fasta.gz',
+        ctg = 'output/hybrid/verkko/{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}/assembly.fasta',
+        reads = 'output/read_subsets/{chrom}/{sample}_{other_reads}.{chrom}-reads.{mapq}.fasta.gz',
     output:
-        'output/alignments/reads-to-assm/{sample_info}_{sample}.{other_reads}_aln-to_{hifi_type}.{ont_type}.{mapq}.{chrom}.bam'
+        'output/alignments/reads-to-assm/{sample}.{other_reads}_aln-to_{hifi_type}.{ont_type}.{mapq}.{chrom}.bam'
     log:
-        'log/output/alignments/reads-to-assm/{sample_info}_{sample}.{other_reads}_aln-to_{hifi_type}.{ont_type}.{mapq}.{chrom}.mmap-bam.log'
+        'log/output/alignments/reads-to-assm/{sample}.{other_reads}_aln-to_{hifi_type}.{ont_type}.{mapq}.{chrom}.mmap-bam.log'
     benchmark:
-        'rsrc/output/alignments/reads-to-assm/{sample_info}_{sample}.{other_reads}_aln-to_{hifi_type}.{ont_type}.{mapq}.{chrom}.mmap-bam.rsrc'
+        'rsrc/output/alignments/reads-to-assm/{sample}.{other_reads}_aln-to_{hifi_type}.{ont_type}.{mapq}.{chrom}.mmap-bam.rsrc'
     wildcard_constraints:
         mapq = 'mq00',
         chrom = '(chrY|chrX|chrXY)'

@@ -39,13 +39,13 @@ rule copy_verkko_assemblies:
     HPC outputs are not useful for downstream analyses (at the moment)
     """
     input:
-        version = 'output/hybrid/verkko/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.verkko.info',
-        linear = 'output/hybrid/renamed/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.wg.fasta',
-        index = 'output/hybrid/renamed/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.wg.fasta.fai',
-        hifi_cov = 'output/hybrid/renamed/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.wg.hifi-coverage.csv',
-        ont_cov = 'output/hybrid/renamed/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.wg.ont-coverage.csv',
+        version = 'output/hybrid/verkko/{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.verkko.info',
+        linear = 'output/hybrid/renamed/{sample}.{hifi_type}.{ont_type}.na.wg.fasta',
+        index = 'output/hybrid/renamed/{sample}.{hifi_type}.{ont_type}.na.wg.fasta.fai',
+        hifi_cov = 'output/hybrid/renamed/{sample}.{hifi_type}.{ont_type}.na.wg.hifi-coverage.csv',
+        ont_cov = 'output/hybrid/renamed/{sample}.{hifi_type}.{ont_type}.na.wg.ont-coverage.csv',
     output:
-        ok = 'output/share/assemblies/verkko_{major}_{minor}/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.copied.ok'
+        ok = 'output/share/assemblies/verkko_{major}_{minor}/{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.copied.ok'
     wildcard_constraints:
         mapq = 'na',
         chrom = 'wg'
@@ -74,11 +74,11 @@ rule copy_verkko_assemblies:
 
 rule copy_verkko_subset_assembly:
     input:
-        version = 'output/hybrid/verkko/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.wg.verkko.info',
-        linear = 'output/subset_wg/20_extract_contigs/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.fasta',
-        index = 'output/subset_wg/20_extract_contigs/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.fasta.fai',
+        version = 'output/hybrid/verkko/{sample}.{hifi_type}.{ont_type}.{mapq}.wg.verkko.info',
+        linear = 'output/subset_wg/20_extract_contigs/{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.fasta',
+        index = 'output/subset_wg/20_extract_contigs/{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.fasta.fai',
     output:
-        ok = 'output/share/assemblies/verkko_{major}_{minor}/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.copied.ok'
+        ok = 'output/share/assemblies/verkko_{major}_{minor}/{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.copied.ok'
     wildcard_constraints:
         mapq = 'na',
         chrom = 'chrY'
@@ -105,14 +105,14 @@ rule copy_verkko_subset_assembly:
 
 rule copy_contig_to_ref_alignments:
     input:
-        version = 'output/hybrid/verkko/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.verkko.info',
-        bam = 'output/alignments/contigs-to-ref/10_renamed/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}_aln-to_{reference}.bam',
-        bai = 'output/alignments/contigs-to-ref/10_renamed/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}_aln-to_{reference}.bam.bai',
-        paf = 'output/alignments/contigs-to-ref/10_renamed/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}_aln-to_{reference}.paf.gz',
-        bed = 'output/eval/contigs-to-ref/10_renamed/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}_aln-to_{reference}.bed',
-        cov = 'output/eval/contigs-to-ref/10_renamed/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.wg_aln-to_{reference}.ref-cov.tsv',
+        version = 'output/hybrid/verkko/{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.verkko.info',
+        bam = 'output/alignments/contigs-to-ref/10_renamed/{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}_aln-to_{reference}.bam',
+        bai = 'output/alignments/contigs-to-ref/10_renamed/{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}_aln-to_{reference}.bam.bai',
+        paf = 'output/alignments/contigs-to-ref/10_renamed/{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}_aln-to_{reference}.paf.gz',
+        bed = 'output/eval/contigs-to-ref/10_renamed/{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}_aln-to_{reference}.bed',
+        cov = 'output/eval/contigs-to-ref/10_renamed/{sample}.{hifi_type}.{ont_type}.na.wg_aln-to_{reference}.ref-cov.tsv',
     output:
-        ok = 'output/share/alignments/contigs-to-ref/verkko_{major}_{minor}/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}_aln-to_{reference}.copied.ok'
+        ok = 'output/share/alignments/contigs-to-ref/verkko_{major}_{minor}/{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}_aln-to_{reference}.copied.ok'
     wildcard_constraints:
         mapq = 'na',
         chrom = 'wg'
@@ -140,12 +140,12 @@ rule copy_contig_to_ref_alignments:
 
 rule copy_subset_contig_to_ref_alignments:
     input:
-        version = 'output/hybrid/verkko/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.wg.verkko.info',
-        bam = 'output/subset_wg/30_extract_ctgaln/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}_aln-to_{reference}.bam',
-        bai = 'output/subset_wg/30_extract_ctgaln/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}_aln-to_{reference}.bam.bai',
-        paf = 'output/subset_wg/30_extract_ctgaln/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}_aln-to_{reference}.paf.gz',
+        version = 'output/hybrid/verkko/{sample}.{hifi_type}.{ont_type}.{mapq}.wg.verkko.info',
+        bam = 'output/subset_wg/30_extract_ctgaln/{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}_aln-to_{reference}.bam',
+        bai = 'output/subset_wg/30_extract_ctgaln/{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}_aln-to_{reference}.bam.bai',
+        paf = 'output/subset_wg/30_extract_ctgaln/{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}_aln-to_{reference}.paf.gz',
     output:
-        ok = 'output/share/alignments/contigs-to-ref/verkko_{major}_{minor}/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}_aln-to_{reference}.copied.ok'
+        ok = 'output/share/alignments/contigs-to-ref/verkko_{major}_{minor}/{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}_aln-to_{reference}.copied.ok'
     wildcard_constraints:
         mapq = 'na',
         chrom = 'chrY'
@@ -177,14 +177,14 @@ READ_ALN_SUBFOLDER = {
 }
 rule copy_reads_to_assm_alignments:
     input:
-        version = 'output/hybrid/verkko/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.wg.verkko.info',
+        version = 'output/hybrid/verkko/{sample}.{hifi_type}.{ont_type}.{mapq}.wg.verkko.info',
         aln_files = lambda wildcards: expand(
-            'output/{subfolder}/{{sample_info}}_{{sample}}.{{other_reads}}_aln-to_{{hifi_type}}.{{ont_type}}.{{mapq}}.{{chrom}}.{ext}',
+            'output/{subfolder}/{{sample}}.{{other_reads}}_aln-to_{{hifi_type}}.{{ont_type}}.{{mapq}}.{{chrom}}.{ext}',
             subfolder=READ_ALN_SUBFOLDER[wildcards.chrom],
             ext=['bam', 'bam.bai', 'paf.gz']
         )
     output:
-        ok = 'output/share/alignments/reads-to-assm/verkko_{major}_{minor}/{sample_info}_{sample}.{other_reads}_aln-to_{hifi_type}.{ont_type}.{mapq}.{chrom}.copied.ok'
+        ok = 'output/share/alignments/reads-to-assm/verkko_{major}_{minor}/{sample}.{other_reads}_aln-to_{hifi_type}.{ont_type}.{mapq}.{chrom}.copied.ok'
     resources:
         walltime = lambda wildcards, attempt: f'{attempt*attempt:02}:59:00',
         mem_mb = lambda wildcards, attempt: 2048 * attempt
@@ -214,11 +214,11 @@ rule copy_reads_to_ref_alignments:
     """
     input:
         aln_files = lambda wildcards: expand(
-            'output/subset_wg/60_subset_rdref/{{sample_info}}_{{sample}}.{{other_reads}}_aln-to_{{reference}}.{{chrom}}.{ext}',
+            'output/subset_wg/60_subset_rdref/{{sample}}.{{other_reads}}_aln-to_{{reference}}.{{chrom}}.{ext}',
             ext=['bam', 'bam.bai', 'paf.gz']
         )
     output:
-        ok = 'output/share/alignments/reads-to-ref/{sample_info}_{sample}.{other_reads}_aln-to_{reference}.{chrom}.copied.ok'
+        ok = 'output/share/alignments/reads-to-ref/{sample}.{other_reads}_aln-to_{reference}.{chrom}.copied.ok'
     resources:
         walltime = lambda wildcards, attempt: f'{attempt*attempt:02}:59:00',
         mem_mb = lambda wildcards, attempt: 2048 * attempt
@@ -243,12 +243,12 @@ rule copy_reads_to_ref_alignments:
 
 rule copy_motif_files:
     input:
-        version = 'output/hybrid/verkko/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.wg.verkko.info',
-        tsv = 'output/subset_wg/50_subset_motif/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.{motif}.norm.tsv',
-        bed = 'output/subset_wg/50_subset_motif/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.{motif}.norm-hiq.bed',
-        fasta = 'output/subset_wg/50_subset_motif/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.{motif}.hiq-seq.fasta',
+        version = 'output/hybrid/verkko/{sample}.{hifi_type}.{ont_type}.{mapq}.wg.verkko.info',
+        tsv = 'output/subset_wg/50_subset_motif/{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.{motif}.norm.tsv',
+        bed = 'output/subset_wg/50_subset_motif/{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.{motif}.norm-hiq.bed',
+        fasta = 'output/subset_wg/50_subset_motif/{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.{motif}.hiq-seq.fasta',
     output:
-        ok = 'output/share/motif_search/verkko_{major}_{minor}/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.{motif}.copied.ok'
+        ok = 'output/share/motif_search/verkko_{major}_{minor}/{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.{motif}.copied.ok'
     resources:
         walltime = lambda wildcards, attempt: f'{attempt*attempt:02}:59:00'
     run:
@@ -273,12 +273,12 @@ rule copy_motif_files:
 
 rule copy_repeatmasker_files:
     input:
-        version = 'output/hybrid/verkko/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.wg.verkko.info',
-        fasta = 'output/motif_search/45_rm_norm/{sample_info}_{sample}/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.rm-mask.fasta',
-        table = 'output/motif_search/45_rm_norm/{sample_info}_{sample}/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.matches.tsv',
-        tar = 'output/motif_search/45_rm_norm/{sample_info}_{sample}/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.rm-out.tar.gz',
+        version = 'output/hybrid/verkko/{sample}.{hifi_type}.{ont_type}.{mapq}.wg.verkko.info',
+        fasta = 'output/motif_search/45_rm_norm/{sample}/{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.rm-mask.fasta',
+        table = 'output/motif_search/45_rm_norm/{sample}/{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.matches.tsv',
+        tar = 'output/motif_search/45_rm_norm/{sample}/{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.rm-out.tar.gz',
     output:
-        ok = 'output/share/repeatmasker/verkko_{major}_{minor}/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.copied.ok'
+        ok = 'output/share/repeatmasker/verkko_{major}_{minor}/{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.copied.ok'
     resources:
         walltime = lambda wildcards, attempt: f'{attempt*attempt:02}:59:00'
     run:
@@ -303,15 +303,15 @@ rule copy_repeatmasker_files:
 
 rule copy_variant_calls:
     input:
-        version = 'output/hybrid/verkko/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.wg.verkko.info',
-        dv_vcf = 'output/variant_calls/10_filter_HIFIRW/{sample_info}_{sample}/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.dv-HET-SNV.vcf.gz',
-        dv_tbi = 'output/variant_calls/10_filter_HIFIRW/{sample_info}_{sample}/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.dv-HET-SNV.vcf.gz.tbi',
-        dv_stats = 'output/variant_calls/10_filter_HIFIRW/{sample_info}_{sample}/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.dv-HET-SNV.stats',
-        pr_vcf = 'output/variant_calls/10_filter_ONTUL/{sample_info}_{sample}/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.pr-HET-SNV.vcf.gz',
-        pr_tbi = 'output/variant_calls/10_filter_ONTUL/{sample_info}_{sample}/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.pr-HET-SNV.vcf.gz.tbi',
-        pr_stats = 'output/variant_calls/10_filter_ONTUL/{sample_info}_{sample}/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.pr-HET-SNV.stats',
+        version = 'output/hybrid/verkko/{sample}.{hifi_type}.{ont_type}.{mapq}.wg.verkko.info',
+        dv_vcf = 'output/variant_calls/10_filter_HIFIRW/{sample}/{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.dv-HET-SNV.vcf.gz',
+        dv_tbi = 'output/variant_calls/10_filter_HIFIRW/{sample}/{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.dv-HET-SNV.vcf.gz.tbi',
+        dv_stats = 'output/variant_calls/10_filter_HIFIRW/{sample}/{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.dv-HET-SNV.stats',
+        pr_vcf = 'output/variant_calls/10_filter_ONTUL/{sample}/{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.pr-HET-SNV.vcf.gz',
+        pr_tbi = 'output/variant_calls/10_filter_ONTUL/{sample}/{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.pr-HET-SNV.vcf.gz.tbi',
+        pr_stats = 'output/variant_calls/10_filter_ONTUL/{sample}/{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.pr-HET-SNV.stats',
     output:
-        ok = 'output/share/variant_calls/verkko_{major}_{minor}/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.copied.ok'
+        ok = 'output/share/variant_calls/verkko_{major}_{minor}/{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.copied.ok'
     run:
         import pathlib as pl
 
@@ -344,9 +344,9 @@ rule copy_variant_calls:
 #
 # rule copy_chromosome_readsets:
 #     input:
-#         fasta = 'output/read_subsets/{chrom}/{sample_info}_{sample}_{read_type}.{chrom}-reads.{mapq}.fasta.gz'
+#         fasta = 'output/read_subsets/{chrom}/{sample}_{read_type}.{chrom}-reads.{mapq}.fasta.gz'
 #     output:
-#         ok = 'output/share/read_subsets/{sample_info}_{sample}_{read_type}.{chrom}-reads.{mapq}.copied.ok'
+#         ok = 'output/share/read_subsets/{sample}_{read_type}.{chrom}-reads.{mapq}.copied.ok'
 #     run:
 #         import os
 #         import pathlib as pl

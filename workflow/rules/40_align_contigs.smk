@@ -13,9 +13,9 @@ rule align_contigs_to_reference_paf:
         ctg = select_whole_genome_assembly,
         ref = lambda wildcards: select_reference_genome(wildcards.reference)
     output:
-        aln = 'output/alignments/contigs-to-ref/{sub_folder}/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}_aln-to_{reference}.paf.gz'
+        aln = 'output/alignments/contigs-to-ref/{sub_folder}/{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}_aln-to_{reference}.paf.gz'
     benchmark:
-        'rsrc/output/alignments/contigs-to-ref/{sub_folder}/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}_aln-to_{reference}.paf.mmap.rsrc'
+        'rsrc/output/alignments/contigs-to-ref/{sub_folder}/{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}_aln-to_{reference}.paf.mmap.rsrc'
     wildcard_constraints:
         sub_folder = '(00_raw|10_renamed)'
     conda:
@@ -32,12 +32,12 @@ rule align_contigs_to_reference_paf:
 
 rule align_contigs_to_reference_bam:
     input:
-        ctg = 'output/hybrid/renamed/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.wg.fasta',
+        ctg = 'output/hybrid/renamed/{sample}.{hifi_type}.{ont_type}.na.wg.fasta',
         ref = lambda wildcards: select_reference_genome(wildcards.reference)
     output:
-        aln = 'output/alignments/contigs-to-ref/10_renamed/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}_aln-to_{reference}.bam'
+        aln = 'output/alignments/contigs-to-ref/10_renamed/{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}_aln-to_{reference}.bam'
     benchmark:
-        'rsrc/output/alignments/contigs-to-ref/10_renamed/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}_aln-to_{reference}.bam.mmap.rsrc'
+        'rsrc/output/alignments/contigs-to-ref/10_renamed/{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}_aln-to_{reference}.bam.mmap.rsrc'
     conda:
         '../envs/biotools.yaml'
     threads: config['num_cpu_medium']
@@ -58,9 +58,9 @@ rule aggregate_contig_alignments:
     some basic statistics for all assembly contigs.
     """
     input:
-        paf = 'output/alignments/contigs-to-ref/{sub_folder}/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}_aln-to_{reference}.paf.gz'
+        paf = 'output/alignments/contigs-to-ref/{sub_folder}/{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}_aln-to_{reference}.paf.gz'
     output:
-        tsv = 'output/alignments/contigs-to-ref/{sub_folder}/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}_aln-to_{reference}.ctg-agg.tsv'
+        tsv = 'output/alignments/contigs-to-ref/{sub_folder}/{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}_aln-to_{reference}.ctg-agg.tsv'
     wildcard_constraints:
         sub_folder = '(00_raw|10_renamed)'
     conda:
@@ -75,10 +75,10 @@ rule aggregate_contig_alignments:
 
 rule align_reference_seq_classes:
     input:
-        ref = 'output/subset_wg/20_extract_contigs/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.chrY.fasta',
+        ref = 'output/subset_wg/20_extract_contigs/{sample}.{hifi_type}.{ont_type}.na.chrY.fasta',
         ctg = 'references_derived/{seq_classes}.fasta'
     output:
-        paf = 'output/alignments/seqclasses-to-assm/{seq_classes}_aln-to_{sample_info}_{sample}.{hifi_type}.{ont_type}.na.chrY.paf.gz'
+        paf = 'output/alignments/seqclasses-to-assm/{seq_classes}_aln-to_{sample}.{hifi_type}.{ont_type}.na.chrY.paf.gz'
     conda:
         '../envs/biotools.yaml'
     threads: config['num_cpu_low']

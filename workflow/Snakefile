@@ -27,133 +27,98 @@ include: 'rules/99_pop_share.smk'
 
 localrules: run_all
 
-COMPLETE_SAMPLES = sorted(set(ONTUL_SAMPLES).intersection(set(HIFIRW_SAMPLES)))
-if 'NA19317' in COMPLETE_SAMPLES and 'NA19347' in COMPLETE_SAMPLES:
-    COMPLETE_SAMPLES.append('NA193N7')
+SAMPLES = read_sample_table()  # requires config['samples']
+SAMPLE_DATA = collect_sample_data(SAMPLES)
+SAMPLE_NAMES = sorted(SAMPLES['sample'].values)
 
-CURRENT_ERROR_SAMPLES = ['NA193N7', 'HG00673']
-
-batches = {
-    'batch1': ['HC02666', 'HC18989', 'HC01457', 'HC19384', 'HG01890', 'HG00358', 'HG03579', 'HG01243', 'HG01952'],
-    'batch2': ['HG03248', 'NA19347', 'HG02554', 'HG02953', 'NA19331', 'HG03009', 'NA19650', 'NA18534', 'NA19317', 'NA19705'],
-    'batch3': ['HG01358', 'HG01258'],
-    'batch4': [],
-    'batch5': ['HG02666', 'NA18989', 'HG01457', 'NA19384'],  # batch5: only contains yr2 samples that also exist as high-coverage version
-}
-
-if bool(config.get('mnml_test', False)):
-    COMPLETE_SAMPLES = ['HC02666', 'HC18989']
-elif bool(config.get('ext_test', False)):
-    COMPLETE_SAMPLES = ['HC02666', 'HC18989', 'HC01457', 'HC19384']
-elif bool(config.get('hprc_test', False)):
-    COMPLETE_SAMPLES = ['HG03579']
-elif bool(config.get('all', False)):
-    COMPLETE_SAMPLES = set()
-    for samples in batches.values():
-        COMPLETE_SAMPLES = COMPLETE_SAMPLES.union(samples)
-    COMPLETE_SAMPLES = sorted(COMPLETE_SAMPLES)
-else:
-    # check if any batches are set
-    batch_keys = [k for k in config.keys() if k.startswith('batch')]
-    if batch_keys:
-        COMPLETE_SAMPLES = []
-        for bk in batch_keys:
-            if bk.endswith('N'):
-                for samples in batches.values():
-                    COMPLETE_SAMPLES.extend(samples)
-                    break
-            else:
-                samples = batches[bk]
-                COMPLETE_SAMPLES.extend(samples)
-
-COMPLETE_SAMPLES = [s for s in COMPLETE_SAMPLES if s not in CURRENT_ERROR_SAMPLES]
-
+CURRENT_ERROR_SAMPLES = []
+COMPLETE_SAMPLES = [s for s in SAMPLE_NAMES if s not in CURRENT_ERROR_SAMPLES]
 
 rule run_all:
     input:
         aln_ref = expand(
-            'output/alignments/reads-to-ref/{sample_long}.{other_reads}_aln-to_{reference}.{ext}',
-            sample_long=[SAMPLE_INFOS[sample]['long_id'] for sample in COMPLETE_SAMPLES if SAMPLE_INFOS[sample]['sex'] == 'M'],
+            'output/alignments/reads-to-ref/{sample}.{other_reads}_aln-to_{reference}.{ext}',
+            sample=COMPLETE_SAMPLES,
             other_reads=['HIFIRW'],
             reference=['T2TXY', 'GRCh38'],
             ext=['paf.gz', 'bam.bai']
         ),
         run_wg = expand(
-            'output/eval/contigs-to-ref/10_renamed/{sample_long}.{hifi_type}.{ont_type}.na.wg_aln-to_{reference}.ref-cov.tsv',
-            sample_long=[SAMPLE_INFOS[sample]['long_id'] for sample in COMPLETE_SAMPLES if SAMPLE_INFOS[sample]['sex'] == 'M'],
+            'output/eval/contigs-to-ref/10_renamed/{sample}.{hifi_type}.{ont_type}.na.wg_aln-to_{reference}.ref-cov.tsv',
+            sample=COMPLETE_SAMPLES,
             hifi_type=['HIFIRW'],
             ont_type=['ONTUL'],
             reference=['T2TXY', 'GRCh38']
         ),
         aln_wg = expand(
-            'output/alignments/reads-to-assm/{sample_long}.{other_reads}_aln-to_{hifi_type}.{ont_type}.na.wg.{ext}',
-            sample_long=[SAMPLE_INFOS[sample]['long_id'] for sample in COMPLETE_SAMPLES if SAMPLE_INFOS[sample]['sex'] == 'M'],
+            'output/alignments/reads-to-assm/{sample}.{other_reads}_aln-to_{hifi_type}.{ont_type}.na.wg.{ext}',
+            sample=COMPLETE_SAMPLES,
             hifi_type=['HIFIRW'],
             ont_type=['ONTUL'],
             other_reads=['ONTUL', 'HIFIRW'],
             ext=['bam.bai', 'paf.gz']
         ),
         motifs_wg = expand(
-            'output/motif_search/20_target_agg/10_renamed/{sample_long}.{hifi_type}.{ont_type}.na.wg.{motif}.agg-trg.tsv',
-            sample_long=[SAMPLE_INFOS[sample]['long_id'] for sample in COMPLETE_SAMPLES if SAMPLE_INFOS[sample]['sex'] == 'M'],
+            'output/motif_search/20_target_agg/10_renamed/{sample}.{hifi_type}.{ont_type}.na.wg.{motif}.agg-trg.tsv',
+            sample=COMPLETE_SAMPLES,
             hifi_type=['HIFIRW'],
             ont_type=['ONTUL'],
             motif=config['motif_search']
         ),
         subset_assm = expand(
-            'output/subset_wg/20_extract_contigs/{sample_long}.{hifi_type}.{ont_type}.na.chrY.fasta',
-            sample_long=[SAMPLE_INFOS[sample]['long_id'] for sample in COMPLETE_SAMPLES if SAMPLE_INFOS[sample]['sex'] == 'M'],
+            'output/subset_wg/20_extract_contigs/{sample}.{hifi_type}.{ont_type}.na.chrY.fasta',
+            sample=COMPLETE_SAMPLES,
             hifi_type=['HIFIRW'],
             ont_type=['ONTUL'],
         ),
         subset_ctg_aln = expand(
-            'output/subset_wg/30_extract_ctgaln/{sample_long}.{hifi_type}.{ont_type}.na.chrY_aln-to_{reference}.{ext}',
-            sample_long=[SAMPLE_INFOS[sample]['long_id'] for sample in COMPLETE_SAMPLES if SAMPLE_INFOS[sample]['sex'] == 'M'],
+            'output/subset_wg/30_extract_ctgaln/{sample}.{hifi_type}.{ont_type}.na.chrY_aln-to_{reference}.{ext}',
+            sample=COMPLETE_SAMPLES,
             hifi_type=['HIFIRW'],
             ont_type=['ONTUL'],
             reference=['T2TXY', 'GRCh38'],
             ext=['bam.bai', 'paf.gz']
         ),
         subset_read_aln = expand(
-            'output/subset_wg/40_extract_rdaln/{sample_long}.{other_reads}_aln-to_{hifi_type}.{ont_type}.na.chrY.{ext}',
-            sample_long=[SAMPLE_INFOS[sample]['long_id'] for sample in COMPLETE_SAMPLES if SAMPLE_INFOS[sample]['sex'] == 'M'],
+            'output/subset_wg/40_extract_rdaln/{sample}.{other_reads}_aln-to_{hifi_type}.{ont_type}.na.chrY.{ext}',
+            sample=COMPLETE_SAMPLES,
             hifi_type=['HIFIRW'],
             ont_type=['ONTUL'],
             other_reads=['ONTUL', 'HIFIRW'],
             ext=['bam.bai', 'paf.gz']
         ),
         subset_motif_seq = expand(
-            'output/subset_wg/50_subset_motif/{sample_long}.{hifi_type}.{ont_type}.na.chrY.{motif}.hiq-seq.fasta',
-            sample_long=[SAMPLE_INFOS[sample]['long_id'] for sample in COMPLETE_SAMPLES if SAMPLE_INFOS[sample]['sex'] == 'M'],
+            'output/subset_wg/50_subset_motif/{sample}.{hifi_type}.{ont_type}.na.chrY.{motif}.hiq-seq.fasta',
+            sample=COMPLETE_SAMPLES,
             hifi_type=['HIFIRW'],
             ont_type=['ONTUL'],
             motif=config['motif_search']
         ),
         repmasker = expand(
-            'output/motif_search/45_rm_norm/{sample_long}/{sample_long}.{hifi_type}.{ont_type}.na.chrY.{ext}',
-            sample_long=[SAMPLE_INFOS[sample]['long_id'] for sample in COMPLETE_SAMPLES if SAMPLE_INFOS[sample]['sex'] == 'M'],
+            'output/motif_search/45_rm_norm/{sample}/{sample}.{hifi_type}.{ont_type}.na.chrY.{ext}',
+            sample=COMPLETE_SAMPLES,
             hifi_type=['HIFIRW'],
             ont_type=['ONTUL'],
             ext=['rm-out.tar.gz', 'rm-mask.fasta', 'matches.tsv']
         ),
         aln_classes = expand(
-            'output/alignments/seqclasses-to-assm/{seq_classes}_aln-to_{sample_long}.{hifi_type}.{ont_type}.na.chrY.paf.gz',
+            'output/alignments/seqclasses-to-assm/{seq_classes}_aln-to_{sample}.{hifi_type}.{ont_type}.na.chrY.paf.gz',
             seq_classes=['GRCh38_chrY-seq-classes_coord_plus_repeats'],
-            sample_long=[SAMPLE_INFOS[sample]['long_id'] for sample in COMPLETE_SAMPLES if SAMPLE_INFOS[sample]['sex'] == 'M'],
+            sample=COMPLETE_SAMPLES,
             hifi_type=['HIFIRW'],
             ont_type=['ONTUL'],
         ),
         snv_calls_dv = expand(
-            'output/variant_calls/10_filter_{other_reads}/{sample_long}/{sample_long}.{hifi_type}.{ont_type}.na.chrY.{caller}-HET-SNV.stats',
-            sample_long=[SAMPLE_INFOS[sample]['long_id'] for sample in COMPLETE_SAMPLES if SAMPLE_INFOS[sample]['sex'] == 'M'],
+            'output/variant_calls/10_filter_{other_reads}/{sample}/{sample}.{hifi_type}.{ont_type}.na.chrY.{caller}-HET-SNV.stats',
+            sample=COMPLETE_SAMPLES,
             hifi_type=['HIFIRW'],
             ont_type=['ONTUL'],
             other_reads=['HIFIRW'],
             caller=['dv']
         ),
         snv_calls_pr = expand(
-            'output/variant_calls/10_filter_{other_reads}/{sample_long}/{sample_long}.{hifi_type}.{ont_type}.na.chrY.{caller}-HET-SNV.stats',
-            sample_long=[SAMPLE_INFOS[sample]['long_id'] for sample in COMPLETE_SAMPLES if SAMPLE_INFOS[sample]['sex'] == 'M'],
+            'output/variant_calls/10_filter_{other_reads}/{sample}/{sample}.{hifi_type}.{ont_type}.na.chrY.{caller}-HET-SNV.stats',
+            sample=COMPLETE_SAMPLES,
             hifi_type=['HIFIRW'],
             ont_type=['ONTUL'],
             other_reads=['ONTUL'],
@@ -165,15 +130,15 @@ rule populate_share:
     input:
         refs = 'output/share/references.ok',
         aln_reads_ref = expand(
-            'output/share/alignments/reads-to-ref/{sample_long}.{other_reads}_aln-to_{reference}.{chrom}.copied.ok',
-            sample_long=[SAMPLE_INFOS[sample]['long_id'] for sample in COMPLETE_SAMPLES if SAMPLE_INFOS[sample]['sex'] == 'M'],
+            'output/share/alignments/reads-to-ref/{sample}.{other_reads}_aln-to_{reference}.{chrom}.copied.ok',
+            sample=COMPLETE_SAMPLES,
             other_reads=['HIFIRW'],
             reference=['T2TXY', 'GRCh38'],
             chrom=['chrY']
         ),
         assemblies = expand(
-            'output/share/assemblies/verkko_{major}_{minor}/{sample_long}.{hifi_type}.{ont_type}.{mapq}.{chrom}.copied.ok',
-            sample_long=[SAMPLE_INFOS[sample]['long_id'] for sample in COMPLETE_SAMPLES if SAMPLE_INFOS[sample]['sex'] == 'M'],
+            'output/share/assemblies/verkko_{major}_{minor}/{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.copied.ok',
+            sample=COMPLETE_SAMPLES,
             hifi_type=['HIFIRW'],
             ont_type=['ONTUL'],
             mapq=['na'],
@@ -182,8 +147,8 @@ rule populate_share:
             minor=config['verkko_minor'].strip('"'),
         ),
         aln_ctg_ref = expand(
-            'output/share/alignments/contigs-to-ref/verkko_{major}_{minor}/{sample_long}.{hifi_type}.{ont_type}.{mapq}.{chrom}_aln-to_{reference}.copied.ok',
-            sample_long=[SAMPLE_INFOS[sample]['long_id'] for sample in COMPLETE_SAMPLES if SAMPLE_INFOS[sample]['sex'] == 'M'],
+            'output/share/alignments/contigs-to-ref/verkko_{major}_{minor}/{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}_aln-to_{reference}.copied.ok',
+            sample=COMPLETE_SAMPLES,
             hifi_type=['HIFIRW'],
             ont_type=['ONTUL'],
             mapq=['na'],
@@ -193,8 +158,8 @@ rule populate_share:
             minor=config['verkko_minor'].strip('"'),
         ),
         aln_reads_assm = expand(
-            'output/share/alignments/reads-to-assm/verkko_{major}_{minor}/{sample_long}.{other_reads}_aln-to_{hifi_type}.{ont_type}.{mapq}.{chrom}.copied.ok',
-            sample_long=[SAMPLE_INFOS[sample]['long_id'] for sample in COMPLETE_SAMPLES if SAMPLE_INFOS[sample]['sex'] == 'M'],
+            'output/share/alignments/reads-to-assm/verkko_{major}_{minor}/{sample}.{other_reads}_aln-to_{hifi_type}.{ont_type}.{mapq}.{chrom}.copied.ok',
+            sample=COMPLETE_SAMPLES,
             hifi_type=['HIFIRW'],
             ont_type=['ONTUL'],
             other_reads=['HIFIRW', 'ONTUL'],
@@ -205,8 +170,8 @@ rule populate_share:
             minor=config['verkko_minor'].strip('"'),
         ),
         motif_sub = expand(
-            'output/share/motif_search/verkko_{major}_{minor}/{sample_long}.{hifi_type}.{ont_type}.na.chrY.{motif}.copied.ok',
-            sample_long=[SAMPLE_INFOS[sample]['long_id'] for sample in COMPLETE_SAMPLES if SAMPLE_INFOS[sample]['sex'] == 'M'],
+            'output/share/motif_search/verkko_{major}_{minor}/{sample}.{hifi_type}.{ont_type}.na.chrY.{motif}.copied.ok',
+            sample=COMPLETE_SAMPLES,
             hifi_type=['HIFIRW'],
             ont_type=['ONTUL'],
             motif=config['motif_search'],
@@ -214,16 +179,16 @@ rule populate_share:
             minor=config['verkko_minor'].strip('"'),
         ),
         repmask_out = expand(
-            'output/share/repeatmasker/verkko_{major}_{minor}/{sample_long}.{hifi_type}.{ont_type}.na.chrY.copied.ok',
-            sample_long=[SAMPLE_INFOS[sample]['long_id'] for sample in COMPLETE_SAMPLES if SAMPLE_INFOS[sample]['sex'] == 'M'],
+            'output/share/repeatmasker/verkko_{major}_{minor}/{sample}.{hifi_type}.{ont_type}.na.chrY.copied.ok',
+            sample=COMPLETE_SAMPLES,
             hifi_type=['HIFIRW'],
             ont_type=['ONTUL'],
             major=config['verkko_major'].strip('"'),
             minor=config['verkko_minor'].strip('"'),
         ),
         var_calls = expand(
-            'output/share/variant_calls/verkko_{major}_{minor}/{sample_long}.{hifi_type}.{ont_type}.na.chrY.copied.ok',
-            sample_long=[SAMPLE_INFOS[sample]['long_id'] for sample in COMPLETE_SAMPLES if SAMPLE_INFOS[sample]['sex'] == 'M'],
+            'output/share/variant_calls/verkko_{major}_{minor}/{sample}.{hifi_type}.{ont_type}.na.chrY.copied.ok',
+            sample=COMPLETE_SAMPLES,
             hifi_type=['HIFIRW'],
             ont_type=['ONTUL'],
             major=config['verkko_major'].strip('"'),
@@ -232,8 +197,8 @@ rule populate_share:
 
         # DEPRECATED: whole-genome runs by default
         # readsets = expand(
-        #     'output/share/read_subsets/{sample_long}_{read_type}.{chrom}-reads.{mapq}.copied.ok',
-        #     sample_long=[SAMPLE_INFOS[sample]['long_id'] for sample in COMPLETE_SAMPLES if SAMPLE_INFOS[sample]['sex'] == 'M'],
+        #     'output/share/read_subsets/{sample}_{read_type}.{chrom}-reads.{mapq}.copied.ok',
+        #     sample=COMPLETE_SAMPLES,
         #     read_type=['HIFIEC', 'HIFIAF', 'ONTUL'],
         #     mapq=['mq00'],
         #     chrom=['chrY'],

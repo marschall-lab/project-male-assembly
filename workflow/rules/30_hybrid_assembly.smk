@@ -50,23 +50,23 @@ rule run_verkko_whole_genome_assembly:
 
     """
     input:
-        hifi = lambda wildcards: SAMPLE_INFOS[wildcards.sample][wildcards.hifi_type],
-        ont = lambda wildcards: SAMPLE_INFOS[wildcards.sample][wildcards.ont_type],
+        hifi = lambda wildcards: SAMPLE_DATA[wildcards.sample][wildcards.hifi_type],
+        ont = lambda wildcards: SAMPLE_DATA[wildcards.sample][wildcards.ont_type],
         # verkko_install = '/gpfs/project/ebertp/data/repository/verkko',
         # mbg_install = '/gpfs/project/ebertp/data/repository/MBG' 
     output:
         assembly = multiext(
-            'output/hybrid/verkko/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.wg/assembly',
+            'output/hybrid/verkko/{sample}.{hifi_type}.{ont_type}.na.wg/assembly',
             '.fasta',
             '.homopolymer-compressed.gfa',
             '.homopolymer-compressed.layout',
             '.hifi-coverage.csv',
             '.ont-coverage.csv'
         ),
-        #ec_reads = 'output/hybrid/verkko/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.wg/hifi-corrected.fasta',
-        version = 'output/hybrid/verkko/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.wg.verkko.info'
+        #ec_reads = 'output/hybrid/verkko/{sample}.{hifi_type}.{ont_type}.na.wg/hifi-corrected.fasta',
+        version = 'output/hybrid/verkko/{sample}.{hifi_type}.{ont_type}.na.wg.verkko.info'
     log:
-        'log/output/hybrid/{sample_info}_{sample}.{hifi_type}.{ont_type}.na.wg.verkko.log'
+        'log/output/hybrid/{sample}.{hifi_type}.{ont_type}.na.wg.verkko.log'
     conda:
         '../envs/verkko.yaml'
     params:
@@ -97,18 +97,18 @@ rule run_verkko_targeted_assembly:
     release version for now.
     """
     input:
-        ont = 'output/read_subsets/{chrom}/{sample_info}_{sample}_{ont_type}.{chrom}-reads.{mapq}.fasta.gz',
-        hifi = 'output/read_subsets/{chrom}/{sample_info}_{sample}_{hifi_type}.{chrom}-reads.{mapq}.fasta.gz'
+        ont = 'output/read_subsets/{chrom}/{sample}_{ont_type}.{chrom}-reads.{mapq}.fasta.gz',
+        hifi = 'output/read_subsets/{chrom}/{sample}_{hifi_type}.{chrom}-reads.{mapq}.fasta.gz'
     output:
         assembly = multiext(
-            'output/hybrid/verkko/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}/assembly',
+            'output/hybrid/verkko/{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}/assembly',
             '.fasta', '.gfa', '.hifi-coverage.csv', '.layout', '.ont-coverage.csv'
         ),
-        version = 'output/hybrid/verkko/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.verkko.info'
+        version = 'output/hybrid/verkko/{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.verkko.info'
     log:
-        'log/output/hybrid/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.verkko.log'
+        'log/output/hybrid/{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.verkko.log'
     benchmark:
-        'rsrc/output/hybrid/{sample_info}_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.verkko.rsrc'
+        'rsrc/output/hybrid/{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.verkko.rsrc'
     wildcard_constraints:
         chrom = '(chrY|chrX|chrXY)',
         mapq = '(mq00|mq60)'

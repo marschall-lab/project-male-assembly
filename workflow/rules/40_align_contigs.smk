@@ -96,6 +96,8 @@ rule convert_seq_class_alignments_to_bed:
         'output/alignments/seqclasses-to-assm/{seq_classes}_aln-to_{sample}.{hifi_type}.{ont_type}.na.chrY.paf.gz'
     output:
         'output/alignments/seqclasses-to-assm/{seq_classes}_aln-to_{sample}.{hifi_type}.{ont_type}.na.chrY.{alignments}.bed'
+    wildcard_constraints:
+        alignments = '(primary|secondary)'
     params:
         select_aln = lambda wildcards: 'tp:A:P' if wildcards.alignments == 'primary' else 'tp:A:S'
     resources:

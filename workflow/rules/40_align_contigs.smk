@@ -89,3 +89,30 @@ rule align_reference_seq_classes:
         sec_aln = "--secondary=yes -N 10000"
     shell:
         MINIMAP_CTG_REF_PAF
+
+
+rule convert_seq_class_alignments_to_bed:
+    input:
+        'output/alignments/seqclasses-to-assm/{seq_classes}_aln-to_{sample}.{hifi_type}.{ont_type}.na.chrY.paf.gz'
+    output:
+        'output/alignments/seqclasses-to-assm/{seq_classes}_aln-to_{sample}.{hifi_type}.{ont_type}.na.chrY.{alignments}.bed'
+    params:
+        select_aln = lambda wildcards: 'tp:A:P' if wildcards.alignments == 'primary' else 'tp:A:S'
+    resources:
+        mem_mb = lambda wildcards, attempt: 1024 * attempt,
+    shell:
+        'zgrep -F "{params.select_aln}" {input} | cut -f 1-12 | '
+        'awk \'BEGIN{{OFS = "\\t"}} {{print $6,$8,$9,$1,$12,$5,$3,$4,$2,"{wildcards.alignments}"}}\' | '
+        ' sort -k1 -k2,3n > {output}'
+
+
+rule merge_seq_class_bed_files:
+    input:
+        pri = 'output/alignments/seqclasses-to-assm/{seq_classes}_aln-to_{sample}.{hifi_type}.{ont_type}.na.chrY.primary.bed',
+        sec = 'output/alignments/seqclasses-to-assm/{seq_classes}_aln-to_{sample}.{hifi_type}.{ont_type}.na.chrY.secondary.bed'
+    output:
+        mrg = 'output/alignments/seqclasses-to-assm/{seq_classes}_aln-to_{sample}.{hifi_type}.{ont_type}.na.chrY.merged.bed'
+    resources:
+        mem_mb = lambda wildcards, attempt: 1024 * attempt,
+    shell:
+        'cat {input.pri} {input.sec} | sort -k1 -k2,3n > {output.mrg}'

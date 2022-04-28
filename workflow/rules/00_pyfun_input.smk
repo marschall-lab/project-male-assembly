@@ -1,6 +1,7 @@
 
 import pathlib
 import pandas
+import collections
 
 
 def read_sample_table():
@@ -9,8 +10,8 @@ def read_sample_table():
 
     if not 'samples' in config:
         raise ValueError('No key "samples" in config - should be a path to the sample table (TSV')
-    sample_table_file = pl.Path(config['samples']).resolve(strict=True)
-    samples = pd.read_csv(
+    sample_table_file = pathlib.Path(config['samples']).resolve(strict=True)
+    samples = pandas.read_csv(
         sample_table_file,
         sep='\t',
         header=0
@@ -23,16 +24,16 @@ def read_sample_table():
     for row in samples.itertuples(index=False):
         try:
             _ = pathlib.Path(row.hifi).resolve(strict=True)
-        except FileNotFoundError:
+        except (FileNotFoundError, TypeError):
             if debug:
-                sys.stderr.write(f'\nError skip: no (valid) HiFi path for sample {sample}\n')
+                sys.stderr.write(f'\nError skip: no (valid) HiFi path for sample {row.sample}\n')
             selector.append(False)
             continue
         try:
             _ = pathlib.Path(row.ont).resolve(strict=True)
-        except FileNotFoundError:
+        except (FileNotFoundError, TypeError):
             if debug:
-                sys.stderr.write(f'\nError skip: no (valid) ONT path set for sample {sample}\n')
+                sys.stderr.write(f'\nError skip: no (valid) ONT path set for sample {row.sample}\n')
             selector.append(False)
             continue
         selector.append(True)
@@ -74,7 +75,7 @@ def get_ont_data(ont_path):
 def get_data(top_path, suffix):
 
     search_path = pathlib.Path(top_path).resolve(strict=True)
-    data_files = sorted(search_path.glob(f'**/{suffix}'))
+    data_files = sorted(search_path.glob(f'**/*{suffix}'))
     assert len(data_files) > 0, f'No data found: {suffix} / {top_path}'
     return data_files
 

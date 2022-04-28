@@ -340,6 +340,41 @@ rule copy_variant_calls:
     # END OF RUN BLOCK
 
 
+rule copy_seq_class_alignments:
+    input:
+        version = 'output/hybrid/verkko/{sample}.{hifi_type}.{ont_type}.{mapq}.wg.verkko.info',
+        paf = 'output/alignments/seqclasses-to-assm/{seq_classes}_aln-to_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.paf.gz',
+        pri = 'output/alignments/seqclasses-to-assm/{seq_classes}_aln-to_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.primary.bed',
+        sec = 'output/alignments/seqclasses-to-assm/{seq_classes}_aln-to_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.secondary.bed',
+        mrg = 'output/alignments/seqclasses-to-assm/{seq_classes}_aln-to_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.merged.bed'
+    output:
+        ok = 'output/share/alignments/seqclasses-to-assm/verkko_{major}_{minor}/{seq_classes}_aln-to_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.copied.ok'
+    run:
+        import pathlib as pl
+
+        verkko_subfolder, assembly_id = determine_verkko_subfolder(
+            input.version,
+            'alignments/seqclasses-to-assm',
+            wildcards.chrom
+        )
+        check_file = ''
+        source_files = [
+            input.paf,
+            input.pri,
+            input.sec,
+            input.mrg
+        ]
+        for source in source_files:
+            source_path = pl.Path(source)
+            target = verkko_subfolder / source_path.name
+            rsync(source_path, target)
+            check_file += f'{source_path}\t{target}\n'
+
+        with open(output.ok, 'w') as dump:
+            _ = dump.write(check_file)
+    # END OF RUN BLOCK
+
+
 # DEPRECATED
 #
 # rule copy_chromosome_readsets:

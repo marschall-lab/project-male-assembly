@@ -169,6 +169,17 @@ rule populate_share:
             major=config['verkko_major'].strip('"'),
             minor=config['verkko_minor'].strip('"'),
         ),
+        aln_seqclass_assm = expand(
+            'output/share/alignments/seqclasses-to-assm/verkko_{major}_{minor}/{seq_classes}_aln-to_{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.copied.ok',
+            sample=COMPLETE_SAMPLES,
+            hifi_type=['HIFIRW'],
+            ont_type=['ONTUL'],
+            mapq=['na'],
+            chrom=['chrY'],
+            seq_classes=['GRCh38_chrY-seq-classes_coord_plus_repeats', 'T2T.chrY-seq-classes'],
+            major=config['verkko_major'].strip('"'),
+            minor=config['verkko_minor'].strip('"'),
+        ),
         motif_sub = expand(
             'output/share/motif_search/verkko_{major}_{minor}/{sample}.{hifi_type}.{ont_type}.na.chrY.{motif}.copied.ok',
             sample=COMPLETE_SAMPLES,

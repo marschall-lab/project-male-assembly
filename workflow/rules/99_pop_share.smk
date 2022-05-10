@@ -51,6 +51,7 @@ rule copy_verkko_assemblies:
         chrom = 'wg'
     resources:
         mem_mb = lambda wildcards, attempt: 2048 * attempt
+    priority: 100
     run:
         import pathlib as pl
 
@@ -82,6 +83,7 @@ rule copy_verkko_subset_assembly:
     wildcard_constraints:
         mapq = 'na',
         chrom = 'chrY'
+    priority: 100
     run:
         import pathlib as pl
 

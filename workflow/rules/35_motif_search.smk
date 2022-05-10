@@ -18,8 +18,12 @@ CPU_MOTIF_FACTOR = {
     'DYZ2_Yq': config['num_cpu_high'],
 }
 
+# Change 2022-05-10
+# Bonus credit situation on HILBERT
+# unclear for the time being, hence
+# all jobs must be set to 0 bonus
 BONUS_MOTIF_FACTOR = {
-    'DYZ2_Yq': 100,
+    'DYZ2_Yq': 0,
 }
 
 EVALUE_CUTOFF_MOTIF = {
@@ -143,6 +147,11 @@ rule normalize_motif_hits:
 
 
 rule aggregate_motif_hits_by_target:
+    """
+    Change 2022-05-10
+    Rare case: sample HG02572 does not have any high-quality matches for DYZ18, hence
+    the original code produced an error. Change to always have a consistent output table.
+    """
     input:
         table = 'output/motif_search/10_norm/{sub_folder}/{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.{motif}.norm.tsv',
     output:
@@ -168,6 +177,14 @@ rule aggregate_motif_hits_by_target:
                 'num_hits_loq': hits.loc[hits['hit_hiq'] < 1, :].shape[0],
             })
             if record['num_hits_hiq'] == 0:
+                # 2022-05-10 add empty fields for output table
+                record['pct_hits_hiq'] = 0
+                record['num_bp_hiq'] = 0
+                record['pct_bp_hiq'] = 0
+                record['mean_pct_len_hiq'] = 0
+                record['median_pct_len_hiq'] = 0
+                record['mean_score_hiq'] = 0
+                record['median_score_hiq'] = 0
                 records.append(record)
                 continue
             record['pct_hits_hiq'] = round(record['num_hits_hiq'] / record['num_hits_total'] * 100, 2)

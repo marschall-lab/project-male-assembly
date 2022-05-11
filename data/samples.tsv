@@ -1,53 +1,53 @@
-sample_id	sample	hifi	hifi_num	ont	ont_num
-1	HG01890	/gpfs/project/projects/medbioinf/data/hgsvc_hifi/HG01890	5	/gpfs/project/projects/medbioinf/data/hgsvc_ontul/HG01890	2
-2	HG02666	/gpfs/project/projects/medbioinf/data/hgsvc_hifi/HG02666	4	/gpfs/project/projects/medbioinf/data/hgsvc_ontul/HG02666	2
-3	NA19384	/gpfs/project/projects/medbioinf/data/hgsvc_hifi/NA19384	3	/gpfs/project/projects/medbioinf/data/hgsvc_ontul/NA19384	3
-4	NA18989	/gpfs/project/projects/medbioinf/data/hgsvc_hifi/GM18989	4	/gpfs/project/projects/medbioinf/data/hgsvc_ontul/NA18989	2
-5	HG03248	/gpfs/project/projects/medbioinf/data/hgsvc_hifi/HG03248	5	/gpfs/project/projects/medbioinf/data/hgsvc_ontul/HG03248	3
-6	NA19317	/gpfs/project/projects/medbioinf/data/hgsvc_hifi/NA19317	4	/gpfs/project/projects/medbioinf/data/hgsvc_ontul/NA19317	3
-7	NA19347	/gpfs/project/projects/medbioinf/data/hgsvc_hifi/NA19347	3	/gpfs/project/projects/medbioinf/data/hgsvc_ontul/NA19347	3
-8	HG02554	/gpfs/project/projects/medbioinf/data/hgsvc_hifi/HG02554	4	/gpfs/project/projects/medbioinf/data/hgsvc_ontul/HG02554	9
-9	HG02953	/gpfs/project/projects/medbioinf/data/hgsvc_hifi/HG02953	4	/gpfs/project/projects/medbioinf/data/hgsvc_ontul/HG02953	9
-10	HG01457	/gpfs/project/projects/medbioinf/data/hgsvc_hifi/HG01457	4	/gpfs/project/projects/medbioinf/data/hgsvc_ontul/HG01457	2
-11	NA19331	/gpfs/project/projects/medbioinf/data/hgsvc_hifi/GM19331	3	/gpfs/project/projects/medbioinf/data/hgsvc_ontul/NA19331	2
-12	HG00358	/gpfs/project/projects/medbioinf/data/hgsvc_hifi/HG00358	5	/gpfs/project/projects/medbioinf/data/hgsvc_ontul/HG00358	3
-13	HG03009	/gpfs/project/projects/medbioinf/data/hgsvc_hifi/HG03009	3	/gpfs/project/projects/medbioinf/data/hgsvc_ontul/HG03009	3
-14	NA18534	/gpfs/project/projects/medbioinf/data/hgsvc_hifi/NA18534	3	/gpfs/project/projects/medbioinf/data/hgsvc_ontul/NA18534	2
-15	NA19650	/gpfs/project/projects/medbioinf/data/hgsvc_hifi/NA19650	3	/gpfs/project/projects/medbioinf/data/hgsvc_ontul/NA19650	3
-16	NA24385/HG002	n/a	0	n/a	0
-17	HG03579	/gpfs/project/projects/medbioinf/data/hprc_hifi/HG03579	4	/gpfs/project/projects/medbioinf/data/hprc_ont/HG03579	3
-18	HG01952	/gpfs/project/projects/medbioinf/data/hprc_hifi/HG01952	4	/gpfs/project/projects/medbioinf/data/hprc_ont/HG01952	3
-19	HG01243	/gpfs/project/projects/medbioinf/data/hprc_hifi/HG01243	3	/gpfs/project/projects/medbioinf/data/hprc_ont/HG01243	3
-20	NA24149	n/a	0	n/a	0
-21	NA19239	/gpfs/project/projects/medbioinf/data/hgsvc_hifi/NA19239	7	n/a	0
-22	HG00512	/gpfs/project/projects/medbioinf/data/hgsvc_hifi/HG00512	6	/gpfs/project/projects/medbioinf/data/hgsvc_ontul/HG00512	3
-23	HG00731	/gpfs/project/projects/medbioinf/data/hgsvc_hifi/HG00731	5	n/a	0
-24	HG03371	/gpfs/project/projects/medbioinf/data/hgsvc_hifi/HG03371	3	/gpfs/project/projects/medbioinf/data/hgsvc_ontul/HG03371	2
-25	HG02011	/gpfs/project/projects/medbioinf/data/hgsvc_hifi/HG02011	3	/gpfs/project/projects/medbioinf/data/hgsvc_ontul/HG02011	3
-26	HG03456	/gpfs/project/projects/medbioinf/data/hgsvc_hifi/HG03456	3	/gpfs/project/projects/medbioinf/data/hgsvc_ontul/HG03456	2
-27	NA19705	/gpfs/project/projects/medbioinf/data/hgsvc_hifi/NA19705	3	/gpfs/project/projects/medbioinf/data/hgsvc_ontul/NA19705	2
-28	HG03065	/gpfs/project/projects/medbioinf/data/hgsvc_hifi/HG03065	3	/gpfs/project/projects/medbioinf/data/hgsvc_ontul/HG03065	2
-29	HG02492	/gpfs/project/projects/medbioinf/data/hgsvc_hifi/HG02492	3	/gpfs/project/projects/medbioinf/data/hgsvc_ontul/HG02492	3
-30	HG01596	n/a	0	n/a	0
-31	NA20509	/gpfs/project/projects/medbioinf/data/hgsvc_hifi/NA20509	4	/gpfs/project/projects/medbioinf/data/hgsvc_ontul/NA20509	3
-32	HG00096	/gpfs/project/projects/medbioinf/data/hgsvc_hifi/HG00096	3	/gpfs/project/projects/medbioinf/data/hgsvc_ontul/HG00096	3
-33	HG01505	/gpfs/project/projects/medbioinf/data/hgsvc_hifi/HG01505	3	/gpfs/project/projects/medbioinf/data/hgsvc_ontul/HG01505	4
-34	HG03732	/gpfs/project/projects/medbioinf/data/hgsvc_hifi/HG03732	3	/gpfs/project/projects/medbioinf/data/hgsvc_ontul/HG03732	3
-35	HG00673	/gpfs/project/projects/medbioinf/data/hprc_hifi/HG00673	4	/gpfs/project/projects/medbioinf/data/hprc_ont/HG00673	3
-36	HG03492	/gpfs/project/projects/medbioinf/data/hprc_hifi/HG03492	3	/gpfs/project/projects/medbioinf/data/hprc_ont/HG03492	3
-37	HG01358	/gpfs/project/projects/medbioinf/data/hprc_hifi/HG01358	4	/gpfs/project/projects/medbioinf/data/hprc_ont/HG01358	3
-38	HG01258	/gpfs/project/projects/medbioinf/data/hprc_hifi/HG01258	4	/gpfs/project/projects/medbioinf/data/hprc_ont/HG01258	3
-39	HG02572	/gpfs/project/projects/medbioinf/data/hprc_hifi/HG02572	4	/gpfs/project/projects/medbioinf/data/hprc_ont/HG02572	3
-40	HG02717	/gpfs/project/projects/medbioinf/data/hprc_hifi/HG02717	4	/gpfs/project/projects/medbioinf/data/hprc_ont/HG02717	3
-41	HG01928	/gpfs/project/projects/medbioinf/data/hprc_hifi/HG01928	4	/gpfs/project/projects/medbioinf/data/hprc_ont/HG01928	3
-42	HG01106	/gpfs/project/projects/medbioinf/data/hprc_hifi/HG01106	4	/gpfs/project/projects/medbioinf/data/hprc_ont/HG01106	3
-43	HG00621	/gpfs/project/projects/medbioinf/data/hprc_hifi/HG00621	4	/gpfs/project/projects/medbioinf/data/hprc_ont/HG00621	3
-44	HG01109	/gpfs/project/projects/medbioinf/data/hprc_hifi/HG01109	3	/gpfs/project/projects/medbioinf/data/hprc_ont/HG01109	3
-45	HG02486	/gpfs/project/projects/medbioinf/data/hprc_hifi/HG02486	6	/gpfs/project/projects/medbioinf/data/hprc_ont/HG02486	3
-46	HG03471	/gpfs/project/projects/medbioinf/data/hprc_hifi/HG03471	4	/gpfs/project/projects/medbioinf/data/hprc_ont/HG03471	3
-47	HG02145	n/a	0	n/a	0
-48	HC01457	/gpfs/project/projects/medbioinf/data/hgsvc_hifi/HC01457	6	/gpfs/project/projects/medbioinf/data/hgsvc_ontul/HC01457	2
-49	HC02666	/gpfs/project/projects/medbioinf/data/hgsvc_hifi/HC02666	6	/gpfs/project/projects/medbioinf/data/hgsvc_ontul/HC02666	2
-50	HC19384	/gpfs/project/projects/medbioinf/data/hgsvc_hifi/HC19384	5	/gpfs/project/projects/medbioinf/data/hgsvc_ontul/HC19384	3
-51	HC18989	/gpfs/project/projects/medbioinf/data/hgsvc_hifi/HC18989	7	/gpfs/project/projects/medbioinf/data/hgsvc_ontul/HC18989	2
-52	NA193N7	n/a	0	n/a	0
+sample_id	sample	hifi	hifi_num	ont	ont_num	short	short_num
+1	HG01890	/gpfs/project/projects/medbioinf/data/hgsvc_hifi/HG01890	5	/gpfs/project/projects/medbioinf/data/hgsvc_ontul/HG01890	2	/gpfs/project/projects/medbioinf/data/illumina_nygc/output/reduced/PRJEB31736.2504/HG01890_ERR3242195.fasta.gz	1
+2	HG02666	/gpfs/project/projects/medbioinf/data/hgsvc_hifi/HG02666	4	/gpfs/project/projects/medbioinf/data/hgsvc_ontul/HG02666	2	/gpfs/project/projects/medbioinf/data/illumina_nygc/output/reduced/PRJEB31736.2504/HG02666_ERR3242387.fasta.gz	1
+3	NA19384	/gpfs/project/projects/medbioinf/data/hgsvc_hifi/NA19384	3	/gpfs/project/projects/medbioinf/data/hgsvc_ontul/NA19384	3	/gpfs/project/projects/medbioinf/data/illumina_nygc/output/reduced/PRJEB31736.2504/NA19384_ERR3239740.fasta.gz	1
+4	NA18989	/gpfs/project/projects/medbioinf/data/hgsvc_hifi/GM18989	4	/gpfs/project/projects/medbioinf/data/hgsvc_ontul/NA18989	2	/gpfs/project/projects/medbioinf/data/illumina_nygc/output/reduced/PRJEB31736.2504/NA18989_ERR3239679.fasta.gz	1
+5	HG03248	/gpfs/project/projects/medbioinf/data/hgsvc_hifi/HG03248	5	/gpfs/project/projects/medbioinf/data/hgsvc_ontul/HG03248	3	/gpfs/project/projects/medbioinf/data/illumina_nygc/output/reduced/PRJEB36890.698/HG03248_ERR3989141.fasta.gz	1
+6	NA19317	/gpfs/project/projects/medbioinf/data/hgsvc_hifi/NA19317	4	/gpfs/project/projects/medbioinf/data/hgsvc_ontul/NA19317	3	/gpfs/project/projects/medbioinf/data/illumina_nygc/output/reduced/PRJEB31736.2504/NA19317_ERR3239712.fasta.gz	1
+7	NA19347	/gpfs/project/projects/medbioinf/data/hgsvc_hifi/NA19347	3	/gpfs/project/projects/medbioinf/data/hgsvc_ontul/NA19347	3	/gpfs/project/projects/medbioinf/data/illumina_nygc/output/reduced/PRJEB31736.2504/NA19347_ERR3239726.fasta.gz	1
+8	HG02554	/gpfs/project/projects/medbioinf/data/hgsvc_hifi/HG02554	4	/gpfs/project/projects/medbioinf/data/hgsvc_ontul/HG02554	9	/gpfs/project/projects/medbioinf/data/illumina_nygc/output/reduced/PRJEB31736.2504/HG02554_ERR3242744.fasta.gz	1
+9	HG02953	/gpfs/project/projects/medbioinf/data/hgsvc_hifi/HG02953	4	/gpfs/project/projects/medbioinf/data/hgsvc_ontul/HG02953	9	/gpfs/project/projects/medbioinf/data/illumina_nygc/output/reduced/PRJEB31736.2504/HG02953_ERR3242604.fasta.gz	1
+10	HG01457	/gpfs/project/projects/medbioinf/data/hgsvc_hifi/HG01457	4	/gpfs/project/projects/medbioinf/data/hgsvc_ontul/HG01457	2	/gpfs/project/projects/medbioinf/data/illumina_nygc/output/reduced/PRJEB36890.698/HG01457_ERR3988884.fasta.gz	1
+11	NA19331	/gpfs/project/projects/medbioinf/data/hgsvc_hifi/GM19331	3	/gpfs/project/projects/medbioinf/data/hgsvc_ontul/NA19331	2	/gpfs/project/projects/medbioinf/data/illumina_nygc/output/reduced/PRJEB31736.2504/NA19331_ERR3239721.fasta.gz	1
+12	HG00358	/gpfs/project/projects/medbioinf/data/hgsvc_hifi/HG00358	5	/gpfs/project/projects/medbioinf/data/hgsvc_ontul/HG00358	3	/gpfs/project/projects/medbioinf/data/illumina_nygc/output/reduced/PRJEB31736.2504/HG00358_ERR3240260.fasta.gz	1
+13	HG03009	/gpfs/project/projects/medbioinf/data/hgsvc_hifi/HG03009	3	/gpfs/project/projects/medbioinf/data/hgsvc_ontul/HG03009	3	/gpfs/project/projects/medbioinf/data/illumina_nygc/output/reduced/PRJEB31736.2504/HG03009_ERR3242842.fasta.gz	1
+14	NA18534	/gpfs/project/projects/medbioinf/data/hgsvc_hifi/NA18534	3	/gpfs/project/projects/medbioinf/data/hgsvc_ontul/NA18534	2	/gpfs/project/projects/medbioinf/data/illumina_nygc/output/reduced/PRJEB31736.2504/NA18534_ERR3239493.fasta.gz	1
+15	NA19650	/gpfs/project/projects/medbioinf/data/hgsvc_hifi/NA19650	3	/gpfs/project/projects/medbioinf/data/hgsvc_ontul/NA19650	3	/gpfs/project/projects/medbioinf/data/illumina_nygc/output/reduced/PRJEB36890.698/NA19650_ERR3989413.fasta.gz	1
+16	NA24385/HG002	n/a	0	n/a	0	n/a	0
+17	HG03579	/gpfs/project/projects/medbioinf/data/hprc_hifi/HG03579	4	/gpfs/project/projects/medbioinf/data/hprc_ont/HG03579	3	/gpfs/project/projects/medbioinf/data/illumina_nygc/output/reduced/PRJEB36890.698/HG03579_ERR3989180.fasta.gz	1
+18	HG01952	/gpfs/project/projects/medbioinf/data/hprc_hifi/HG01952	4	/gpfs/project/projects/medbioinf/data/hprc_ont/HG01952	3	/gpfs/project/projects/medbioinf/data/illumina_nygc/output/reduced/PRJEB36890.698/HG01952_ERR3988958.fasta.gz	1
+19	HG01243	/gpfs/project/projects/medbioinf/data/hprc_hifi/HG01243	3	/gpfs/project/projects/medbioinf/data/hprc_ont/HG01243	3	/gpfs/project/projects/medbioinf/data/illumina_nygc/output/reduced/PRJEB36890.698/HG01243_ERR3988858.fasta.gz	1
+20	NA24149	n/a	0	n/a	0	n/a	0
+21	NA19239	/gpfs/project/projects/medbioinf/data/hgsvc_hifi/NA19239	7	n/a	0	/gpfs/project/projects/medbioinf/data/illumina_nygc/output/reduced/PRJEB31736.2504/NA19239_ERR3239454.fasta.gz	1
+22	HG00512	/gpfs/project/projects/medbioinf/data/hgsvc_hifi/HG00512	6	/gpfs/project/projects/medbioinf/data/hgsvc_ontul/HG00512	3	/gpfs/project/projects/medbioinf/data/illumina_nygc/output/reduced/PRJEB36890.698/HG00512_ERR3988780.fasta.gz	1
+23	HG00731	/gpfs/project/projects/medbioinf/data/hgsvc_hifi/HG00731	5	n/a	0	/gpfs/project/projects/medbioinf/data/illumina_nygc/output/reduced/PRJEB31736.2504/HG00731_ERR3241754.fasta.gz	1
+24	HG03371	/gpfs/project/projects/medbioinf/data/hgsvc_hifi/HG03371	3	/gpfs/project/projects/medbioinf/data/hgsvc_ontul/HG03371	2	/gpfs/project/projects/medbioinf/data/illumina_nygc/output/reduced/PRJEB36890.698/HG03371_ERR3989162.fasta.gz	1
+25	HG02011	/gpfs/project/projects/medbioinf/data/hgsvc_hifi/HG02011	3	/gpfs/project/projects/medbioinf/data/hgsvc_ontul/HG02011	3	/gpfs/project/projects/medbioinf/data/illumina_nygc/output/reduced/PRJEB36890.698/HG02011_ERR3988973.fasta.gz	1
+26	HG03456	/gpfs/project/projects/medbioinf/data/hgsvc_hifi/HG03456	3	/gpfs/project/projects/medbioinf/data/hgsvc_ontul/HG03456	2	/gpfs/project/projects/medbioinf/data/illumina_nygc/output/reduced/PRJEB36890.698/HG03456_ERR3989168.fasta.gz	1
+27	NA19705	/gpfs/project/projects/medbioinf/data/hgsvc_hifi/NA19705	3	/gpfs/project/projects/medbioinf/data/hgsvc_ontul/NA19705	2	/gpfs/project/projects/medbioinf/data/illumina_nygc/output/reduced/PRJEB36890.698/NA19705_ERR3989428.fasta.gz	1
+28	HG03065	/gpfs/project/projects/medbioinf/data/hgsvc_hifi/HG03065	3	/gpfs/project/projects/medbioinf/data/hgsvc_ontul/HG03065	2	/gpfs/project/projects/medbioinf/data/illumina_nygc/output/reduced/PRJEB36890.698/HG03065_ERR3989118.fasta.gz	1
+29	HG02492	/gpfs/project/projects/medbioinf/data/hgsvc_hifi/HG02492	3	/gpfs/project/projects/medbioinf/data/hgsvc_ontul/HG02492	3	/gpfs/project/projects/medbioinf/data/illumina_nygc/output/reduced/PRJEB36890.698/HG02492_ERR3989019.fasta.gz	1
+30	HG01596	n/a	0	n/a	0	/gpfs/project/projects/medbioinf/data/illumina_nygc/output/reduced/PRJEB31736.2504/HG01596_ERR3242063.fasta.gz	1
+31	NA20509	/gpfs/project/projects/medbioinf/data/hgsvc_hifi/NA20509	4	/gpfs/project/projects/medbioinf/data/hgsvc_ontul/NA20509	3	/gpfs/project/projects/medbioinf/data/illumina_nygc/output/reduced/PRJEB31736.2504/NA20509_ERR3239792.fasta.gz	1
+32	HG00096	/gpfs/project/projects/medbioinf/data/hgsvc_hifi/HG00096	3	/gpfs/project/projects/medbioinf/data/hgsvc_ontul/HG00096	3	/gpfs/project/projects/medbioinf/data/illumina_nygc/output/reduced/PRJEB31736.2504/HG00096_ERR3240114.fasta.gz	1
+33	HG01505	/gpfs/project/projects/medbioinf/data/hgsvc_hifi/HG01505	3	/gpfs/project/projects/medbioinf/data/hgsvc_ontul/HG01505	4	/gpfs/project/projects/medbioinf/data/illumina_nygc/output/reduced/PRJEB36890.698/HG01505_ERR3988892.fasta.gz	1
+34	HG03732	/gpfs/project/projects/medbioinf/data/hgsvc_hifi/HG03732	3	/gpfs/project/projects/medbioinf/data/hgsvc_ontul/HG03732	3	/gpfs/project/projects/medbioinf/data/illumina_nygc/output/reduced/PRJEB36890.698/HG03732_ERR3989210.fasta.gz	1
+35	HG00673	/gpfs/project/projects/medbioinf/data/hprc_hifi/HG00673	4	/gpfs/project/projects/medbioinf/data/hprc_ont/HG00673	3	/gpfs/project/projects/medbioinf/data/illumina_nygc/output/reduced/PRJEB36890.698/HG00673_ERR3988814.fasta.gz	1
+36	HG03492	/gpfs/project/projects/medbioinf/data/hprc_hifi/HG03492	3	/gpfs/project/projects/medbioinf/data/hprc_ont/HG03492	3	/gpfs/project/projects/medbioinf/data/illumina_nygc/output/reduced/PRJEB36890.698/HG03492_ERR3989173.fasta.gz	1
+37	HG01358	/gpfs/project/projects/medbioinf/data/hprc_hifi/HG01358	4	/gpfs/project/projects/medbioinf/data/hprc_ont/HG01358	3	/gpfs/project/projects/medbioinf/data/illumina_nygc/output/reduced/PRJEB36890.698/HG01358_ERR3988875.fasta.gz	1
+38	HG01258	/gpfs/project/projects/medbioinf/data/hprc_hifi/HG01258	4	/gpfs/project/projects/medbioinf/data/hprc_ont/HG01258	3	/gpfs/project/projects/medbioinf/data/illumina_nygc/output/reduced/PRJEB36890.698/HG01258_ERR3988862.fasta.gz	1
+39	HG02572	/gpfs/project/projects/medbioinf/data/hprc_hifi/HG02572	4	/gpfs/project/projects/medbioinf/data/hprc_ont/HG02572	3	/gpfs/project/projects/medbioinf/data/illumina_nygc/output/reduced/PRJEB36890.698/HG02572_ERR3989028.fasta.gz	1
+40	HG02717	/gpfs/project/projects/medbioinf/data/hprc_hifi/HG02717	4	/gpfs/project/projects/medbioinf/data/hprc_ont/HG02717	3	/gpfs/project/projects/medbioinf/data/illumina_nygc/output/reduced/PRJEB36890.698/HG02717_ERR3989059.fasta.gz	1
+41	HG01928	/gpfs/project/projects/medbioinf/data/hprc_hifi/HG01928	4	/gpfs/project/projects/medbioinf/data/hprc_ont/HG01928	3	/gpfs/project/projects/medbioinf/data/illumina_nygc/output/reduced/PRJEB36890.698/HG01928_ERR3988951.fasta.gz	1
+42	HG01106	/gpfs/project/projects/medbioinf/data/hprc_hifi/HG01106	4	/gpfs/project/projects/medbioinf/data/hprc_ont/HG01106	3	/gpfs/project/projects/medbioinf/data/illumina_nygc/output/reduced/PRJEB36890.698/HG01106_ERR3988841.fasta.gz	1
+43	HG00621	/gpfs/project/projects/medbioinf/data/hprc_hifi/HG00621	4	/gpfs/project/projects/medbioinf/data/hprc_ont/HG00621	3	/gpfs/project/projects/medbioinf/data/illumina_nygc/output/reduced/PRJEB36890.698/HG00621_ERR3988803.fasta.gz	1
+44	HG01109	/gpfs/project/projects/medbioinf/data/hprc_hifi/HG01109	3	/gpfs/project/projects/medbioinf/data/hprc_ont/HG01109	3	/gpfs/project/projects/medbioinf/data/illumina_nygc/output/reduced/PRJEB36890.698/HG01109_ERR3988842.fasta.gz	1
+45	HG02486	/gpfs/project/projects/medbioinf/data/hprc_hifi/HG02486	6	/gpfs/project/projects/medbioinf/data/hprc_ont/HG02486	3	n/a	0
+46	HG03471	/gpfs/project/projects/medbioinf/data/hprc_hifi/HG03471	4	/gpfs/project/projects/medbioinf/data/hprc_ont/HG03471	3	n/a	0
+47	HG02145	n/a	0	n/a	0	/gpfs/project/projects/medbioinf/data/illumina_nygc/output/reduced/PRJEB36890.698/HG02145_ERR3988995.fasta.gz	1
+48	HC01457	/gpfs/project/projects/medbioinf/data/hgsvc_hifi/HC01457	6	/gpfs/project/projects/medbioinf/data/hgsvc_ontul/HC01457	2	/gpfs/project/projects/medbioinf/data/illumina_nygc/output/reduced/PRJEB36890.698/HG01457_ERR3988884.fasta.gz	1
+49	HC02666	/gpfs/project/projects/medbioinf/data/hgsvc_hifi/HC02666	6	/gpfs/project/projects/medbioinf/data/hgsvc_ontul/HC02666	2	/gpfs/project/projects/medbioinf/data/illumina_nygc/output/reduced/PRJEB31736.2504/HG02666_ERR3242387.fasta.gz	1
+50	HC19384	/gpfs/project/projects/medbioinf/data/hgsvc_hifi/HC19384	5	/gpfs/project/projects/medbioinf/data/hgsvc_ontul/HC19384	3	/gpfs/project/projects/medbioinf/data/illumina_nygc/output/reduced/PRJEB31736.2504/NA19384_ERR3239740.fasta.gz	1
+51	HC18989	/gpfs/project/projects/medbioinf/data/hgsvc_hifi/HC18989	7	/gpfs/project/projects/medbioinf/data/hgsvc_ontul/HC18989	2	/gpfs/project/projects/medbioinf/data/illumina_nygc/output/reduced/PRJEB31736.2504/NA18989_ERR3239679.fasta.gz	1
+52	NA193N7	n/a	0	n/a	0	n/a	0

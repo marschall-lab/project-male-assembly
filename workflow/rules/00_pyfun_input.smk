@@ -21,6 +21,7 @@ def read_sample_table():
         f'Sample table does not contain all mandatory columns: {mandatory_columns}'
 
     selector = []
+    has_short_reads = []
     for row in samples.itertuples(index=False):
         try:
             _ = pathlib.Path(row.hifi).resolve(strict=True)
@@ -37,12 +38,21 @@ def read_sample_table():
             selector.append(False)
             continue
         selector.append(True)
+        try:
+            _ = pathlib.Path(row.short).resolve(strict=True)
+        except (FileNotFoundError, TypeError):
+            if debug:
+                sys.stderr.write(f'\nError skip: no (valid) short-read path set for sample {row.sample}\n')
+            has_short_reads.append(False)
+            continue
+        has_short_reads.append(True)
 
     samples = samples.loc[selector, :].copy()
-    return samples
+    sr_samples = set(samples.loc[has_short_reads, 'sample'].values)
+    return samples, sr_samples
 
 
-def collect_sample_data(samples):
+def collect_sample_data(samples, short_read_samples):
 
     sample_data = collections.defaultdict(dict)
 
@@ -55,6 +65,10 @@ def collect_sample_data(samples):
         ont_data = get_ont_data(row.ont)
         sample_data[row.sample]['ONTUL'] = ont_data
         sample_data[row.sample][('ONTUL', 'num')] = len(ont_data)
+        if row.sample in short_read_samples:
+            short_reads = get_short_read_data(row.short)
+            sample_data[row.sample]['SHORT'] = ont_data
+            sample_data[row.sample][('SHORT', 'num')] = len(ont_data)
     return sample_data
 
 
@@ -70,6 +84,18 @@ def get_ont_data(ont_path):
     suffix = 'guppy-5.0.11-sup-prom_fastq_pass.fastq.gz'
     ont_files = get_data(ont_path, suffix)
     return ont_files
+
+
+def get_short_read_data(short_path):
+
+    suffix = '.fastq.gz'
+    # slightly different b/c all short-reads
+    # are currently available as single FASTA file
+    if pathlib.Path(short_path).is_file():
+        short_reads = [short_path]
+    else:
+        short_reads = get_data(short_path, suffix)
+    return short_reads
 
 
 def get_data(top_path, suffix):

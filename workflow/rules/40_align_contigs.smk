@@ -83,7 +83,7 @@ rule align_reference_seq_classes:
         '../envs/biotools.yaml'
     threads: config['num_cpu_low']
     resources:
-        mem_mb = lambda wildcards, attempt: 4096 + 4096 * attempt,
+        mem_mb = lambda wildcards, attempt: 16384 + 8192 * attempt,
         walltime = lambda wildcards, attempt: f'{attempt*attempt}:59:00',
     params:
         sec_aln = "--secondary=yes -N 10000"

@@ -21,7 +21,7 @@ sample_id	sample	hifi	hifi_num	ont	ont_num	short	short_num
 20	NA24149	n/a	0	n/a	0	n/a	0
 21	NA19239	/gpfs/project/projects/medbioinf/data/hgsvc_hifi/NA19239	7	n/a	0	/gpfs/project/projects/medbioinf/data/illumina_nygc/output/reduced/PRJEB31736.2504/NA19239_ERR3239454.fasta.gz	1
 22	HG00512	/gpfs/project/projects/medbioinf/data/hgsvc_hifi/HG00512	6	/gpfs/project/projects/medbioinf/data/hgsvc_ontul/HG00512	3	/gpfs/project/projects/medbioinf/data/illumina_nygc/output/reduced/PRJEB36890.698/HG00512_ERR3988780.fasta.gz	1
-23	HG00731	/gpfs/project/projects/medbioinf/data/hgsvc_hifi/HG00731	5	n/a	0	/gpfs/project/projects/medbioinf/data/illumina_nygc/output/reduced/PRJEB31736.2504/HG00731_ERR3241754.fasta.gz	1
+23	HG00731	/gpfs/project/projects/medbioinf/data/hgsvc_hifi/HG00731	5	/gpfs/project/projects/medbioinf/data/hgsvc_ontul/HG00731	4	/gpfs/project/projects/medbioinf/data/illumina_nygc/output/reduced/PRJEB31736.2504/HG00731_ERR3241754.fasta.gz	1
 24	HG03371	/gpfs/project/projects/medbioinf/data/hgsvc_hifi/HG03371	3	/gpfs/project/projects/medbioinf/data/hgsvc_ontul/HG03371	2	/gpfs/project/projects/medbioinf/data/illumina_nygc/output/reduced/PRJEB36890.698/HG03371_ERR3989162.fasta.gz	1
 25	HG02011	/gpfs/project/projects/medbioinf/data/hgsvc_hifi/HG02011	3	/gpfs/project/projects/medbioinf/data/hgsvc_ontul/HG02011	3	/gpfs/project/projects/medbioinf/data/illumina_nygc/output/reduced/PRJEB36890.698/HG02011_ERR3988973.fasta.gz	1
 26	HG03456	/gpfs/project/projects/medbioinf/data/hgsvc_hifi/HG03456	3	/gpfs/project/projects/medbioinf/data/hgsvc_ontul/HG03456	2	/gpfs/project/projects/medbioinf/data/illumina_nygc/output/reduced/PRJEB36890.698/HG03456_ERR3989168.fasta.gz	1

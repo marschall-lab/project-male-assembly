@@ -16,7 +16,7 @@ rule dump_short_read_kmers:
         '../envs/biotools.yaml'
     threads: config['num_cpu_medium']
     resources:
-        mem_mb = lambda wildcards, input, attempt: int(input.size_mb * 5 * attempt * 0.75),
+        mem_mb = lambda wildcards, input, attempt: int(input.size_mb * 2 * attempt * 0.75),
         walltime = lambda wildcards, attempt: f'{attempt**3:02}:59:00'
     params:
         kmer_size = 31,

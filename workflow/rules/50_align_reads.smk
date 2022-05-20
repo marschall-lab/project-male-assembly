@@ -54,7 +54,7 @@ rule align_reads_to_assembly_paf:
         'rsrc/output/alignments/reads-to-assm/{sample}.{other_reads}_aln-to_{hifi_type}.{ont_type}.na.{chrom}.mmap-paf.rsrc'
     wildcard_constraints:
         chrom = 'wg'
-    threads: int(config['num_cpu_medium']) + int(config['num_cpu_high'])
+    threads: config['num_cpu_high']
     conda:
         '../envs/biotools.yaml'
     resources:
@@ -82,7 +82,7 @@ rule align_reads_to_assembly_bam:
         'rsrc/output/alignments/reads-to-assm/{sample}.{other_reads}_aln-to_{hifi_type}.{ont_type}.na.{chrom}.mmap-bam.rsrc'
     wildcard_constraints:
         chrom = 'wg'
-    threads: int(config['num_cpu_medium']) + int(config['num_cpu_high'])
+    threads: config['num_cpu_high']
     conda:
         '../envs/biotools.yaml'
     resources:

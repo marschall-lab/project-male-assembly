@@ -1,0 +1,23 @@
+Bootstrap: localimage
+From: base.sif
+
+%post
+export PATH=/opt/conda/bin:$PATH
+mkdir repos
+cd repos
+git clone https://github.com/ablab/VerityMap.git
+cd VerityMap
+git checkout v2.1.1-alpha
+mamba install --file requirements.txt
+# add all the requirements that are not part of the requirements file...
+mamba install make \
+cmake \
+pkg-config \
+cxx-compiler
+cd veritymap
+make
+mamba remove make cmake cxx-compiler
+mamba clean --index-cache --tarballs --packages --yes
+
+%labels
+VERITYMAP v2.1.1-alpha

@@ -1,0 +1,11 @@
+Bootstrap: localimage
+From: base.sif
+
+%files
+veritymap.yaml veritymap.yaml
+
+%post
+export PATH=/opt/conda/bin:$PATH
+mamba env update --quiet --file /veritymap.yaml --name base
+mamba clean --index-cache --tarballs --packages --yes
+

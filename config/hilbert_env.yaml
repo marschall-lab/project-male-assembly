@@ -4,7 +4,9 @@ reference_container_names:
   - ncbi-t2t-chm13hg002_v0
   - ncbi-hg38-bwaidx_v0
 
-container_store: '/gpfs/project/projects/medbioinf/container'
+container_store: /gpfs/project/projects/medbioinf/container
+
+veritymap_repo: /gpfs/project/ebertp/data/repository/VerityMap
 
 path_sample_table: /gpfs/project/projects/medbioinf/projects/hgsvc/2021_pgas/project-diploid-assembly/annotation/samples/samples.tsv
 path_hifirw_reads:

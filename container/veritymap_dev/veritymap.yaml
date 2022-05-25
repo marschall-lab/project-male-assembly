@@ -1,0 +1,16 @@
+name: veritymap
+dependencies:
+  - Python=3.9.*
+  - pip
+  - biopython=1.79
+  - click
+  - numpy=1.22.4
+  - plotly=5.8.0
+  - python-slugify=6.1.2
+  - text-unidecode=1.3
+  - tenacity=8.0.1
+  - make
+  - cmake>=3.12
+  - pkg-config
+  - cxx-compiler
+  - zlib=1.2.11

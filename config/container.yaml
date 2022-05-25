@@ -3,3 +3,4 @@ container:
   deepvariant: deepvariant_v1.3.0.sif
   pepperdv: pepper-deepvariant_v0.8-v1.3.sif
   veritymap: veritymap_v2.1.1-alpha.sif
+  veritymap_env: veritymap_env.sif

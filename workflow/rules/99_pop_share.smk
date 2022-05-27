@@ -82,7 +82,7 @@ rule copy_verkko_subset_assembly:
         ok = 'output/share/assemblies/verkko_{major}_{minor}/{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.copied.ok'
     wildcard_constraints:
         mapq = 'na',
-        chrom = 'chrY'
+        chrom = '(chrY|chrX)'
     priority: 100
     run:
         import pathlib as pl

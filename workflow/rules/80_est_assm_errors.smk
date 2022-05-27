@@ -73,6 +73,49 @@ rule build_veritymap:
         'touch {output}'
 
 
+rule run_chrom_veritymap:
+    """
+    NB: important to execute the main.py at the right
+    location due to the setup horror explained above.
+    Since main is messing with sys.path, VerityMap
+    can be properly executed irrespective of the install/setup
+    into "." locations by pip.
+    """
+    input:
+        build_ok = 'repos/veritymap.build.ok',
+        reads = 'output/subset_wg/45_extract_reads/{sample}.{other_reads}_aln-to_{hifi_type}.{ont_type}.na.{chrom}.reads.fasta.gz',
+        assembly = 'output/subset_wg/20_extract_contigs/{sample}.{hifi_type}.{ont_type}.na.{chrom}.fasta',
+    output:
+        chk = 'output/eval/assm_errors/{sample}.{hifi_type}.{ont_type}.na.{chrom}.{other_reads}.vm.chk'
+    log:
+        'log/output/eval/assm_errors/{sample}.{hifi_type}.{ont_type}.na.{chrom}.{other_reads}.vm.log'
+    benchmark:
+        'rsrc/output/eval/assm_errors/{sample}.{hifi_type}.{ont_type}.na.{chrom}.{other_reads}.vm.rsrc'
+    wildcard_constraints:
+        chrom = '(chrY|chrX)'
+    singularity:
+        f'{config["container_store"]}/{config["container"]["veritymap_env"]}'
+    threads: config['num_cpu_low']
+    resources:
+        mem_mb = lambda wildcards, attempt: 8192 * attempt,
+        walltime = lambda wildcards, attempt: f'{11*attempt}:59:00'
+    params:
+        preset = lambda wildcards: {'HIFIRW': 'hifi', 'ONTUL': 'ont'}[wildcards.other_reads],
+        outdir = lambda wildcards, output: output.chk.rsplit('.', 2)[0]
+    shell:
+        'python repos/VerityMap/veritymap/main.py --no-reuse --reads {input.reads} -t {threads} '
+        '-d {params.preset} -l {wildcards.sample} -o {params.outdir} {input.assembly} &> {log}'
+            ' && '
+        'touch {output.chk}'
+
+
+###########################
+# BELOW: DEPRECATED
+# VerityMap cannot process
+# a diploid genome
+###########################
+
+
 rule merge_read_sets:
     """
     VerityMap only supports a single
@@ -92,7 +135,7 @@ rule merge_read_sets:
         'seqtk seq -A -C {input.reads} | pigz -p {threads} --best > {output.reads}'
 
 
-rule run_veritymap:
+rule run_wg_veritymap:
     """
     NB: important to execute the main.py at the right
     location due to the setup horror explained above.

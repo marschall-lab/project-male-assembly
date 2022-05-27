@@ -83,36 +83,58 @@ rule determine_contig_order:
 rule extract_y_contigs:
     input:
         wg_assm = 'output/hybrid/verkko/{sample}.{hifi_type}.{ont_type}.na.wg/assembly.fasta',
-        wg_hifi_cov = 'output/hybrid/verkko/{sample}.{hifi_type}.{ont_type}.na.wg/assembly.hifi-coverage.csv',
-        wg_ont_cov = 'output/hybrid/verkko/{sample}.{hifi_type}.{ont_type}.na.wg/assembly.ont-coverage.csv',
-        ren_json = 'output/subset_wg/15_order_contigs/{sample}.{hifi_type}.{ont_type}.na.chrY.names.otn-map.json',
-        ren_sed = 'output/subset_wg/15_order_contigs/{sample}.{hifi_type}.{ont_type}.na.chrY.names.otn-map.sed',
-        sub_bed = 'output/subset_wg/10_find_contigs/{sample}.{hifi_type}.{ont_type}.na.chrY.bed',
+        ren_y_json = 'output/subset_wg/15_order_contigs/{sample}.{hifi_type}.{ont_type}.na.chrY.names.otn-map.json',
+        ren_x_json = 'output/subset_wg/15_order_contigs/{sample}.{hifi_type}.{ont_type}.na.chrX.names.otn-map.json',
     output:
         ren_assm = 'output/hybrid/renamed/{sample}.{hifi_type}.{ont_type}.na.wg.fasta',
-        ren_hifi_cov = 'output/hybrid/renamed/{sample}.{hifi_type}.{ont_type}.na.wg.hifi-coverage.csv',
-        ren_ont_cov = 'output/hybrid/renamed/{sample}.{hifi_type}.{ont_type}.na.wg.ont-coverage.csv',
-        sub_assm = 'output/subset_wg/20_extract_contigs/{sample}.{hifi_type}.{ont_type}.na.chrY.fasta',
-        sub_bed = 'output/subset_wg/20_extract_contigs/{sample}.{hifi_type}.{ont_type}.na.chrY.bed',
-        sub_names = 'output/subset_wg/20_extract_contigs/{sample}.{hifi_type}.{ont_type}.na.chrY.names.txt'
+        sub_y_assm = 'output/subset_wg/20_extract_contigs/{sample}.{hifi_type}.{ont_type}.na.chrY.fasta',
+        sub_x_assm = 'output/subset_wg/20_extract_contigs/{sample}.{hifi_type}.{ont_type}.na.chrX.fasta',
     conda:
         '../envs/pyscript.yaml'
     resources:
         walltime = lambda wildcards, attempt: f'{attempt*attempt}:59:59',
-        mem_mb = lambda wildcards, attempt: 4096 * attempt
+        mem_mb = lambda wildcards, attempt: 2048 * attempt
     params:
         script_exec = find_script_path('rename_extract_assembly.py')
     shell:
-        '{params.script_exec} --input-fasta {input.wg_assm} --name-map {input.ren_json} '
-        '--out-wg {output.ren_assm} --out-sub {output.sub_assm}'
+        '{params.script_exec} --input-fasta {input.wg_assm} --out-wg {output.ren_assm} '
+            '--name-map {input.ren_y_json} {input.ren_x_json} '
+            '--out-sub {output.sub_y_assm} {output.sub_x_assm}'
+
+
+rule rename_verkko_coverage_tables:
+    input:
+        wg_hifi_cov = 'output/hybrid/verkko/{sample}.{hifi_type}.{ont_type}.na.wg/assembly.hifi-coverage.csv',
+        wg_ont_cov = 'output/hybrid/verkko/{sample}.{hifi_type}.{ont_type}.na.wg/assembly.ont-coverage.csv',
+        ren_y_sed = 'output/subset_wg/15_order_contigs/{sample}.{hifi_type}.{ont_type}.na.chrY.names.otn-map.sed',
+        sub_y_bed = 'output/subset_wg/10_find_contigs/{sample}.{hifi_type}.{ont_type}.na.chrY.bed',
+        ren_x_sed = 'output/subset_wg/15_order_contigs/{sample}.{hifi_type}.{ont_type}.na.chrX.names.otn-map.sed',
+        ren_x_bed = 'output/subset_wg/10_find_contigs/{sample}.{hifi_type}.{ont_type}.na.chrX.bed',
+    output:
+        ren_hifi_cov = 'output/hybrid/renamed/{sample}.{hifi_type}.{ont_type}.na.wg.hifi-coverage.csv',
+        ren_ont_cov = 'output/hybrid/renamed/{sample}.{hifi_type}.{ont_type}.na.wg.ont-coverage.csv',
+        merge_sed = 'output/subset_wg/15_order_contigs/{sample}.{hifi_type}.{ont_type}.na.chrY-chrX.names.otn-map.sed',
+        sub_y_bed = 'output/subset_wg/20_extract_contigs/{sample}.{hifi_type}.{ont_type}.na.chrY.bed',
+        sub_y_names = 'output/subset_wg/20_extract_contigs/{sample}.{hifi_type}.{ont_type}.na.chrY.names.txt',
+        sub_x_bed = 'output/subset_wg/20_extract_contigs/{sample}.{hifi_type}.{ont_type}.na.chrX.bed',
+        sub_x_names = 'output/subset_wg/20_extract_contigs/{sample}.{hifi_type}.{ont_type}.na.chrX.names.txt'
+    resources:
+        walltime = lambda wildcards, attempt: f'{attempt:02}:59:59',
+        mem_mb = lambda wildcards, attempt: 1024 * attempt
+    shell:
+        'cat {input.ren_y_sed} {input.ren_x_sed} > {output.merge_sed}'
             ' && '
-        'sed -f {input.ren_sed} {input.wg_ont_cov} > {output.ren_ont_cov}'
+        'sed -f {output.merge_sed} {input.wg_ont_cov} > {output.ren_ont_cov}'
             ' && '
-        'sed -f {input.ren_sed} {input.wg_hifi_cov} > {output.ren_hifi_cov}'
+        'sed -f {output.merge_sed} {input.wg_hifi_cov} > {output.ren_hifi_cov}'
             ' && '
-        'sed -f {input.ren_sed} {input.sub_bed} > {output.sub_bed}'
+        'sed -f {input.ren_y_sed} {input.sub_y_bed} > {output.sub_y_bed}'
             ' && '
-        'cut -f 1 {output.sub_bed} | sort > {output.sub_names}'
+        'cut -f 1 {output.sub_y_bed} | sort > {output.sub_y_names}'
+            ' && '
+        'sed -f {input.ren_x_sed} {input.sub_x_bed} > {output.sub_x_bed}'
+            ' && '
+        'cut -f 1 {output.sub_x_bed} | sort > {output.sub_x_names}'
 
 
 rule extract_contig_alignments_paf:

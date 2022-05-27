@@ -71,10 +71,11 @@ rule run_all:
             motif=config['motif_search']
         ),
         subset_assm = expand(
-            'output/subset_wg/20_extract_contigs/{sample}.{hifi_type}.{ont_type}.na.chrY.fasta',
+            'output/subset_wg/20_extract_contigs/{sample}.{hifi_type}.{ont_type}.na.{chrom}.fasta',
             sample=COMPLETE_SAMPLES,
             hifi_type=['HIFIRW'],
             ont_type=['ONTUL'],
+            chrom=['chrY', 'chrX']
         ),
         subset_ctg_aln = expand(
             'output/subset_wg/30_extract_ctgaln/{sample}.{hifi_type}.{ont_type}.na.chrY_aln-to_{reference}.{ext}',
@@ -134,6 +135,14 @@ rule run_all:
             sample=COMPLETE_SR_SAMPLES,
             hifi_type=['HIFIRW'],
             ont_type=['ONTUL']
+        ),
+        vm_assm_errors = expand(
+            'output/eval/assm_errors/{sample}.{hifi_type}.{ont_type}.na.{chrom}.{other_reads}.vm.chk',
+            sample=COMPLETE_SAMPLES,
+            hifi_type=['HIFIRW'],
+            ont_type=['ONTUL'],
+            other_reads=['HIFIRW', 'ONTUL'],
+            chrom=['chrX', 'chrY']
         )
 
 
@@ -153,7 +162,7 @@ rule populate_share:
             hifi_type=['HIFIRW'],
             ont_type=['ONTUL'],
             mapq=['na'],
-            chrom=['wg', 'chrY'],
+            chrom=['wg', 'chrY', 'chrX'],
             major=config['verkko_major'].strip('"'),
             minor=config['verkko_minor'].strip('"'),
         ),

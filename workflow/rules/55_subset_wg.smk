@@ -54,17 +54,19 @@ rule determine_contig_order:
     makes only sense for a complete assembly, i.e. T2T
     """
     input:
-        ctg_names = 'output/subset_wg/10_find_contigs/{sample}.{hifi_type}.{ont_type}.na.chrY.names.txt',
+        ctg_names = 'output/subset_wg/10_find_contigs/{sample}.{hifi_type}.{ont_type}.na.{chrom}.names.txt',
         ctg_aln = 'output/alignments/contigs-to-ref/00_raw/{sample}.{hifi_type}.{ont_type}.na.wg_aln-to_T2TXY.paf.gz',
         seq_classes = lambda wildcards: f'references_derived/{config["reference_y_seq_classes"]["T2TXY"]}.bed',
         ref_cov = 'output/eval/contigs-to-ref/00_raw/{sample}.{hifi_type}.{ont_type}.na.wg_aln-to_T2TXY.ref-cov.tsv',
     output:
-        new_names = 'output/subset_wg/15_order_contigs/{sample}.{hifi_type}.{ont_type}.na.chrY.names.txt',
+        new_names = 'output/subset_wg/15_order_contigs/{sample}.{hifi_type}.{ont_type}.na.{chrom}.names.txt',
         name_maps = multiext(
-            'output/subset_wg/15_order_contigs/{sample}.{hifi_type}.{ont_type}.na.chrY.names',
+            'output/subset_wg/15_order_contigs/{sample}.{hifi_type}.{ont_type}.na.{chrom}.names',
             '.otn-map.tsv', '.otn-map.json', '.otn-map.sed',
             '.nto-map.tsv', '.nto-map.json', '.nto-map.sed'
         )
+    wildcard_constraints:
+        chrom = '(chrY|chrX)'
     conda:
         '../envs/pyscript.yaml'
     resources:
@@ -75,7 +77,7 @@ rule determine_contig_order:
         '{params.script_exec} --sample-name {wildcards.sample} --names {input.ctg_names} '
             '--seq-classes {input.seq_classes} --class-coverage {input.ref_cov} '
             '--paf {input.ctg_aln} --output {output.new_names} '
-            '--dump-mappings tsv json sed'
+            '--dump-mappings tsv json sed --process-chrom {wildcards.chrom}'
 
 
 rule extract_y_contigs:

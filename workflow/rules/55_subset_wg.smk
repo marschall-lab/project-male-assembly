@@ -1,6 +1,6 @@
 
 
-rule determine_chry_contigs:
+rule determine_chrom_contigs:
     """
     This makes only sense relative to a complete chrY, i.e. T2T,
     hence reference is hard-coded
@@ -8,6 +8,15 @@ rule determine_chry_contigs:
     NB: this rule is only executed on the raw Verkko output, i.e.,
     it it a prerequisite for identifying and renaming the assembled
     chrY contigs, but its output is not used afterwards
+
+    Update: 2022-05-27
+    chrX also needs to be extracted to take a look at the PAR regions.
+    However, since no sequence motifs are available to aid in the
+    identification of the respective contigs, the "agg_motifs"
+    input will effectively be ignored by the script, and no
+    further interpretation of the contigs is performed as part
+    of this pipeline (all downstream).
+
     """
     input:
         agg_ctg_aln = expand(
@@ -23,18 +32,20 @@ rule determine_chry_contigs:
             mapq='na'
         )
     output:
-        table = 'output/subset_wg/10_find_contigs/{sample}.{hifi_type}.{ont_type}.na.chrY.stats.tsv',
-        names = 'output/subset_wg/10_find_contigs/{sample}.{hifi_type}.{ont_type}.na.chrY.names.txt',
-        bed = 'output/subset_wg/10_find_contigs/{sample}.{hifi_type}.{ont_type}.na.chrY.bed',
+        table = 'output/subset_wg/10_find_contigs/{sample}.{hifi_type}.{ont_type}.na.{chrom}.stats.tsv',
+        names = 'output/subset_wg/10_find_contigs/{sample}.{hifi_type}.{ont_type}.na.{chrom}.names.txt',
+        bed = 'output/subset_wg/10_find_contigs/{sample}.{hifi_type}.{ont_type}.na.{chrom}.bed',
+    wildcard_constraints:
+        chrom = '(chrY|chrX)'
     conda:
         '../envs/pyscript.yaml'
     resources:
         mem_mb = lambda wildcards, attempt: 1024 * attempt
     params:
-        script_exec = find_script_path('determine_y_contigs.py')
+        script_exec = find_script_path('identify_contigs.py')
     shell:
-        '{params.script_exec} --agg-align {input.agg_ctg_aln} --agg-motif {input.agg_motifs} '
-            '--out-stats {output.table} --out-names {output.names} --out-bed {output.bed}'
+        '{params.script_exec} --select-chrom {wildcards.chrom} --agg-align {input.agg_ctg_aln} '
+            '--agg-motif {input.agg_motifs} --out-stats {output.table} --out-names {output.names} --out-bed {output.bed}'
 
 
 rule determine_contig_order:
@@ -154,6 +165,41 @@ rule extract_read_alignments_paf:
         mem_mb = lambda wildcards, attempt: 1024 * attempt
     shell:
         'zgrep -w -F -f {input.names} {input.paf} | pigz -p 4 --best > {output.paf}'
+
+
+rule extract_read_names:
+    """
+    This rule exists to run VerityMap, which does not support
+    diploid genome assemblies, i.e., need to run only on
+    chrY and chrX
+    """
+    input:
+        paf = 'output/subset_wg/40_extract_rdaln/{sample}.{other_reads}_aln-to_{hifi_type}.{ont_type}.na.{chrom}.paf.gz'
+    output:
+        txt = 'output/subset_wg/40_extract_rdaln/{sample}.{other_reads}_aln-to_{hifi_type}.{ont_type}.na.{chrom}.read-names.txt'
+    wildcard_constraints:
+        chrom = '(chrX|chrY)'
+    resources:
+        mem_mb = lambda wildcards, attempt: 1024 * attempt
+    shell:
+        'zcat {input.paf} | cut -f 1 | sort | uniq > {output.txt}'
+
+
+rule extract_read_subset:
+    input:
+        reads = select_input_reads,
+        names = 'output/subset_wg/40_extract_rdaln/{sample}.{other_reads}_aln-to_{hifi_type}.{ont_type}.na.{chrom}.read-names.txt'
+    output:
+        fasta = 'output/subset_wg/45_extract_reads/{sample}.{other_reads}_aln-to_{hifi_type}.{ont_type}.na.{chrom}.reads.fasta.gz'
+    wildcard_constraints:
+        chrom = '(chrX|chrY)'
+    conda:
+        '../envs/biotools.yaml'
+    threads: 4
+    resources:
+        mem_mb = lambda wildcards, attempt: 1024 * attempt
+    shell:
+        'seqtk subseq {input.reads} {input.names} | seqtk seq -A -C | pigz --best -p {threads} > {output.fasta}'
 
 
 rule extract_read_alignments_bam:

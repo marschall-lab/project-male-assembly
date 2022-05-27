@@ -3,6 +3,7 @@
 import pathlib as pl
 import argparse as argp
 import csv
+import functools as fnt
 
 import pandas as pd
 
@@ -59,15 +60,24 @@ def parse_command_line():
         required=False,
         help='Path to chrY contigs (BED format)'
     )
+    parser.add_argument(
+        '--select-chrom',
+        '-c',
+        type=str,
+        default='chrY',
+        choices=['chrY', 'chrX'],
+        dest='chrom',
+        help='Specify chromosome to select: chrY (default) or chrX'
+    )
     args = parser.parse_args()
     return args
 
 
 # TODO: make a generic "apply_rule" function
 # and avoid code duplication
-def rule_select_y_only_alignments(table, reason):
+def rule_select_chrom_only_alignments(table, reason, chrom):
 
-    chry_align_columns = [c for c in table.columns if c.startswith('num_aln_chrY')]
+    chry_align_columns = [c for c in table.columns if c.startswith(f'num_aln_{chrom}')]
     other_align_columns = [c for c in table.columns if c.startswith('num_aln') and c not in chry_align_columns]
 
     select_y = table[chry_align_columns].sum(axis=1) > 0
@@ -117,10 +127,10 @@ def rule_select_unaligned_specific_hits(table, motif, reason):
     return select, remain
 
 
-def rule_select_majority_primary_alignment(table, reason):
+def rule_select_majority_primary_alignment(table, reason, chrom):
 
-    chry_primary_column = 'pct_aln_chrY_PRI'
-    selector = table[chry_primary_column] > PRIMARY_ALN_THRESHOLD_PCT
+    chrom_primary_column = f'pct_aln_{chrom}_PRI'
+    selector = table[chrom_primary_column] > PRIMARY_ALN_THRESHOLD_PCT
     select, remain = apply_selector(selector, table, reason)
     return select, remain
 
@@ -137,7 +147,7 @@ def apply_selector(selector, table, reason):
     return selected_contigs, remaining_contigs
 
 
-def merge_aggregated_tables(align, motifs):
+def merge_aggregated_tables(align, motifs, chrom):
 
     keep_motif_columns = [
         'target',  # tig name
@@ -146,82 +156,86 @@ def merge_aggregated_tables(align, motifs):
 
     df = pd.read_csv(align, sep='\t', header=0)
     processed_motifs = []
-    for motif_table in motifs:
-        tmp = pd.read_csv(motif_table, sep='\t', header=0)
-        motif_name = tmp['query'].unique()
-        processed_motifs.append(motif_name)
-        assert len(motif_name) == 1
-        motif_name = motif_name[0]
-        drop_columns = [c for c in tmp.columns if c not in keep_motif_columns]
-        tmp.drop(drop_columns, axis=1, inplace=True)
-        tmp.rename(
-            {
-                'target': 'tig',
-                'num_hits_hiq': f'num_hits_hiq_{motif_name}'
-            },
-            axis=1,
-            inplace=True
-        )
-        df = df.merge(tmp, how='outer', left_on='tig', right_on='tig')
-    df.fillna(0, inplace=True)
+    if chrom == 'chrY':
+        for motif_table in motifs:
+            tmp = pd.read_csv(motif_table, sep='\t', header=0)
+            motif_name = tmp['query'].unique()
+            processed_motifs.append(motif_name)
+            assert len(motif_name) == 1
+            motif_name = motif_name[0]
+            drop_columns = [c for c in tmp.columns if c not in keep_motif_columns]
+            tmp.drop(drop_columns, axis=1, inplace=True)
+            tmp.rename(
+                {
+                    'target': 'tig',
+                    'num_hits_hiq': f'num_hits_hiq_{motif_name}'
+                },
+                axis=1,
+                inplace=True
+            )
+            df = df.merge(tmp, how='outer', left_on='tig', right_on='tig')
+        df.fillna(0, inplace=True)
     return df, processed_motifs
 
 
-def select_chry_contigs(table):
+def select_chrom_contigs(table, chrom):
 
     selected = []
     remaining = table.copy()
 
-    reason = "Rule 1: only chrY alignments"
-    subset, remaining = rule_select_y_only_alignments(
+    reason = f"Rule 1: only {chrom} alignments"
+    subset, remaining = rule_select_chrom_only_alignments(
         remaining,
-        reason
+        reason,
+        chrom
     )
     if subset is not None:
         print(reason, ': ', subset.shape[0])
         selected.append(subset)
 
-    for motif in Y_SPECIFIC_MOTIFS:
-        reason = f"Rule 2: mixed alignments with specific motif hits [{motif}]"
-        subset, remaining = rule_select_y_specific_motif_hits(
-            remaining,
-            motif,
-            reason
-        )
-        if subset is not None:
-            print(reason, ': ', subset.shape[0])
-            selected.append(subset)
+    if chrom == 'chrY':
 
-    for motif in UNSPECIFIC_MOTIFS:
-        reason = f"Rule 3: mixed alignments (primary to chrY) with many (>{UNSPECIFIC_THRESHOLD}) unspecific motif hits [{motif}]"
-        subset, remaining = rule_select_many_unspecific_motif_hits(
-            remaining,
-            motif,
-            reason
-        )
-        if subset is not None:
-            print(reason, ': ', subset.shape[0])
-            selected.append(subset)
+        for motif in Y_SPECIFIC_MOTIFS:
+            reason = f"Rule 2: mixed alignments with specific motif hits [{motif}]"
+            subset, remaining = rule_select_y_specific_motif_hits(
+                remaining,
+                motif,
+                reason
+            )
+            if subset is not None:
+                print(reason, ': ', subset.shape[0])
+                selected.append(subset)
 
-    for motif in Y_SPECIFIC_MOTIFS:
-        reason = f"Rule 4: unaligned contigs with specific motif hits [{motif}]"
-        subset, remaining = rule_select_unaligned_specific_hits(
-            remaining,
-            motif,
-            reason
-        )
-        if subset is not None:
-            print(reason, ': ', subset.shape[0])
-            selected.append(subset)
+        for motif in UNSPECIFIC_MOTIFS:
+            reason = f"Rule 3: mixed alignments (primary to chrY) with many (>{UNSPECIFIC_THRESHOLD}) unspecific motif hits [{motif}]"
+            subset, remaining = rule_select_many_unspecific_motif_hits(
+                remaining,
+                motif,
+                reason
+            )
+            if subset is not None:
+                print(reason, ': ', subset.shape[0])
+                selected.append(subset)
 
-    reason = f"Rule 5: majority (>{PRIMARY_ALN_THRESHOLD_PCT}% bp) of contig primary alignments to chrY"
-    subset, remaining = rule_select_majority_primary_alignment(remaining, reason)
+        for motif in Y_SPECIFIC_MOTIFS:
+            reason = f"Rule 4: unaligned contigs with specific motif hits [{motif}]"
+            subset, remaining = rule_select_unaligned_specific_hits(
+                remaining,
+                motif,
+                reason
+            )
+            if subset is not None:
+                print(reason, ': ', subset.shape[0])
+                selected.append(subset)
+
+    reason = f"Rule 5: majority (>{PRIMARY_ALN_THRESHOLD_PCT}% bp) of contig primary alignments to {chrom}"
+    subset, remaining = rule_select_majority_primary_alignment(remaining, reason, chrom)
     if subset is not None:
         print(reason, ': ', subset.shape[0])
         selected.append(subset)
 
     if not selected:
-        raise RuntimeError('No chromosome Y contigs selected')
+        raise RuntimeError(f'No {chrom} contigs selected')
     selected = pd.concat(selected, axis=0, ignore_index=False)
     selected['reason'] = '"' + selected['reason'] + '"'
     num_columns = [c for c in selected.columns if c not in ['tig', 'reason']]
@@ -229,13 +243,13 @@ def select_chry_contigs(table):
     return selected
 
 
-def keep_stats_columns(column):
+def keep_stats_columns(chrom, column):
 
     if column in ['tig', 'tig_length', 'reason']:
         keep = True
     elif 'hits' in column:
         keep = True
-    elif 'chrY' in column:
+    elif chrom in column:
         keep = True
     else:
         keep = False
@@ -245,9 +259,11 @@ def keep_stats_columns(column):
 def main():
 
     args = parse_command_line()
-    df, motifs = merge_aggregated_tables(args.align, args.motifs)
-    selected = select_chry_contigs(df)
-    keep_columns = list(filter(keep_stats_columns, selected.columns))
+    df, motifs = merge_aggregated_tables(args.align, args.motifs, args.chrom)
+    selected = select_chrom_contigs(df, args.chrom)
+
+    keep_chrom_stats_columns = fnt.partial(keep_stats_columns, args.chrom)
+    keep_columns = list(filter(keep_chrom_stats_columns, selected.columns))
 
     args.out_stats.parent.mkdir(parents=True, exist_ok=True)
     selected.sort_values(['tig_length', 'tig'], inplace=True, ascending=False)

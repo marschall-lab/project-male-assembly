@@ -179,9 +179,11 @@ rule extract_contig_alignments_bam:
 rule extract_read_alignments_paf:
     input:
         paf = 'output/alignments/reads-to-assm/{sample}.{other_reads}_aln-to_{hifi_type}.{ont_type}.na.wg.paf.gz',
-        names = 'output/subset_wg/20_extract_contigs/{sample}.{hifi_type}.{ont_type}.na.chrY.names.txt'
+        names = 'output/subset_wg/20_extract_contigs/{sample}.{hifi_type}.{ont_type}.na.{chrom}.names.txt'
     output:
-        paf = 'output/subset_wg/40_extract_rdaln/{sample}.{other_reads}_aln-to_{hifi_type}.{ont_type}.na.chrY.paf.gz'
+        paf = 'output/subset_wg/40_extract_rdaln/{sample}.{other_reads}_aln-to_{hifi_type}.{ont_type}.na.{chrom}.paf.gz'
+    wildcard_constraints:
+        chrom = '(chrX|chrY)'
     conda:
         '../envs/biotools.yaml'
     threads: 4

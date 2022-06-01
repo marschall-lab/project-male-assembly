@@ -90,8 +90,20 @@ def main():
                     nucs = col.Counter(record.sequence.upper())
                     raise ValueError(f'Illegel characters in sequence record {record.name}: {nucs}')
                 out_name = name_maps.get(record.name, record.name)
-                if '.RV.' in out_name:
-                    out_seq = record.sequence.translate(revcomp_table)[::-1]
+
+                # hard-coded exception (see gh#3)
+                # this contig represents an inversion relative to T2T-Y,
+                # and should thus be reversed despite aligning in forward
+                # orientation (request by Pille H.)
+                if 'unassigned-0009118.HG03492' in out_name:
+                    if '.FW.':
+                        out_seq = record.sequence.translate(revcomp_table)[::-1]
+                        out_name = out_name.replace('.FW.', '.RV.')
+                    else:
+                        # hm, quite unexpected, but should be as intended then
+                        pass
+                elif '.RV.' in out_name:
+                    out_seq = record.sequence.translate(revcomp_table)[::-1]               
                 else:
                     out_seq = record.sequence
                 fasta_wg.write(out_name, out_seq)

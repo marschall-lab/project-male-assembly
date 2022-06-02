@@ -97,8 +97,12 @@ def main():
                 # orientation (request by Pille H.)
                 if 'unassigned-0009118.HG03492' in out_name:
                     if '.FW.':
+                        # because the name will be changed, need to update
+                        # the subset_buffers/subset_names
+                        subset_idx = subset_names[out_name]
                         out_seq = record.sequence.translate(revcomp_table)[::-1]
                         out_name = out_name.replace('.FW.', '.RV.')
+                        subset_names[out_name] = subset_idx
                     else:
                         # hm, quite unexpected, but should be as intended then
                         pass
@@ -114,7 +118,6 @@ def main():
     for subset_idx, output_subset in enumerate(args.out_sub):
         output_subset.parent.mkdir(parents=True, exist_ok=True)
         with dnaio.FastaWriter(output_subset) as fasta_sub:
-            print(output_subset)
             for name, seq in sorted(subset_buffers[subset_idx]):
                 fasta_sub.write(name, seq)
 

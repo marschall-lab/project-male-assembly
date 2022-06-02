@@ -80,7 +80,7 @@ rule determine_contig_order:
             '--dump-mappings tsv json sed --process-chrom {wildcards.chrom}'
 
 
-rule extract_y_contigs:
+rule extract_chrom_contigs:
     input:
         wg_assm = 'output/hybrid/verkko/{sample}.{hifi_type}.{ont_type}.na.wg/assembly.fasta',
         ren_y_json = 'output/subset_wg/15_order_contigs/{sample}.{hifi_type}.{ont_type}.na.chrY.names.otn-map.json',
@@ -109,7 +109,7 @@ rule rename_verkko_coverage_tables:
         ren_y_sed = 'output/subset_wg/15_order_contigs/{sample}.{hifi_type}.{ont_type}.na.chrY.names.otn-map.sed',
         sub_y_bed = 'output/subset_wg/10_find_contigs/{sample}.{hifi_type}.{ont_type}.na.chrY.bed',
         ren_x_sed = 'output/subset_wg/15_order_contigs/{sample}.{hifi_type}.{ont_type}.na.chrX.names.otn-map.sed',
-        ren_x_bed = 'output/subset_wg/10_find_contigs/{sample}.{hifi_type}.{ont_type}.na.chrX.bed',
+        sub_x_bed = 'output/subset_wg/10_find_contigs/{sample}.{hifi_type}.{ont_type}.na.chrX.bed',
     output:
         ren_hifi_cov = 'output/hybrid/renamed/{sample}.{hifi_type}.{ont_type}.na.wg.hifi-coverage.csv',
         ren_ont_cov = 'output/hybrid/renamed/{sample}.{hifi_type}.{ont_type}.na.wg.ont-coverage.csv',
@@ -223,7 +223,7 @@ rule extract_read_subset:
         '../envs/biotools.yaml'
     threads: 4
     resources:
-        mem_mb = lambda wildcards, attempt: 1024 * attempt
+        mem_mb = lambda wildcards, attempt: 32768 + 32768 * attempt
     shell:
         'seqtk subseq {input.reads} {input.names} | seqtk seq -A -C | pigz --best -p {threads} > {output.fasta}'
 

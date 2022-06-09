@@ -35,7 +35,7 @@ SAMPLES, SHORT_READ_SAMPLE_NAMES = read_sample_table()  # requires config['sampl
 SAMPLE_DATA = collect_sample_data(SAMPLES, SHORT_READ_SAMPLE_NAMES)
 SAMPLE_NAMES = sorted(SAMPLES['sample'].values)
 
-CURRENT_ERROR_SAMPLES = ['NA19317']  # waiting for more data
+CURRENT_ERROR_SAMPLES = []
 COMPLETE_SAMPLES = [s for s in SAMPLE_NAMES if s not in CURRENT_ERROR_SAMPLES]
 COMPLETE_SR_SAMPLES = [s for s in SHORT_READ_SAMPLE_NAMES if s not in CURRENT_ERROR_SAMPLES]
 

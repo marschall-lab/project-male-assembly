@@ -82,6 +82,15 @@ def main():
 
     args.out_wg.parent.mkdir(parents=True, exist_ok=True)
 
+    # 2022-06-09
+    # list of wrongly inverted contigs (coincide with actual inversions)
+    # all contigs identified by Pille H.
+    # Also see comment below
+    wrong_inv = [
+        'unassigned-0009118.HG03492',
+        'unassigned-0002359.NA19239'
+    ]
+
     subset_buffers = col.defaultdict(list)
     with dnaio.FastaWriter(args.out_wg) as fasta_wg:
         with dnaio.open(args.input_fasta) as fasta_in:
@@ -95,8 +104,8 @@ def main():
                 # this contig represents an inversion relative to T2T-Y,
                 # and should thus be reversed despite aligning in forward
                 # orientation (request by Pille H.)
-                if 'unassigned-0009118.HG03492' in out_name:
-                    if '.FW.':
+                if any(contig_name in out_name for contig_name in wrong_inv):
+                    if '.FW.' in out_name:
                         # because the name will be changed, need to update
                         # the subset_buffers/subset_names
                         subset_idx = subset_names[out_name]
@@ -107,7 +116,7 @@ def main():
                         # hm, quite unexpected, but should be as intended then
                         pass
                 elif '.RV.' in out_name:
-                    out_seq = record.sequence.translate(revcomp_table)[::-1]               
+                    out_seq = record.sequence.translate(revcomp_table)[::-1]
                 else:
                     out_seq = record.sequence
                 fasta_wg.write(out_name, out_seq)

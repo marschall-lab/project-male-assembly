@@ -106,19 +106,26 @@ def main():
                 # orientation (request by Pille H.)
                 if any(contig_name in out_name for contig_name in wrong_inv):
                     if '.FW.' in out_name:
+                        # case for HG03492
                         # because the name will be changed, need to update
                         # the subset_buffers/subset_names
                         subset_idx = subset_names[out_name]
                         out_seq = record.sequence.translate(revcomp_table)[::-1]
                         out_name = out_name.replace('.FW.', '.RV.')
                         subset_names[out_name] = subset_idx
+                    elif '.RV.' in out_name:
+                        # case for NA19239
+                        subset_idx = subset_names[out_name]
+                        out_seq = record.sequence.translate(revcomp_table)[::-1]
+                        out_name = out_name.replace('.RV.', '.FW.')
+                        subset_names[out_name] = subset_idx
                     else:
-                        # hm, quite unexpected, but should be as intended then
-                        pass
+                        raise ValueError(out_name)
                 elif '.RV.' in out_name:
                     out_seq = record.sequence.translate(revcomp_table)[::-1]
                 else:
                     out_seq = record.sequence
+                assert len(record.sequence) == len(out_seq)
                 fasta_wg.write(out_name, out_seq)
                 if out_name != record.name:
                     subset_idx = subset_names[out_name]

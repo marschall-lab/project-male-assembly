@@ -115,8 +115,12 @@ def main():
                         subset_names[out_name] = subset_idx
                     elif '.RV.' in out_name:
                         # case for NA19239
+                        # this aligns reverse, but should not be
+                        # revcomp'ed, i.e. the original sequence
+                        # as in the untouched Verkko assembly is
+                        # the correct one
                         subset_idx = subset_names[out_name]
-                        out_seq = record.sequence.translate(revcomp_table)[::-1]
+                        out_seq = record.sequence  # do not revcomp
                         out_name = out_name.replace('.RV.', '.FW.')
                         subset_names[out_name] = subset_idx
                     else:
@@ -126,6 +130,12 @@ def main():
                 else:
                     out_seq = record.sequence
                 assert len(record.sequence) == len(out_seq)
+                if '.FW.' in out_name:
+                    assert out_seq == record.sequence
+                elif '.RV.' in out_name:
+                    assert out_seq != record.sequence
+                else:
+                    raise ValueError(out_name)
                 fasta_wg.write(out_name, out_seq)
                 if out_name != record.name:
                     subset_idx = subset_names[out_name]

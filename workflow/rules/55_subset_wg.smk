@@ -225,7 +225,7 @@ rule extract_read_subset:
     resources:
         mem_mb = lambda wildcards, attempt: 32768 + 32768 * attempt
     shell:
-        'seqtk subseq {input.reads} {input.names} | seqtk seq -A -C | pigz --best -p {threads} > {output.fasta}'
+        'zcat {input.reads} | seqtk subseq /dev/stdin {input.names} | seqtk seq -A -C | pigz --best -p {threads} > {output.fasta}'
 
 
 rule extract_read_alignments_bam:

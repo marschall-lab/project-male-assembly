@@ -67,8 +67,8 @@ def collect_sample_data(samples, short_read_samples):
         sample_data[row.sample][('ONTUL', 'num')] = len(ont_data)
         if row.sample in short_read_samples:
             short_reads = get_short_read_data(row.short)
-            sample_data[row.sample]['SHORT'] = ont_data
-            sample_data[row.sample][('SHORT', 'num')] = len(ont_data)
+            sample_data[row.sample]['SHORT'] = short_reads
+            sample_data[row.sample][('SHORT', 'num')] = len(short_reads)
     return sample_data
 
 

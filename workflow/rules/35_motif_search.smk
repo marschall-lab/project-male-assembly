@@ -212,7 +212,7 @@ rule repmsk_chry_contigs:
     """
     input:
         fasta = 'output/subset_wg/20_extract_contigs/{sample}.{hifi_type}.{ont_type}.na.chrY.fasta',
-        rename = 'output/subset_wg/15_order_contigs/{sample}.{hifi_type}.{ont_type}.na.chrY.names.nto-map.sed'
+        rename = 'output/subset_wg/25_name_mappings/{sample}.{hifi_type}.{ont_type}.na.chrY.names.nto-map.sed'
     output:
         tmp_fasta = temp('output/motif_search/40_repmask/{sample}.{hifi_type}.{ont_type}.na.chrY.fasta'),
         repmask_output = multiext(
@@ -242,7 +242,7 @@ rule collect_repeatmasker_output:
         masked = 'output/motif_search/40_repmask/{sample}.{hifi_type}.{ont_type}.na.chrY/{sample}.{hifi_type}.{ont_type}.na.chrY.fasta.masked',
         aln = 'output/motif_search/40_repmask/{sample}.{hifi_type}.{ont_type}.na.chrY/{sample}.{hifi_type}.{ont_type}.na.chrY.fasta.cat.gz',
         table = 'output/motif_search/40_repmask/{sample}.{hifi_type}.{ont_type}.na.chrY/{sample}.{hifi_type}.{ont_type}.na.chrY.fasta.out',
-        rename = 'output/subset_wg/15_order_contigs/{sample}.{hifi_type}.{ont_type}.na.chrY.names.otn-map.sed',
+        rename = 'output/subset_wg/25_name_mappings/{sample}.{hifi_type}.{ont_type}.na.chrY.names.otn-map.sed',
     output:
         fasta_rn = 'output/motif_search/45_rm_norm/{sample}/{sample}.{hifi_type}.{ont_type}.na.chrY.rm-mask.fasta',
         result_tar = 'output/motif_search/45_rm_norm/{sample}/{sample}.{hifi_type}.{ont_type}.na.chrY.rm-out.tar.gz',
@@ -266,7 +266,7 @@ rule collect_repeatmasker_output:
 rule normalize_repeatmasker_table:
     input:
         table = 'output/motif_search/40_repmask/{sample}.{hifi_type}.{ont_type}.na.chrY/{sample}.{hifi_type}.{ont_type}.na.chrY.fasta.out',
-        rename = 'output/subset_wg/15_order_contigs/{sample}.{hifi_type}.{ont_type}.na.chrY.names.otn-map.json',
+        rename = 'output/subset_wg/25_name_mappings/{sample}.{hifi_type}.{ont_type}.na.chrY.names.otn-map.json',
     output:
         tsv = 'output/motif_search/45_rm_norm/{sample}/{sample}.{hifi_type}.{ont_type}.na.chrY.matches.tsv',
     resources:

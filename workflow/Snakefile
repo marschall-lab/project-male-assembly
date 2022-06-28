@@ -136,6 +136,12 @@ rule run_all:
             hifi_type=['HIFIRW'],
             ont_type=['ONTUL']
         ),
+        dump_short_meryl_db = expand(
+            'output/kmer_dump/{sample}.{reads}.k{kmer}.meryl',
+            sample=COMPLETE_SR_SAMPLES,
+            reads=['SHORT'],
+            kmer=[21]  # this value: Merqury/meryl docs, for human diploid
+        ),
         vm_assm_errors = expand(
             'output/eval/assm_errors/{sample}.{hifi_type}.{ont_type}.na.{chrom}.{other_reads}.vm.chk',
             sample=COMPLETE_SAMPLES,

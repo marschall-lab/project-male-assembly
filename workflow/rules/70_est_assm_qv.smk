@@ -16,7 +16,7 @@ rule dump_short_read_kmers:
         '../envs/biotools.yaml'
     threads: config['num_cpu_medium']
     resources:
-        mem_mb = lambda wildcards, input, attempt: int(input.size_mb * 2 * attempt * 0.75),
+        mem_mb = lambda wildcards, attempt: 65536 + 32768 * attempt,
         walltime = lambda wildcards, attempt: f'{attempt**3:02}:59:00'
     params:
         kmer_size = 31,
@@ -63,8 +63,8 @@ rule dump_meryl_kmer_db:
         '../envs/biotools.yaml'
     threads: config['num_cpu_medium']
     resources:
-        mem_mb = lambda wildcards, input, attempt: int(input.size_mb * 3 * attempt),
-        mem_gb = lambda wildcards, input, attempt: int(input.size_mb * 3 * attempt / 1024),
+        mem_mb = lambda wildcards, input, attempt: int(input.size_mb * 2 * attempt),
+        mem_gb = lambda wildcards, input, attempt: int(input.size_mb * 2 * attempt / 1024),
         walltime = lambda wildcards, attempt: f'{attempt**3:02}:59:00'
     params:
         kmer_size = lambda wildcards: int(wildcards.kmer)
@@ -73,6 +73,15 @@ rule dump_meryl_kmer_db:
 
 
 rule run_merqury:
+    """
+    Merqury was added as an alternative to yak,
+    but because of the mess it creates with its
+    input symlinking strategy, it is essentially
+    not usable. Generating the output of this rule
+    is currently not triggered when running the
+    pipeline with targets "run_all" or
+    "populate_share".
+    """
     input:
         meryl_db = 'output/kmer_dump/{sample}.{other_reads}.k{kmer}.meryl',
         wg_assm = 'output/hybrid/renamed/{sample}.{hifi_type}.{ont_type}.na.wg.fasta',
@@ -91,6 +100,6 @@ rule run_merqury:
     params:
         outdir = lambda wildcards, output: output.chk.rsplit('.', 1)[-2]
     shell:
-        '$$MERQURY/merqury.sh {input.meryl_db} {input.wg_assm} {params.outdir} &> {log}'
+        '$MERQURY/merqury.sh {input.meryl_db} {input.wg_assm} {params.outdir} &> {log}'
             ' && '
         'touch {output.chk}'

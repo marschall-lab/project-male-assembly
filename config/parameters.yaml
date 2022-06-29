@@ -26,8 +26,8 @@ expert_annotations:
   - GRCh38_chrY-seq-classes_coord_plus_repeats.fasta
   - T2T.chrY-seq-classes.fasta
   - TSPY.fasta
-  - Yqhet_2.7kb.fasta
-  - Yqhet_3.1kb.fasta
+  - Yqhet_2k7bp.fasta
+  - Yqhet_3k1bp.fasta
 
 motif_search:
   - DYZ18_Yq
@@ -37,8 +37,8 @@ motif_search:
   - DYZ3-prim_Ycentro
   - DYZ3-sec_Ycentro
   - TSPY
-  - Yqhet_2.7kb
-  - Yqhet_3.1kb
+  - Yqhet_2k7bp
+  - Yqhet_3k1bp
 
 contig_id_motifs:
   - DYZ18_Yq
@@ -57,8 +57,8 @@ hmmer_evalue_cutoff:
   'DYZ3-prim_Ycentro': '1.60E-15'
   'DYZ19_Yq': '1.60E-15'
   'TSPY': '1.60E-200'
-  'Yqhet_2.7kb': '1.60E-200'
-  'Yqhey_3.1kb': '1.60E-200'
+  'Yqhet_2k7bp': '1.60E-200'
+  'Yqhet_3k1bp': '1.60E-200'
 
 # HMMER score threshold per motif or 0,
 # determined by expert (Pille H.)
@@ -70,8 +70,8 @@ hmmer_score_threshold:
   'DYZ3-sec_Ycentro': 1700
   'DYZ3-prim_Ycentro': 90
   'TSPY': 1000
-  'Yqhet_2.7kb': 1500
-  'Yqhet_3.1kb': 1500
+  'Yqhet_2k7bp': 1500
+  'Yqhet_3k1bp': 1500
 
 # this info is part of the config
 # just to populate the Globus share,

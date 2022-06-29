@@ -1,13 +1,4 @@
 
-"""
-Only motifs that are used for Y contig identification are thresholded;
-for all other motifs, all chrY hits are retained
-
-- DYZ1 - score >2500
-- DYZ2 - score >1700
-- DYZ18 - score >2100
-- DYZ3-sec_Ycentro - score >1700
-"""
 
 RUNTIME_MOTIF_FACTOR = {
     'DYZ2_Yq': 10,
@@ -16,23 +7,6 @@ RUNTIME_MOTIF_FACTOR = {
 
 CPU_MOTIF_FACTOR = {
     'DYZ2_Yq': config['num_cpu_high'],
-}
-
-# Change 2022-05-10
-# Bonus credit situation on HILBERT
-# unclear for the time being, hence
-# all jobs must be set to 0 bonus
-BONUS_MOTIF_FACTOR = {
-    'DYZ2_Yq': 0,
-}
-
-EVALUE_CUTOFF_MOTIF = {
-    'DYZ1_Yq': '1.60E-150',
-    'DYZ18_Yq': '1.60E-150',
-    'DYZ2_Yq': '1.60E-150',
-    'DYZ3-sec_Ycentro': '1.60E-150',
-    'DYZ3-prim_Ycentro': '1.60E-15',
-    'DYZ19_Yq': '1.60E-15'
 }
 
 rule hmmer_motif_search:
@@ -56,9 +30,8 @@ rule hmmer_motif_search:
     resources:
         mem_mb = lambda wildcards, attempt: 24576 + 32768 * attempt,
         walltime = lambda wildcards, attempt: f'{attempt*RUNTIME_MOTIF_FACTOR.get(wildcards.motif, 1):02}:59:00',
-        bonus = lambda wildcards, attempt: BONUS_MOTIF_FACTOR.get(wildcards.motif, 0)
     params:
-        evalue = lambda wildcards: EVALUE_CUTOFF_MOTIF[wildcards.motif]
+        evalue = lambda wildcards: config['hmmer_evalue_cutoff'][wildcards.motif]
     shell:
         'nhmmer --cpu {threads} --dna -o {output.txt} --tblout {output.table} -E {params.evalue} {input.qry} {input.assm} &> {log}'
 
@@ -85,14 +58,6 @@ HMMER_TABLE_COLUMNS = [
 HMMER_TABLE_NAMES = [t[0] for t in HMMER_TABLE_COLUMNS]
 HMMER_TABLE_USE_COLS = [t[0] for t in HMMER_TABLE_COLUMNS if t[1]]
 
-SCORE_THRESHOLDS_MOTIF = {
-    'DYZ1_Yq': 2500,
-    'DYZ18_Yq': 2100,
-    'DYZ2_Yq': 1700,
-    'DYZ3-sec_Ycentro': 1700,
-    'DYZ3-prim_Ycentro': 90
-}
-
 rule normalize_motif_hits:
     input:
         table = 'output/motif_search/00_detection/{sub_folder}/{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.{motif}.table.txt',
@@ -106,7 +71,7 @@ rule normalize_motif_hits:
     resources:
         mem_mb = lambda wildcards, attempt: 2048 * attempt,
     params:
-        min_score_t = lambda wildcards: SCORE_THRESHOLDS_MOTIF.get(wildcards.motif, 0)
+        min_score_t = lambda wildcards: config['hmmer_score_threshold'].get(wildcards.motif, 0)
     run:
         import pandas as pd
 

@@ -299,7 +299,8 @@ rule extract_read_subset:
         '../envs/biotools.yaml'
     threads: 4
     resources:
-        mem_mb = lambda wildcards, attempt: 32768 + 32768 * attempt
+        mem_mb = lambda wildcards, attempt: 32768 + 32768 * attempt,
+        walltime = lambda wildcards, attempt: f'{attempt*attempt:02}:59:59'
     shell:
         'zcat {input.reads} | seqtk subseq /dev/stdin {input.names} | seqtk seq -A -C | pigz --best -p {threads} > {output.fasta}'
 

@@ -24,6 +24,7 @@ include: 'rules/55_subset_wg.smk'
 include: 'rules/60_eval_contig_align.smk'
 include: 'rules/65_call_variants.smk'
 include: 'rules/70_est_assm_qv.smk'
+include: 'rules/75_assm_stats.smk'
 include: 'rules/80_est_assm_errors.smk'
 include: 'rules/99_pop_share.smk'
 
@@ -149,7 +150,18 @@ rule run_all:
             ont_type=['ONTUL'],
             other_reads=['HIFIRW', 'ONTUL'],
             chrom=['chrX', 'chrY']
-        )
+        ),
+        quast_reports = expand(
+            'output/eval/assm_stats/quast/{sample}.{hifi_type}.{ont_type}.na.{chrom}/report.tsv',
+            sample=COMPLETE_SAMPLES,
+            hifi_type=['HIFIRW'],
+            ont_type=['ONTUL'],
+            chrom=['chrX', 'chrY', 'wg']
+        ),
+        close_samples = [
+            'output/alignments/contigs-to-contigs/NA19347.HIFIRW.ONTUL.na.chrY_aln-to_NA19317.paf.gz',
+            'output/alignments/contigs-to-contigs/NA19317.HIFIRW.ONTUL.na.chrY_aln-to_NA19347.paf.gz',
+        ]
 
 
 rule populate_share:

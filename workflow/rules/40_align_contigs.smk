@@ -30,6 +30,29 @@ rule align_contigs_to_reference_paf:
         MINIMAP_CTG_REF_PAF
 
 
+rule align_contigs_close_samples:
+    input:
+        na19317 = 'output/subset_wg/20_extract_contigs/NA19317.{hifi_type}.{ont_type}.na.chrY.fasta',
+        na19347 = 'output/subset_wg/20_extract_contigs/NA19347.{hifi_type}.{ont_type}.na.chrY.fasta',
+    output:
+        ref_317 = 'output/alignments/contigs-to-contigs/NA19347.{hifi_type}.{ont_type}.na.chrY_aln-to_NA19317.paf.gz',
+        ref_347 = 'output/alignments/contigs-to-contigs/NA19317.{hifi_type}.{ont_type}.na.chrY_aln-to_NA19347.paf.gz',
+    conda:
+        '../envs/biotools.yaml'
+    threads: config['num_cpu_low']
+    resources:
+        mem_mb = lambda wildcards, attempt: 4096 * attempt,
+        walltime = lambda wildcards, attempt: f'{attempt * attempt:02}:59:00',
+    params:
+        sec_aln = "-p 0.95 --secondary=yes -N 1"
+    shell:
+        'minimap2 -t {threads} -x asm20 -Y {params.sec_aln} '
+        '--cs -c --paf-no-hit {input.na19317} {input.na19347} | pigz -p {threads} --best > {output.ref_317}'
+            ' && '
+        'minimap2 -t {threads} -x asm20 -Y {params.sec_aln} '
+        '--cs -c --paf-no-hit {input.na19347} {input.na19317} | pigz -p {threads} --best > {output.ref_347}'
+
+
 rule align_contigs_to_reference_bam:
     input:
         ctg = 'output/hybrid/renamed/{sample}.{hifi_type}.{ont_type}.na.wg.fasta',

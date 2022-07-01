@@ -82,7 +82,10 @@ def get_hifi_data(hifi_path):
 def get_ont_data(ont_path):
 
     suffix = 'guppy-5.0.11-sup-prom_fastq_pass.fastq.gz'
-    ont_files = get_data(ont_path, suffix)
+    if pathlib.Path(ont_path).is_file():
+        ont_files = [ont_path]
+    else:
+        ont_files = get_data(ont_path, suffix)
     return ont_files
 
 

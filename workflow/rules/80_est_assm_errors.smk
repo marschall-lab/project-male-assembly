@@ -16,6 +16,10 @@ localrules: clone_veritymap_repo, build_veritymap, clean_veritymap_build
 
 
 rule clone_veritymap_repo:
+    """
+    2022-07-04
+    Checkout target is bugfix branch
+    """
     output:
         'repos/veritymap.git.ok'
     envmodules:
@@ -29,7 +33,7 @@ rule clone_veritymap_repo:
             ' && '
         'cd VerityMap'
             ' && '
-        'git checkout v2.1.1-alpha'
+        'git checkout 8d241f4'
             ' && '
         'cd ../../ && touch {output}'
 

@@ -135,7 +135,8 @@ def main():
                 elif '.RV.' in out_name:
                     assert out_seq != record.sequence
                 else:
-                    raise ValueError(out_name)
+                    # tig not renamed
+                    pass
                 fasta_wg.write(out_name, out_seq)
                 if out_name != record.name:
                     subset_idx = subset_names[out_name]

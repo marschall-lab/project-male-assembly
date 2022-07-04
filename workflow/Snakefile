@@ -132,8 +132,7 @@ rule run_all:
             caller=['pr']
         ),
         est_assm_qv = expand(
-            'output/eval/assembly_qv/{sample}.{hifi_type}.{ont_type}.na.wg.yak-qv.txt',
-            sample=COMPLETE_SR_SAMPLES,
+            'output/eval/assembly_qv/SAMPLES.{hifi_type}.{ont_type}.na.wg.yak-qv.tsv',
             hifi_type=['HIFIRW'],
             ont_type=['ONTUL']
         ),
@@ -152,8 +151,7 @@ rule run_all:
             chrom=['chrX', 'chrY']
         ),
         quast_reports = expand(
-            'output/eval/assm_stats/quast/{sample}.{hifi_type}.{ont_type}.na.{chrom}/report.tsv',
-            sample=COMPLETE_SAMPLES,
+            'output/eval/assm_stats/SAMPLES.{hifi_type}.{ont_type}.na.{chrom}.quast-report.tsv',
             hifi_type=['HIFIRW'],
             ont_type=['ONTUL'],
             chrom=['chrX', 'chrY', 'wg']
@@ -161,7 +159,16 @@ rule run_all:
         close_samples = [
             'output/alignments/contigs-to-contigs/NA19347.HIFIRW.ONTUL.na.chrY_aln-to_NA19317.paf.gz',
             'output/alignments/contigs-to-contigs/NA19317.HIFIRW.ONTUL.na.chrY_aln-to_NA19347.paf.gz',
-        ]
+        ],
+        assm_errors = expand(
+            'output/eval/merged_errors/{sample}.{hifi_type}.{ont_type}.na.{chrom}.{other_reads}.{source}-errors.tsv',
+            sample=COMPLETE_SAMPLES,
+            hifi_type=['HIFIRW'],
+            ont_type=['ONTUL'],
+            other_reads=['HIFIRW'],
+            chrom=['chrY'],
+            source=['vm', 'dv', 'pr']
+        )
 
 
 rule populate_share:
@@ -171,6 +178,13 @@ rule populate_share:
             'output/share/alignments/reads-to-ref/{sample}.{other_reads}_aln-to_{reference}.{chrom}.copied.ok',
             sample=COMPLETE_SAMPLES,
             other_reads=['HIFIRW'],
+            reference=['T2TXY', 'GRCh38'],
+            chrom=['chrY']
+        ),
+        aln_reads_ref_HG002 = expand(
+            'output/share/alignments/reads-to-ref/{sample}.{other_reads}_aln-to_{reference}.{chrom}.copied.ok',
+            sample=['NA24385'],
+            other_reads=['HIFIRW', 'ONTUL'],
             reference=['T2TXY', 'GRCh38'],
             chrom=['chrY']
         ),

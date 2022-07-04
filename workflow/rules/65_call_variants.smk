@@ -84,3 +84,37 @@ rule select_hiq_het_snvs:
         'tabix --preset vcf {output.vcf}'
             ' && '
         'bcftools stats {output.vcf} > {output.stats}'
+
+
+rule convert_het_snv_to_tsv:
+    input:
+        vcf = 'output/variant_calls/10_filter_{other_reads}/{sample}/{sample}.{hifi_type}.{ont_type}.na.{chrom}.{caller}-HET-SNV.vcf.gz',
+    output:
+        tsv = 'output/eval/merged_errors/{sample}.{hifi_type}.{ont_type}.na.{chrom}.{other_reads}.{caller}-errors.tsv'
+    run:
+        import gzip
+        import pandas as pd
+        source = 'DeepVariant' if wildcards.caller == 'dv' else 'PEPPER'
+
+        rows = []
+        with gzip.open(input.vcf, 'rt') as vcf:
+            for line in vcf:
+                if line.startswith('#'):
+                    continue
+                parts = line.strip().split()
+                row = {
+                    'chrom': parts[0],
+                    'end': int(parts[1]),
+                    'start': int(parts[1]) - 1,
+                    'est_size': 1,
+                    'sample': wildcards.sample,
+                    'source': source,
+                    'reads': wildcards.other_reads
+                }
+                rows.append(row)
+        col_names = ['chrom', 'start', 'end', 'est_size', 'sample', 'source', 'reads']
+        df = pd.DataFrame.from_records(rows, columns=col_names)
+        df.sort_values(['chrom', 'start'], ascending=True, inplace=True)
+        df.to_csv(output.tsv, sep='\t', header=True, index=False)
+    # END OF RUN BLOCK
+

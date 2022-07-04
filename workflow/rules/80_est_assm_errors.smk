@@ -90,7 +90,8 @@ rule run_chrom_veritymap:
         reads = 'output/subset_wg/45_extract_reads/{sample}.{other_reads}_aln-to_{hifi_type}.{ont_type}.na.{chrom}.reads.fasta.gz',
         assembly = 'output/subset_wg/20_extract_contigs/{sample}.{hifi_type}.{ont_type}.na.{chrom}.fasta',
     output:
-        chk = 'output/eval/assm_errors/{sample}.{hifi_type}.{ont_type}.na.{chrom}.{other_reads}.vm.chk'
+        chk = 'output/eval/assm_errors/{sample}.{hifi_type}.{ont_type}.na.{chrom}.{other_reads}.vm.chk',
+        bed = 'output/eval/assm_errors/{sample}.{hifi_type}.{ont_type}.na.{chrom}.{other_reads}/{sample}_kmers_dist_diff.bed'
     log:
         'log/output/eval/assm_errors/{sample}.{hifi_type}.{ont_type}.na.{chrom}.{other_reads}.vm.log'
     benchmark:
@@ -111,6 +112,29 @@ rule run_chrom_veritymap:
         '-d {params.preset} -l {wildcards.sample} -o {params.outdir} {input.assembly} &> {log}'
             ' && '
         'touch {output.chk}'
+
+
+rule normalize_veritymap_bed_file:
+    """
+    Normalize VerityMap BED file for simple
+    merge with SNV/HET errors from variant
+    callers - just format change...
+    """
+    input:
+        bed = 'output/eval/assm_errors/{sample}.{hifi_type}.{ont_type}.na.{chrom}.{other_reads}/{sample}_kmers_dist_diff.bed'
+    output:
+        tsv = 'output/eval/merged_errors/{sample}.{hifi_type}.{ont_type}.na.{chrom}.{other_reads}.vm-errors.tsv'
+    run:
+        import pandas as pd
+        df = pd.read_csv(input.bed, sep='\t', header=None, names=['chrom', 'start', 'end', 'est_size', 'num_reads'])
+        df.drop('num_reads', axis=1, inplace=True)
+
+        df['sample'] = wildcards.sample
+        df['reads'] = wildcards.other_reads
+        df['source'] = 'VerityMap'
+
+        df.to_csv(output.tsv, sep='\t', header=True, index=False)
+    # END OF RUN BLOCK
 
 
 ###########################

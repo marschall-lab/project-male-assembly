@@ -1,4 +1,6 @@
 
+localrules: aggregate_yak_assembly_qv
+
 rule dump_short_read_kmers:
     """
     For now, this rule only supports
@@ -47,9 +49,37 @@ rule estimate_assembly_qv:
         'yak qv -p -t{threads} {input.kmer_dump} {input.fasta} > {output.qv} 2> {log}'
 
 
+rule aggregate_yak_assembly_qv:
+    input:
+        tables = expand(
+            'output/eval/assembly_qv/{sample}.{{hifi_type}}.{{ont_type}}.na.wg.yak-qv.txt',
+            sample=COMPLETE_SR_SAMPLES
+        )
+    output:
+        table = 'output/eval/assembly_qv/SAMPLES.{hifi_type}.{ont_type}.na.wg.yak-qv.tsv',
+    run:
+        import pathlib as pl
+
+        assembly_qv = []
+        for file_path in input.tables:
+            sample_name = pl.Path(file_path).stem.split('.')[0]
+            with open(file_path, 'r') as table:
+                for line in table:
+                    if not line.startswith('QV'):
+                        continue
+                    _, raw, adjusted = line.strip().split()
+                    assembly_qv.append((sample_name, 'wg', 'yak', adjusted))
+
+        with open(output.table, 'w') as table:
+            _ = table.write('sample\tassembly\test_method\tqv\n')
+            for record in sorted(assembly_qv):
+                _ = table.write('\t'.join(record) + '\n')
+
+    # END OF RUN BLOCK
+
+
 # add alternative method
 # run Merqury on whole-genome assembly
-
 rule dump_meryl_kmer_db:
     input:
         reads = lambda wildcards: SAMPLE_DATA[wildcards.sample][wildcards.reads]

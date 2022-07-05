@@ -151,6 +151,35 @@ rule create_reference_bed_file:
     # END OF RUN BLOCK
 
 
+rule prep_t2t_seq_class_cache_file:
+    """
+    Special rule to prepare the T2T-Y sequence class
+    annotations to be suitable for plotting
+    """
+    input:
+        bed = 'references_derived/T2T.chrY-seq-classes.bed'
+    output:
+        tsv = 'references_derived/T2T.chrY-seq-classes.tsv'
+    run:
+        import matplotlib.colors as mcol
+        import pandas as pd
+
+        names = ['chrom', 'start', 'end', 'name', 'hex_color', 'full_name']
+        df = pd.read_csv(input.bed, sep='\t', header=None, names=names)
+        # next line: manual fix for OBO
+        df.loc[df['name'] == 'PAR2', 'end'] -= 1
+        # convert HEX to RGBA
+        df[['red', 'green', 'blue', 'alpha']] = 0.
+        rgb_colors = []
+        for row in df.itertuples(index=False):
+            r,g,b,a = mcol.to_rgba(row.hex_color)
+            rgb_colors.append([r, g, b, a])
+        df[['red', 'green', 'blue', 'alpha']] = rgb_colors
+    
+        df.to_csv(output.tsv, sep='\t', header=True, index=False)
+    # END OF RUN BLOCK
+
+
 #######################################################################
 # Special rule:
 # - sync manually created motif and annotation files from the Globus
@@ -172,105 +201,3 @@ rule sync_expert_reference_file:
         'rsync --checksum {input.infile} {output.outfile}'
             ' && '
         'md5sum {output.outfile} > {output.outfile}.md5'
-
-
-###################################################################
-# ------------- DEPRECATED --------------
-# Below: extract subsets of reads aligning to specific chromosomes
-# here: T2T/chrX and T2T/chrY are relevant
-# NB: the whole-genome alignment step including the generation of
-# the output cache is implemented as part of the HGSVC ONT-QC
-# pipeline; should be moved here at some point
-###################################################################
-
-
-# rule extract_aligned_chry_read_names:
-#     input:
-#         cached_aln = select_alignment_cache_file
-#     output:
-#         'output/read_subsets/{chrom}/{sample}_{read_type}.{chrom}-reads.mq60.txt',
-#         'output/read_subsets/{chrom}/{sample}_{read_type}.{chrom}-reads.mq00.txt'
-#     run:
-#         import pandas as pd
-#         with pd.HDFStore(input.cached_aln, 'r') as hdf:
-#             chrom_aln = hdf[wildcards.chrom]
-#             highq_reads = chrom_aln.loc[chrom_aln['mapq'] == 60, 'read_name'].unique().tolist()
-#             with open(output[0], 'w') as dump:
-#                 _ = dump.write('\n'.join(sorted(highq_reads)) + '\n')
-#             all_reads = chrom_aln['read_name'].unique().tolist()
-#             with open(output[1], 'w') as dump:
-#                 _ = dump.write('\n'.join(sorted(all_reads)) + '\n')
-
-
-# rule extract_aligned_chrom_read_sequences:
-#     input:
-#         names = 'output/read_subsets/{chrom}/{sample}_{read_type}.{chrom}-reads.{mapq}.txt',
-#         reads = lambda wildcards: SAMPLE_DATA[wildcards.sample][wildcards.read_type],
-#     output:
-#         'output/read_subsets/{chrom}/{sample}_{read_type}.{chrom}-reads.{mapq}.fasta.gz',
-#     conda:
-#         '../envs/biotools.yaml'
-#     wildcard_constraints:
-#         sample = CONSTRAINT_REGULAR_SAMPLES,
-#         read_type = '(HIFIEC|HIFIAF|ONTUL|ONTEC)',
-#         chrom = '(chrX|chrY)'
-#     threads: config['num_cpu_low']
-#     resources:
-#         walltime = lambda wildcards, attempt: f'{4 * attempt:02}:00:00',
-#     shell:
-#         'seqtk subseq {input.reads} {input.names} | seqtk seq -A -C | pigz -p {threads} --best > {output}'
-
-
-# rule merge_sex_chrom_reads:
-#     input:
-#         chrx = 'output/read_subsets/chrX/{sample}_{read_type}.chrX-reads.{mapq}.fasta.gz',
-#         chry = 'output/read_subsets/chrY/{sample}_{read_type}.chrY-reads.{mapq}.fasta.gz',
-#     output:
-#         'output/read_subsets/chrXY/{sample}_{read_type}.chrXY-reads.{mapq}.fasta.gz',
-#     conda:
-#         '../envs/biotools.yaml'
-#     wildcard_constraints:
-#         read_type = '(HIFIEC|HIFIAF|ONTUL|ONTEC)',
-#         sample = CONSTRAINT_REGULAR_SAMPLES,
-#     threads: config['num_cpu_low']
-#     resources:
-#         walltime = lambda wildcards, attempt: f'{attempt:02}:00:00',
-#     shell:
-#         'pigz -d -c {input.chrx} {input.chry} | pigz --best -p {threads} > {output}'
-
-
-# rule merge_read_types:
-#     input:
-#         hifiec = 'output/read_subsets/{chrom}/{sample}_HIFIEC.{chrom}-reads.{mapq}.fasta.gz',
-#         ontec = 'output/read_subsets/{chrom}/{sample}_ONTEC.{chrom}-reads.{mapq}.fasta.gz',
-#     output:
-#         'output/read_subsets/{chrom}/{sample}_OHEC.{chrom}-reads.{mapq}.fasta.gz',
-#     conda:
-#         '../envs/biotools.yaml'
-#     wildcard_constraints:
-#         chrom = '(chrY|chrX|chrXY)',
-#         sample = CONSTRAINT_REGULAR_SAMPLES,
-#     threads: config['num_cpu_low']
-#     resources:
-#         walltime = lambda wildcards, attempt: f'{attempt * attempt:02}:00:00',
-#     shell:
-#         'pigz -d -c {input.hifiec} {input.ontec} | pigz --best -p {threads} > {output}'
-
-
-# rule merge_afr_mix_subsets:
-#     """
-#     Dedicated rule to merge read sets for the AFR mix sample: NA19317 + NA19347 = NA193N7
-#     """
-#     input:
-#         reads = select_afr_mix_subsets
-#     output:
-#         'output/read_subsets/{chrom}/{sample}_{read_type}.{chrom}-reads.{mapq}.fasta.gz',
-#     conda:
-#         '../envs/biotools.yaml'
-#     wildcard_constraints:
-#         sample = '(NA193N7|NA193NN|AFR4MIX)'
-#     threads: config['num_cpu_low']
-#     resources:
-#         walltime = lambda wildcards, attempt: f'{attempt * attempt:02}:00:00',
-#     shell:
-#         'pigz -d -c {input.reads} | pigz --best -p {threads} > {output}'

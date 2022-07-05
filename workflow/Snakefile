@@ -14,6 +14,17 @@ if config.get('use_reference_containers', True):
 
 include: 'rules/00_pyfun_input.smk'
 include: 'rules/00_pyfun_utils.smk'
+
+# samples with short-read data can be used to compute
+# an assembly QV estimate
+SAMPLES, SHORT_READ_SAMPLE_NAMES = read_sample_table()  # requires config['samples']
+SAMPLE_DATA = collect_sample_data(SAMPLES, SHORT_READ_SAMPLE_NAMES)
+SAMPLE_NAMES = sorted(SAMPLES['sample'].values)
+
+CURRENT_ERROR_SAMPLES = []
+COMPLETE_SAMPLES = [s for s in SAMPLE_NAMES if s not in CURRENT_ERROR_SAMPLES]
+COMPLETE_SR_SAMPLES = [s for s in SHORT_READ_SAMPLE_NAMES if s not in CURRENT_ERROR_SAMPLES]
+
 include: 'rules/10_utils.smk'
 include: 'rules/20_preprocessing.smk'
 include: 'rules/30_hybrid_assembly.smk'
@@ -30,15 +41,6 @@ include: 'rules/99_pop_share.smk'
 
 localrules: run_all
 
-# samples with short-read data can be used to compute
-# an assembly QV estimate
-SAMPLES, SHORT_READ_SAMPLE_NAMES = read_sample_table()  # requires config['samples']
-SAMPLE_DATA = collect_sample_data(SAMPLES, SHORT_READ_SAMPLE_NAMES)
-SAMPLE_NAMES = sorted(SAMPLES['sample'].values)
-
-CURRENT_ERROR_SAMPLES = []
-COMPLETE_SAMPLES = [s for s in SAMPLE_NAMES if s not in CURRENT_ERROR_SAMPLES]
-COMPLETE_SR_SAMPLES = [s for s in SHORT_READ_SAMPLE_NAMES if s not in CURRENT_ERROR_SAMPLES]
 
 rule run_all:
     input:
@@ -160,15 +162,25 @@ rule run_all:
             'output/alignments/contigs-to-contigs/NA19347.HIFIRW.ONTUL.na.chrY_aln-to_NA19317.paf.gz',
             'output/alignments/contigs-to-contigs/NA19317.HIFIRW.ONTUL.na.chrY_aln-to_NA19347.paf.gz',
         ],
-        assm_errors = expand(
+        assm_errors_vm_dv = expand(
             'output/eval/merged_errors/{sample}.{hifi_type}.{ont_type}.na.{chrom}.{other_reads}.{source}-errors.tsv',
             sample=COMPLETE_SAMPLES,
             hifi_type=['HIFIRW'],
             ont_type=['ONTUL'],
             other_reads=['HIFIRW'],
             chrom=['chrY'],
-            source=['vm', 'dv', 'pr']
-        )
+            source=['vm', 'dv']
+        ),
+        assm_errors_pr = expand(
+            'output/eval/merged_errors/{sample}.{hifi_type}.{ont_type}.na.{chrom}.{other_reads}.{source}-errors.tsv',
+            sample=COMPLETE_SAMPLES,
+            hifi_type=['HIFIRW'],
+            ont_type=['ONTUL'],
+            other_reads=['ONTUL'],
+            chrom=['chrY'],
+            source=['pr']
+        ),
+
 
 
 rule populate_share:

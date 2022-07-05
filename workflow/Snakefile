@@ -88,6 +88,13 @@ rule run_all:
             reference=['T2TXY', 'GRCh38'],
             ext=['bam.bai', 'paf.gz']
         ),
+        cache_ctg_aln = expand(
+            'output/subset_wg/30_extract_ctgaln/{sample}.{hifi_type}.{ont_type}.na.chrY_aln-to_{reference}.cache.h5',
+            sample=COMPLETE_SAMPLES,
+            hifi_type=['HIFIRW'],
+            ont_type=['ONTUL'],
+            reference=['T2TXY', 'GRCh38'],
+        ),
         subset_read_aln = expand(
             'output/subset_wg/40_extract_rdaln/{sample}.{other_reads}_aln-to_{hifi_type}.{ont_type}.na.chrY.{ext}',
             sample=COMPLETE_SAMPLES,
@@ -95,6 +102,13 @@ rule run_all:
             ont_type=['ONTUL'],
             other_reads=['ONTUL', 'HIFIRW'],
             ext=['bam.bai', 'paf.gz']
+        ),
+        cache_read_aln = expand(
+            'output/subset_wg/40_extract_rdaln/{sample}.READS_aln-to_{hifi_type}.{ont_type}.na.{chrom}.cache.h5',
+            sample=COMPLETE_SAMPLES,
+            hifi_type=['HIFIRW'],
+            ont_type=['ONTUL'],
+            chrom=['chrY']
         ),
         subset_motif_seq = expand(
             'output/subset_wg/50_subset_motif/{sample}.{hifi_type}.{ont_type}.na.chrY.{motif}.hiq-seq.fasta',

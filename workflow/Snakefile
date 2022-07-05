@@ -147,7 +147,7 @@ rule run_all:
             sample=COMPLETE_SAMPLES,
             hifi_type=['HIFIRW'],
             ont_type=['ONTUL'],
-            other_reads=['HIFIRW', 'ONTUL'],
+            other_reads=['HIFIRW'],
             chrom=['chrX', 'chrY']
         ),
         quast_reports = expand(

@@ -11,6 +11,11 @@ CPU_MOTIF_FACTOR = {
     'TSPY': config['num_cpu_high']
 }
 
+MEMORY_MOTIF_FACTOR = {
+    'TSPY': 5
+}
+
+
 rule hmmer_motif_search:
     input:
         assm = select_whole_genome_assembly,
@@ -30,7 +35,7 @@ rule hmmer_motif_search:
 #        '../envs/biotools.yaml'
     threads: lambda wildcards: CPU_MOTIF_FACTOR.get(wildcards.motif, config['num_cpu_medium'])
     resources:
-        mem_mb = lambda wildcards, attempt: 24576 + 24576 * attempt,
+        mem_mb = lambda wildcards, attempt: 24576 + 24576 * attempt * MEMORY_MOTIF_FACTOR.get(wildcards.motif, 1),
         walltime = lambda wildcards, attempt: f'{attempt*RUNTIME_MOTIF_FACTOR.get(wildcards.motif, 1):02}:59:00',
     params:
         evalue = lambda wildcards: config['hmmer_evalue_cutoff'][wildcards.motif]

@@ -113,7 +113,7 @@ rule align_reads_to_reference_paf:
     benchmark:
         'rsrc/output/alignments/reads-to-ref/{sample}.{other_reads}_aln-to_{reference}.mmap-paf.rsrc'
     wildcard_constraints:
-        other_reads = 'HIFIRW'
+        other_reads = '(HIFIRW|ONTUL)'
     threads: config['num_cpu_medium']
     conda:
         '../envs/biotools.yaml'
@@ -143,7 +143,7 @@ rule align_reads_to_reference_bam:
     benchmark:
         'rsrc/output/alignments/reads-to-ref/{sample}.{other_reads}_aln-to_{reference}.mmap-bam.rsrc'
     wildcard_constraints:
-        other_reads = 'HIFIRW'
+        other_reads = '(HIFIRW|ONTUL)'
     threads: config['num_cpu_high']
     conda:
         '../envs/biotools.yaml'

@@ -177,7 +177,7 @@ rule run_all:
             'output/alignments/contigs-to-contigs/NA19317.HIFIRW.ONTUL.na.chrY_aln-to_NA19347.paf.gz',
         ],
         assm_errors_vm_dv = expand(
-            'output/eval/merged_errors/{sample}.{hifi_type}.{ont_type}.na.{chrom}.{other_reads}.{source}-errors.tsv',
+            'output/eval/merged_errors/norm_tables/{sample}.{hifi_type}.{ont_type}.na.{chrom}.{other_reads}.{source}-errors.tsv',
             sample=COMPLETE_SAMPLES,
             hifi_type=['HIFIRW'],
             ont_type=['ONTUL'],
@@ -186,7 +186,7 @@ rule run_all:
             source=['vm', 'dv']
         ),
         assm_errors_pr = expand(
-            'output/eval/merged_errors/{sample}.{hifi_type}.{ont_type}.na.{chrom}.{other_reads}.{source}-errors.tsv',
+            'output/eval/merged_errors/norm_tables/{sample}.{hifi_type}.{ont_type}.na.{chrom}.{other_reads}.{source}-errors.tsv',
             sample=COMPLETE_SAMPLES,
             hifi_type=['HIFIRW'],
             ont_type=['ONTUL'],

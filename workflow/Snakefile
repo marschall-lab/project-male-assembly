@@ -194,6 +194,12 @@ rule run_all:
             chrom=['chrY'],
             source=['pr']
         ),
+        assm_errors = expand(
+            'output/eval/merged_errors/SAMPLES.{hifi_type}.{ont_type}.na.{chrom}.error-stats.tsv',
+            hifi_type=['HIFIRW'],
+            ont_type=['ONTUL'],
+            chrom=['chrY'],
+        )
 
 
 
@@ -282,6 +288,15 @@ rule populate_share:
             ont_type=['ONTUL'],
             major=config['verkko_major'].strip('"'),
             minor=config['verkko_minor'].strip('"'),
+        ),
+        assm_errors = expand(
+            'output/share/assembly_errors/verkko_{major}_{minor}/{sample}.{hifi_type}.{ont_type}.na.chrY.copied.ok',
+            sample=COMPLETE_SAMPLES,
+            hifi_type=['HIFIRW'],
+            ont_type=['ONTUL'],
+            major=config['verkko_major'].strip('"'),
+            minor=config['verkko_minor'].strip('"'),
+
         )
 
         # DEPRECATED: whole-genome runs by default

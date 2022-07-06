@@ -105,6 +105,37 @@ rule copy_verkko_subset_assembly:
     # END OF RUN BLOCK
 
 
+rule copy_assembly_error_table:
+    input:
+        version = 'output/hybrid/verkko/{sample}.{hifi_type}.{ont_type}.{mapq}.wg.verkko.info',
+        errors = 'output/eval/merged_errors/{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.errors.tsv',
+    output:
+        ok = 'output/share/assembly_errors/verkko_{major}_{minor}/{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.copied.ok'
+    wildcard_constraints:
+        mapq = 'na',
+        chrom = 'chrY'
+    priority: 100
+    run:
+        import pathlib as pl
+
+        verkko_subfolder, assembly_id = determine_verkko_subfolder(
+            input.version,
+            'assembly_errors',
+            wildcards.chrom
+        )
+
+        check_file = ''
+        for source in [input.errors]:
+            source_path = pl.Path(source)
+            target = verkko_subfolder / source_path.name
+            rsync(source_path, target)
+            check_file += f'{source_path}\t{target}\n'
+
+        with open(output.ok, 'w') as dump:
+            _ = dump.write(check_file)
+    # END OF RUN BLOCK
+
+
 rule copy_contig_to_ref_alignments:
     input:
         version = 'output/hybrid/verkko/{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.verkko.info',

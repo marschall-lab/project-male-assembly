@@ -12,7 +12,7 @@
 # obvious TODO: replace that when errors are fixed
 ########################################################################################
 
-localrules: clone_veritymap_repo, build_veritymap, clean_veritymap_build
+localrules: clone_veritymap_repo, build_veritymap, clean_veritymap_build, merge_error_annotations
 
 
 rule clone_veritymap_repo:
@@ -123,7 +123,7 @@ rule normalize_veritymap_bed_file:
     input:
         bed = 'output/eval/assm_errors/{sample}.{hifi_type}.{ont_type}.na.{chrom}.{other_reads}/{sample}_kmers_dist_diff.bed'
     output:
-        tsv = 'output/eval/merged_errors/{sample}.{hifi_type}.{ont_type}.na.{chrom}.{other_reads}.vm-errors.tsv'
+        tsv = 'output/eval/merged_errors/norm_tables/{sample}.{hifi_type}.{ont_type}.na.{chrom}.{other_reads}.vm-errors.tsv'
     run:
         import pandas as pd
         df = pd.read_csv(input.bed, sep='\t', header=None, names=['chrom', 'start', 'end', 'est_size', 'num_reads'])
@@ -134,6 +134,45 @@ rule normalize_veritymap_bed_file:
         df['source'] = 'VerityMap'
 
         df.to_csv(output.tsv, sep='\t', header=True, index=False)
+    # END OF RUN BLOCK
+
+
+rule merge_error_annotations:
+    input:
+        snv_dv = 'output/eval/merged_errors/norm_tables/{sample}.{hifi_type}.{ont_type}.na.{chrom}.HIFIRW.dv-errors.tsv',
+        snv_pr = 'output/eval/merged_errors/norm_tables/{sample}.{hifi_type}.{ont_type}.na.{chrom}.ONTUL.pr-errors.tsv',
+        hifi_vm = 'output/eval/merged_errors/norm_tables/{sample}.{hifi_type}.{ont_type}.na.{chrom}.HIFIRW.vm-errors.tsv',
+        quast = 'output/eval/assm_stats/SAMPLES.{hifi_type}.{ont_type}.na.{chrom}.quast-report.tsv'
+    output:
+        tsv = 'output/eval/merged_errors/{sample}.{hifi_type}.{ont_type}.na.{chrom}.errors.tsv',
+        stats = 'output/eval/merged_errors/{sample}.{hifi_type}.{ont_type}.na.{chrom}.error-stats.tsv',
+    wildcard_constraints:
+        chrom = '(chrX|chrY)'
+    run:
+        import pandas as pd
+
+        assm_stats = pd.read_csv(input.quast, sep='\t', header=0)
+        assm_length = assm_stats.at[assm_stats['sample'] == wildcards.sample, 'assembly_length_bp']
+
+        all_errors = []
+        error_stats = dict()
+        for err_file in [input.snv_dv, input.snv_pr, input.hifi_vm]:
+            df = pd.read_csv(err_file, sep='\t', header=0)
+            all_errors.append(df)
+        all_errors = pd.concat(all_errors, axis=0, ignore_index=False)
+        all_errors.sort_values(['chrom', 'start', 'end'], ascending=True, inplace=True)
+
+        error_stats['assembly_length_bp'] = assm_length
+        error_stats['num_errors'] = all_errors.shape[0]
+        error_stats['num_SNV_errors'] = all_errors.loc[all_errors['est_size'] == 1, :].shape[0]
+        error_stats['error_bp'] = all_errors['est_size'].abs().sum()
+        error_stats['error_bp_per_kbp'] = round(error_stats['bp_errors'] / assm_length * 1000, 5)
+        error_stats['error_SNV_per_kbp'] = round(error_stats['num_SNV_errors'] / assm_length * 1000, 5)
+
+        all_errors.to_csv(output.tsv, sep='\t', header=True, index=False)
+
+        error_stats = pd.DataFrame(error_stats)
+        error_stats.to_csv(output.stats, sep='\t', header=True, index=False)
     # END OF RUN BLOCK
 
 

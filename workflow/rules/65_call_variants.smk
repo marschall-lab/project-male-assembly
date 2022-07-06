@@ -90,7 +90,7 @@ rule convert_het_snv_to_tsv:
     input:
         vcf = 'output/variant_calls/10_filter_{other_reads}/{sample}/{sample}.{hifi_type}.{ont_type}.na.{chrom}.{caller}-HET-SNV.vcf.gz',
     output:
-        tsv = 'output/eval/merged_errors/{sample}.{hifi_type}.{ont_type}.na.{chrom}.{other_reads}.{caller}-errors.tsv'
+        tsv = 'output/eval/merged_errors/norm_tables/{sample}.{hifi_type}.{ont_type}.na.{chrom}.{other_reads}.{caller}-errors.tsv'
     run:
         import gzip
         import pandas as pd

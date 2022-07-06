@@ -108,6 +108,13 @@ rule aggregate_quast_reports:
             rows.append(row)
 
         df = pd.DataFrame.from_records(rows)
+        df['assembly_type'] = wildcards.chrom
+        df['is_E2E_ref'] = 0
+        select_e2e_ref = df['reference_length_bp'] * 0.99 <= df['contig_NG50']
+        df.loc[select_e2e_ref, 'is_E2E_ref'] = 1
+        df['is_E2E_assm'] = 0
+        select_e2e_assm = df['assembly_length_bp'] * 0.99 <= df['contig_N50']
+        df.loc[select_e2e_assm, 'is_E2E_assm']  = 1
         df.sort_values('sample', ascending=True, inplace=True)
 
         df.to_csv(output.table, sep='\t', header=True, index=False)

@@ -44,6 +44,14 @@ rule compute_chrom_assembly_stats:
 
 
 rule aggregate_quast_reports:
+    """
+    Turns out, there is a bug in Quast that
+    silently omits certain statistics (so far
+    observed: NG90, LG90) for some samples for
+    unclear reasons. This leads to a change in
+    line numbering, requiring much more bloated
+    code to extract the relevant stats.
+    """
     input:
         reports = expand(
             'output/eval/assm_stats/quast/{sample}.{{hifi_type}}.{{ont_type}}.na.{{chrom}}/report.tsv',
@@ -55,31 +63,48 @@ rule aggregate_quast_reports:
         chrom = '(wg|chrY|chrX)'
     run:
         import pandas as pd
-
-        keep_records = dict(
-            [(1, 'sample'), (2, 'contigs_num'), (7, 'contigs_geq50kbp_num'),
-            (8, 'assembly_len_bp'), (15, 'largest_contig'), (17, 'reference_len_bp'), (18, 'GC_pct'),
-            (19, 'contig_N50'), (20, 'contig_NG50'), (21, 'contig_N90'), (22, 'contig_auN'),
-            (23, 'contig_auNG'), (24, 'contig_L50'), (25, 'contig_LG50'), (26, 'contig_L90')]
-        )
+        import collections as col
+        
+        keep_records = [
+            ('Assembly', 'sample', str, None), ('# contigs (>= 0 bp)', 'contigs_num', int, None),
+            ('# contigs (>= 50000 bp)', 'contigs_geq50kbp_num', int, None),
+            ('Total length (>= 0 bp)', 'assembly_length_bp', int, None), ('Largest contig', 'largest_contig_bp', int, None),
+            ('Estimated reference length', 'reference_length_bp', int, None), ('GC (%)', 'GC_pct', float, None),
+            ('auN', 'contig_auN', float, -1), ('auNG', 'contig_auNG', float, -1)
+        ]
+        for contig_stat in ['N50', 'NG50', 'N90', 'NG90', 'L50', 'L90', 'LG50', 'LG90']:
+            keep_records.append((contig_stat, f'contig_{contig_stat}', int, -1))
+        keep_records.append(None)
 
         rows = []
         for file_path in input.reports:
             with open(file_path, 'r') as report:
+                this_records = col.deque(keep_records)
                 row = dict()
                 for ln, line in enumerate(report, start=1):
-                    try:
-                        column_name = keep_records[ln]
-                        column_value = line.strip().split()[-1]
-                        if column_name == 'sample':
-                            pass
-                        elif column_name in ['GC_pct', 'contig_auN', 'contig_auNG']:
-                            column_value = float(column_value)
+                    while 1:
+                        keep_line = this_records.popleft()
+                        if keep_line is None:
+                            this_records.append(None)
+                            break
+                        if line.startswith(keep_line[0]):
+                            row_name = keep_line[1]
+                            value_type = keep_line[2]
+                            row_value = value_type(line.strip().split()[-1])
+                            row[row_name] = row_value
+                            continue
                         else:
-                            column_value = int(column_value)
-                    except KeyError:
+                            this_records.append(keep_line)
+                            continue
+                # add defaults if stats are missing
+                for missing_stat in this_records:
+                    if missing_stat is None:
                         continue
-                    row[column_name] = column_value
+                    default_value = missing_stat[3]
+                    if default_value is None:
+                        raise ValueError(f'Missing statistic in QUAST report w/o default: {file_path} / {missing_stat}')
+                    row[missing_stat[1]] = default_value
+
             rows.append(row)
 
         df = pd.DataFrame.from_records(rows)

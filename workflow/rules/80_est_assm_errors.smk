@@ -12,7 +12,11 @@
 # obvious TODO: replace that when errors are fixed
 ########################################################################################
 
-localrules: clone_veritymap_repo, build_veritymap, clean_veritymap_build, merge_error_annotations
+localrules: clone_veritymap_repo, \
+            build_veritymap, \
+            clean_veritymap_build, \
+            merge_error_annotations, \
+            merge_all_error_stats
 
 
 rule clone_veritymap_repo:
@@ -152,7 +156,7 @@ rule merge_error_annotations:
         import pandas as pd
 
         assm_stats = pd.read_csv(input.quast, sep='\t', header=0)
-        assm_length = assm_stats.at[assm_stats['sample'] == wildcards.sample, 'assembly_length_bp']
+        assm_length = assm_stats.loc[assm_stats['sample'] == wildcards.sample, 'assembly_length_bp'].values[0]
 
         all_errors = []
         error_stats = dict()
@@ -166,13 +170,37 @@ rule merge_error_annotations:
         error_stats['num_errors'] = all_errors.shape[0]
         error_stats['num_SNV_errors'] = all_errors.loc[all_errors['est_size'] == 1, :].shape[0]
         error_stats['error_bp'] = all_errors['est_size'].abs().sum()
-        error_stats['error_bp_per_kbp'] = round(error_stats['bp_errors'] / assm_length * 1000, 5)
+        error_stats['error_bp_per_kbp'] = round(error_stats['error_bp'] / assm_length * 1000, 5)
         error_stats['error_SNV_per_kbp'] = round(error_stats['num_SNV_errors'] / assm_length * 1000, 5)
+        error_stats['sample'] = wildcards.sample
 
         all_errors.to_csv(output.tsv, sep='\t', header=True, index=False)
 
-        error_stats = pd.DataFrame(error_stats)
+        error_stats = pd.DataFrame.from_records([error_stats])
         error_stats.to_csv(output.stats, sep='\t', header=True, index=False)
+    # END OF RUN BLOCK
+
+
+rule merge_all_error_stats:
+    input:
+        stats = expand(
+            'output/eval/merged_errors/{sample}.{{hifi_type}}.{{ont_type}}.na.{{chrom}}.error-stats.tsv',
+            sample=SAMPLE_NAMES
+        )
+    output:
+        tsv = 'output/eval/merged_errors/SAMPLES.{hifi_type}.{ont_type}.na.{chrom}.error-stats.tsv',
+    run:
+        import pandas as pd
+
+        all_stats = []
+        for tsv_file in input.stats:
+            df = pd.read_csv(tsv_file, sep='\t', header=0)
+            all_stats.append(df)
+
+        all_stats = pd.concat(all_stats, axis=0, ignore_index=False)
+        all_stats.sort_values('sample', ascending=True, inplace=True)
+
+        all_stats.to_csv(output.tsv, sep='\t', header=True, index=False)
     # END OF RUN BLOCK
 
 

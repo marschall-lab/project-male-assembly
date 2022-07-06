@@ -3,16 +3,16 @@
 RUNTIME_MOTIF_FACTOR = {
     'DYZ2_Yq': 10,
     'DYZ3-sec_Ycentro': 2,
-    'TSPY': 23
+    'TSPY': 35
 }
 
 CPU_MOTIF_FACTOR = {
     'DYZ2_Yq': config['num_cpu_high'],
-    'TSPY': config['num_cpu_high']
+    'TSPY': config['num_cpu_high'] + config['num_cpu_medium']
 }
 
 MEMORY_MOTIF_FACTOR = {
-    'TSPY': 5
+    'TSPY': 6
 }
 
 

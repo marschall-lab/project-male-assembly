@@ -12,7 +12,7 @@ CPU_MOTIF_FACTOR = {
 }
 
 MEMORY_MOTIF_FACTOR = {
-    'TSPY': 6
+    'TSPY': 15
 }
 
 
@@ -35,8 +35,35 @@ rule hmmer_motif_search:
 #        '../envs/biotools.yaml'
     threads: lambda wildcards: CPU_MOTIF_FACTOR.get(wildcards.motif, config['num_cpu_medium'])
     resources:
-        mem_mb = lambda wildcards, attempt: 24576 + 24576 * attempt * MEMORY_MOTIF_FACTOR.get(wildcards.motif, 1),
+        mem_mb = lambda wildcards, attempt: (24576 + 24576 * attempt) * MEMORY_MOTIF_FACTOR.get(wildcards.motif, 1),
         walltime = lambda wildcards, attempt: f'{attempt*RUNTIME_MOTIF_FACTOR.get(wildcards.motif, 1):02}:59:00',
+    params:
+        evalue = lambda wildcards: config['hmmer_evalue_cutoff'][wildcards.motif]
+    shell:
+        'nhmmer --cpu {threads} --dna -o {output.txt} --tblout {output.table} -E {params.evalue} {input.qry} {input.assm} &> {log}'
+
+
+rule hmmer_reference_motif_search:
+    input:
+        assm = 'references_derived/{sample}_chrY.fasta',
+        qry = 'references_derived/{motif}.fasta'
+    output:
+        txt = 'output/motif_search/00_detection/{sub_folder}/{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.{motif}.txt',
+        table = 'output/motif_search/00_detection/{sub_folder}/{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.{motif}.table.txt',
+    log:
+        'log/output/motif_search/00_detection/{sub_folder}/{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.{motif}.hmmer.log',
+    benchmark:
+        'rsrc/output/motif_search/00_detection/{sub_folder}/{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.{motif}.hmmer.rsrc',
+    wildcard_constraints:
+        sub_folder = '20_refseq'
+    singularity:
+        'hmmer.sif'
+#    conda:
+#        '../envs/biotools.yaml'
+    threads: config['num_cpu_low']
+    resources:
+        mem_mb = lambda wildcards, attempt: 8192 * attempt * attempt,
+        walltime = lambda wildcards, attempt: f'{attempt*attempt:02}:59:00',
     params:
         evalue = lambda wildcards: config['hmmer_evalue_cutoff'][wildcards.motif]
     shell:
@@ -74,7 +101,7 @@ rule normalize_motif_hits:
         bed_all = 'output/motif_search/10_norm/{sub_folder}/{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.{motif}.norm.bed',
         bed_hiq = 'output/motif_search/10_norm/{sub_folder}/{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.{motif}.norm-hiq.bed',
     wildcard_constraints:
-        sub_folder = '(00_raw|10_renamed)'
+        sub_folder = '(00_raw|10_renamed|20_refseq)'
     resources:
         mem_mb = lambda wildcards, attempt: 2048 * attempt,
     params:
@@ -197,7 +224,43 @@ rule repmsk_chry_contigs:
         'rsrc/output/motif_search/40_repmask/{sample}.{hifi_type}.{ont_type}.na.chrY.repmask.rsrc',
     conda:
         '../envs/biotools.yaml'
+    wildcard_constraints:
+        sample = SAMPLE_NAME_CONSTRAINT
     threads: config['num_cpu_medium']
+    resources:
+        mem_mb = lambda wildcards, attempt: 12288 * attempt,
+        walltime = lambda wildcards, attempt: f'{attempt*attempt:02}:59:00',
+    params:
+        out_dir = 'output/motif_search/40_repmask/{sample}.{hifi_type}.{ont_type}.na.chrY'
+    shell:
+        'sed -f {input.rename} {input.fasta} > {output.tmp_fasta} && '
+        'RepeatMasker -pa {threads} -s -dir {params.out_dir} -species human {output.tmp_fasta} &> {log}'
+
+
+rule repmsk_ref_chry_contigs:
+    """
+    Same as for HMMER above.
+    For reference chrY, no renaming needed, that part is just kept here
+    to not break anything else
+    """
+    input:
+        fasta = 'references_derived/{sample}_chrY.fasta',
+        rename = 'output/subset_wg/25_name_mappings/{sample}.{hifi_type}.{ont_type}.na.chrY.names.nto-map.sed'
+    output:
+        tmp_fasta = temp('output/motif_search/40_repmask/{sample}.{hifi_type}.{ont_type}.na.chrY.fasta'),
+        repmask_output = multiext(
+            'output/motif_search/40_repmask/{sample}.{hifi_type}.{ont_type}.na.chrY/{sample}.{hifi_type}.{ont_type}.na.chrY',
+            '.fasta.cat.gz', '.fasta.masked', '.fasta.out', '.fasta.tbl'
+        )
+    log:
+        'log/output/motif_search/40_repmask/{sample}.{hifi_type}.{ont_type}.na.chrY.repmask.log',
+    benchmark:
+        'rsrc/output/motif_search/40_repmask/{sample}.{hifi_type}.{ont_type}.na.chrY.repmask.rsrc',
+    conda:
+        '../envs/biotools.yaml'
+    wildcard_constraints:
+        sample = '(T2T|GRCh38)'
+    threads: config['num_cpu_low']
     resources:
         mem_mb = lambda wildcards, attempt: 12288 * attempt,
         walltime = lambda wildcards, attempt: f'{attempt*attempt:02}:59:00',

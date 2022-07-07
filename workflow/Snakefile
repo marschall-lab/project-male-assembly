@@ -20,6 +20,7 @@ include: 'rules/00_pyfun_utils.smk'
 SAMPLES, SHORT_READ_SAMPLE_NAMES = read_sample_table()  # requires config['samples']
 SAMPLE_DATA = collect_sample_data(SAMPLES, SHORT_READ_SAMPLE_NAMES)
 SAMPLE_NAMES = sorted(SAMPLES['sample'].values)
+SAMPLE_NAME_CONSTRAINT = '(' + '|'.join(SAMPLE_NAMES) + ')'
 
 CURRENT_ERROR_SAMPLES = []
 COMPLETE_SAMPLES = [s for s in SAMPLE_NAMES if s not in CURRENT_ERROR_SAMPLES]
@@ -276,6 +277,23 @@ rule populate_share:
         repmask_out = expand(
             'output/share/repeatmasker/verkko_{major}_{minor}/{sample}.{hifi_type}.{ont_type}.na.chrY.copied.ok',
             sample=COMPLETE_SAMPLES,
+            hifi_type=['HIFIRW'],
+            ont_type=['ONTUL'],
+            major=config['verkko_major'].strip('"'),
+            minor=config['verkko_minor'].strip('"'),
+        ),
+        motif_sub_ref = expand(
+            'output/share/motif_search/verkko_{major}_{minor}/{sample}.{hifi_type}.{ont_type}.na.chrY.{motif}.copied.ok',
+            sample=['T2T'],
+            hifi_type=['HIFIRW'],
+            ont_type=['ONTUL'],
+            motif=config['motif_search'],
+            major=config['verkko_major'].strip('"'),
+            minor=config['verkko_minor'].strip('"'),
+        ),
+        repmask_out_ref = expand(
+            'output/share/repeatmasker/verkko_{major}_{minor}/{sample}.{hifi_type}.{ont_type}.na.chrY.copied.ok',
+            sample=['T2T'],
             hifi_type=['HIFIRW'],
             ont_type=['ONTUL'],
             major=config['verkko_major'].strip('"'),

@@ -123,7 +123,8 @@ rule dump_contig_name_mapping_files:
         sed_otn = 'output/subset_wg/25_name_mappings/{sample}.{hifi_type}.{ont_type}.na.{chrom}.names.otn-map.sed',
         sed_nto = 'output/subset_wg/25_name_mappings/{sample}.{hifi_type}.{ont_type}.na.{chrom}.names.nto-map.sed',
     wildcard_constraints:
-        chrom = '(chrY|chrX)'
+        chrom = '(chrY|chrX)',
+        sample = SAMPLE_NAME_CONSTRAINT
     resources:
         mem_mb = lambda wildcards, attempt: 1024 * attempt
     run:
@@ -176,6 +177,77 @@ rule dump_contig_name_mapping_files:
             for new_name, _ in new_contig_names:
                 _ = listing.write(f'{new_name}\n')
     # END OF RUN BLOCK
+
+
+rule dump_ref_name_mapping_files:
+    """
+    Annoying code duplication to process
+    chrY reference files for certain steps
+    of the pipeline - late incoming request...
+    """
+    input:
+        ref = 'references_derived/{sample}_{chrom}.fasta'
+    output:
+        final_names = 'output/subset_wg/25_name_mappings/{sample}.HIFIRW.ONTUL.na.{chrom}.names.txt',
+        tsv_otn = 'output/subset_wg/25_name_mappings/{sample}.HIFIRW.ONTUL.na.{chrom}.names.otn-map.tsv',
+        tsv_nto = 'output/subset_wg/25_name_mappings/{sample}.HIFIRW.ONTUL.na.{chrom}.names.nto-map.tsv',
+        json_otn = 'output/subset_wg/25_name_mappings/{sample}.HIFIRW.ONTUL.na.{chrom}.names.otn-map.json',
+        json_nto = 'output/subset_wg/25_name_mappings/{sample}.HIFIRW.ONTUL.na.{chrom}.names.nto-map.json',
+        sed_otn = 'output/subset_wg/25_name_mappings/{sample}.HIFIRW.ONTUL.na.{chrom}.names.otn-map.sed',
+        sed_nto = 'output/subset_wg/25_name_mappings/{sample}.HIFIRW.ONTUL.na.{chrom}.names.nto-map.sed',
+    wildcard_constraints:
+        chrom = 'chrY',
+        sample = '(T2T|GRCh38)'
+    run:
+        import json
+
+        new_contig_names = []
+        with open(input.fasta, 'r') as fasta:
+            for line in fasta:
+                if not line.startswith('>'):
+                    continue
+                new_name = line.strip()[1:]  # ignore leading ">"
+                old_name = new_name
+                new_contig_names.append((new_name, old_name))
+
+        # dump TSV output
+        otn_file = output.tsv_otn
+        nto_file = output.tsv_nto
+        with open(otn_file, 'w') as otn:
+            with open(nto_file, 'w') as nto:
+                for new_name, old_name in new_contig_names:
+                    assert old_name in new_name
+                    _ = otn.write(f'{old_name}\t{new_name}\n')
+                    _ = nto.write(f'{new_name}\t{old_name}\n')
+
+        # dump JSON output
+        otn_file = output.json_otn
+        nto_file = output.json_nto
+
+        otn_map = dict((old_name, new_name) for new_name, old_name in new_contig_names)
+        with open(otn_file, 'w') as otn:
+            json.dump(otn_map, otn, indent=1)
+
+        nto_map = dict(new_contig_names)
+        with open(nto_file, 'w') as nto:
+            json.dump(nto_map, nto, indent=1)
+
+        # dump SED output
+        otn_file = output.sed_otn
+        nto_file = output.sed_nto
+        with open(otn_file, 'w') as otn:
+            with open(nto_file, 'w') as nto:
+                for new_name, old_name in new_contig_names:
+                    assert old_name in new_name
+                    _ = otn.write(f's/\\b{old_name}\\b/{new_name}/g\n')
+                    _ = nto.write(f's/\\b{new_name}\\b/{old_name}/g\n')
+
+        # dump name listing
+        with open(output.final_names, 'w') as listing:
+            for new_name, _ in new_contig_names:
+                _ = listing.write(f'{new_name}\n')
+    # END OF RUN BLOCK
+
 
 
 rule rename_verkko_coverage_tables:

@@ -190,7 +190,27 @@ rule normalize_veritymap_bed_file:
             elif is_disjoint:
                 merged_events.append(records.copy())
             else:
-                raise ValueError(f'Cannot process presumably identical events: {records}')
+                # What is left at this point: records that are not clearly
+                # disjoint but also not spanning or reaching - be conservative
+                # and create separate "reaching" records. In essence, this will
+                # probably overestimate the actual error rate.
+                cover_reach = abs(misassm_len)
+                covered_indices = set()
+                for row in records.itertuples(index=False):
+                    start = row.start
+                    end = start + cover_reach
+                    select_reach = (records['start'] < end) & (start < records['end'])
+                    sub = records.loc[select_reach, :]
+                    if all(i in covered_indices for i in sub.index):
+                        continue
+                    new_record = pd.DataFrame(
+                        [[ctg, sub['start'].min(), sub['end'].max(), misassm_len]],
+                        columns=keep_cols
+                    )
+                    merged_events.append(new_record)
+                    covered_indices = covered_indices.union(set(sub.index.values))
+                    
+                #raise ValueError(f'Cannot process presumably identical events: {records}')
 
         merged_events = pd.concat(merged_events, axis=0, ignore_index=False)    
 

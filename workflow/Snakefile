@@ -384,3 +384,28 @@ rule cache_all_aln:
             ont_type=['ONTUL'],
             reference=['T2TXY', 'GRCh38'],
         ),
+
+
+rule run_veritymap:
+    input:
+        vm_assm_chk = expand(
+            'output/eval/assm_errors/{sample}.{hifi_type}.{ont_type}.na.{chrom}.{other_reads}.vm.chk',
+            sample=COMPLETE_SAMPLES,
+            hifi_type=['HIFIRW'],
+            ont_type=['ONTUL'],
+            other_reads=['HIFIRW', 'ONTUL'],
+            chrom=['chrX', 'chrY']
+        ),
+
+
+rule norm_vm_output:
+    input:
+        vm_assm_errors = expand(
+            'output/eval/merged_errors/norm_tables/{sample}.{hifi_type}.{ont_type}.na.{chrom}.{other_reads}.vm-errors.tsv',
+            sample=COMPLETE_SAMPLES,
+            hifi_type=['HIFIRW'],
+            ont_type=['ONTUL'],
+            other_reads=['HIFIRW'],
+            chrom=['chrX', 'chrY']
+        ),
+        

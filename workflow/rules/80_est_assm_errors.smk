@@ -123,6 +123,16 @@ rule normalize_veritymap_bed_file:
     Normalize VerityMap BED file for simple
     merge with SNV/HET errors from variant
     callers - just format change...
+
+    2022-07-08
+    Feedback from dev indicates that records that
+    all give the same misassembly length but different
+    coordinates for the rare k-mers are - more likely
+    than not - all describing the same problem/mis-
+    assembly event, and VerityMap is just internally
+    failing at recognizing this. Not waiting for a
+    fix, but merging all such records into one keeping
+    lowest start and highest end coordinate.
     """
     input:
         bed = 'output/eval/assm_errors/{sample}.{hifi_type}.{ont_type}.na.{chrom}.{other_reads}/{sample}_kmers_dist_diff.bed'
@@ -130,14 +140,53 @@ rule normalize_veritymap_bed_file:
         tsv = 'output/eval/merged_errors/norm_tables/{sample}.{hifi_type}.{ont_type}.na.{chrom}.{other_reads}.vm-errors.tsv'
     run:
         import pandas as pd
-        df = pd.read_csv(input.bed, sep='\t', header=None, names=['chrom', 'start', 'end', 'est_size', 'num_reads'])
-        df.drop('num_reads', axis=1, inplace=True)
 
-        df['sample'] = wildcards.sample
-        df['reads'] = wildcards.other_reads
-        df['source'] = 'VerityMap'
+        keep_cols = ['chrom', 'start', 'end', 'est_size']
+        df = pd.read_csv(
+            input.bed, sep='\t', header=None,
+            names=keep_cols + ['num_reads'],
+            usecols=keep_cols
+        )
+        df.sort_values(['chrom', 'start'], ascending=True, inplace=True)
 
-        df.to_csv(output.tsv, sep='\t', header=True, index=False)
+        # 2022-07-08 (see docstring above)
+        merged_events = []
+        for (ctg, misassm_len), records in df.groupby(['chrom', 'est_size']):
+            if records.shape[0] == 1:
+                # unique event
+                merged_events.append(records.copy())
+                continue
+            
+            first_iv_start, first_iv_end = records.loc[records.index[0], ['start', 'end']].values
+            last_iv_start, last_iv_end = records.loc[records.index[-1], ['start', 'end']].values
+
+            # heuristic 1: if all the same event,
+            # the estimated size should span all intervals
+            is_spanning = (last_iv_end - first_iv_start) <= abs(misassm_len)
+
+            # heuristic 2: the event should at least
+            # reach into first and last interval
+            is_reaching = (first_iv_end - 1 + misassm_len) >= last_iv_start
+
+            if is_spanning or is_reaching:
+                new_record = pd.DataFrame(
+                    [[ctg, first_iv_start, last_iv_end, misassm_len]],
+                    columns=keep_cols
+                )
+                merged_events.append(new_record)
+            else:
+                raise ValueError(f'Cannot process presumably identical events: {records}')
+
+        merged_events = pd.concat(merged_events, axis=0, ignore_index=False)    
+
+        merged_events['sample'] = wildcards.sample
+        merged_events['reads'] = wildcards.other_reads
+        merged_events['source'] = 'VerityMap'
+        merged_events.sort_values(['chrom', 'start'], ascending=True, inplace=True)
+
+        assert pd.notnull(merged_events).all(axis=1).all()
+
+        merged_events.to_csv(output.tsv, sep='\t', header=True, index=False)
     # END OF RUN BLOCK
 
 

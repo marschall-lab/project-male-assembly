@@ -400,12 +400,12 @@ rule run_veritymap:
 
 rule norm_vm_output:
     input:
-        vm_assm_errors = expand(
-            'output/eval/merged_errors/norm_tables/{sample}.{hifi_type}.{ont_type}.na.{chrom}.{other_reads}.vm-errors.tsv',
+        assm_errors = expand(
+            'output/share/assembly_errors/verkko_{major}_{minor}/{sample}.{hifi_type}.{ont_type}.na.chrY.copied.ok',
             sample=COMPLETE_SAMPLES,
             hifi_type=['HIFIRW'],
             ont_type=['ONTUL'],
-            other_reads=['HIFIRW'],
-            chrom=['chrX', 'chrY']
-        ),
-        
+            major=config['verkko_major'].strip('"'),
+            minor=config['verkko_minor'].strip('"'),
+
+        )

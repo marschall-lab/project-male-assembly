@@ -67,6 +67,12 @@ rule run_all:
             other_reads=['ONTUL', 'HIFIRW'],
             ext=['bam.bai', 'paf.gz']
         ),
+        cache_rdref_aln = expand(
+            'output/subset_wg/60_subset_rdref/{sample}.READS_aln-to_{reference}.{chrom}.cache.h5',
+            sample=COMPLETE_SAMPLES,
+            reference=['T2T'],
+            chrom=['chrY']
+        ),
         motifs_wg = expand(
             'output/motif_search/20_target_agg/10_renamed/{sample}.{hifi_type}.{ont_type}.na.wg.{motif}.agg-trg.tsv',
             sample=COMPLETE_SAMPLES,
@@ -317,11 +323,64 @@ rule populate_share:
 
         )
 
-        # DEPRECATED: whole-genome runs by default
-        # readsets = expand(
-        #     'output/share/read_subsets/{sample}_{read_type}.{chrom}-reads.{mapq}.copied.ok',
-        #     sample=COMPLETE_SAMPLES,
-        #     read_type=['HIFIEC', 'HIFIAF', 'ONTUL'],
-        #     mapq=['mq00'],
-        #     chrom=['chrY'],
-        # ),
+
+rule run_ref_motifs:
+    input:
+        motif_sub_ref = expand(
+            'output/share/motif_search/verkko_{major}_{minor}/{sample}.{hifi_type}.{ont_type}.na.chrY.{motif}.copied.ok',
+            sample=['T2T'],
+            hifi_type=['HIFIRW'],
+            ont_type=['ONTUL'],
+            motif=config['motif_search'],
+            major=config['verkko_major'].strip('"'),
+            minor=config['verkko_minor'].strip('"'),
+        ),
+        repmask_out_ref = expand(
+            'output/share/repeatmasker/verkko_{major}_{minor}/{sample}.{hifi_type}.{ont_type}.na.chrY.copied.ok',
+            sample=['T2T'],
+            hifi_type=['HIFIRW'],
+            ont_type=['ONTUL'],
+            major=config['verkko_major'].strip('"'),
+            minor=config['verkko_minor'].strip('"'),
+        ),
+
+
+rule run_hmmer_tspy:
+    input:
+        motif_sub = expand(
+            'output/share/motif_search/verkko_{major}_{minor}/{sample}.{hifi_type}.{ont_type}.na.chrY.{motif}.copied.ok',
+            sample=COMPLETE_SAMPLES,
+            hifi_type=['HIFIRW'],
+            ont_type=['ONTUL'],
+            motif=['TSPY'],
+            major=config['verkko_major'].strip('"'),
+            minor=config['verkko_minor'].strip('"'),
+        ),
+
+
+rule cache_all_aln:
+    input:
+        cache_rdref_aln = expand(
+            'output/subset_wg/60_subset_rdref/{sample}.READS_aln-to_{reference}.{chrom}.cache.h5',
+            sample=COMPLETE_SAMPLES,
+            reference=['T2T'],
+            chrom=['chrY']
+        ),
+        close_samples = [
+            'output/alignments/contigs-to-contigs/NA19347.HIFIRW.ONTUL.na.chrY_aln-to_NA19317.cache.h5',
+            'output/alignments/contigs-to-contigs/NA19317.HIFIRW.ONTUL.na.chrY_aln-to_NA19347.cache.h5',
+        ],
+        cache_read_aln = expand(
+            'output/subset_wg/40_extract_rdaln/{sample}.READS_aln-to_{hifi_type}.{ont_type}.na.{chrom}.cache.h5',
+            sample=COMPLETE_SAMPLES,
+            hifi_type=['HIFIRW'],
+            ont_type=['ONTUL'],
+            chrom=['chrY']
+        ),
+        cache_ctg_aln = expand(
+            'output/subset_wg/30_extract_ctgaln/{sample}.{hifi_type}.{ont_type}.na.chrY_aln-to_{reference}.cache.h5',
+            sample=COMPLETE_SAMPLES,
+            hifi_type=['HIFIRW'],
+            ont_type=['ONTUL'],
+            reference=['T2TXY', 'GRCh38'],
+        ),

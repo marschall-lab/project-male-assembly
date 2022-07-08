@@ -3,16 +3,16 @@
 RUNTIME_MOTIF_FACTOR = {
     'DYZ2_Yq': 10,
     'DYZ3-sec_Ycentro': 2,
-    'TSPY': 35
+    'TSPY': 71
 }
 
 CPU_MOTIF_FACTOR = {
     'DYZ2_Yq': config['num_cpu_high'],
-    'TSPY': config['num_cpu_high'] + config['num_cpu_medium']
+    'TSPY': config['num_cpu_max']
 }
 
 MEMORY_MOTIF_FACTOR = {
-    'TSPY': 15
+    'TSPY': 30
 }
 
 
@@ -44,6 +44,10 @@ rule hmmer_motif_search:
 
 
 rule hmmer_reference_motif_search:
+    """
+    The TSPY motif requires huge
+    amount of memory even for just chrY
+    """
     input:
         assm = 'references_derived/{sample}_chrY.fasta',
         qry = 'references_derived/{motif}.fasta'
@@ -62,8 +66,8 @@ rule hmmer_reference_motif_search:
 #        '../envs/biotools.yaml'
     threads: config['num_cpu_low']
     resources:
-        mem_mb = lambda wildcards, attempt: 8192 * attempt * attempt,
-        walltime = lambda wildcards, attempt: f'{attempt*attempt:02}:59:00',
+        mem_mb = lambda wildcards, attempt: 24576 * (attempt**3),
+        walltime = lambda wildcards, attempt: f'{attempt**3:02}:59:00',
     params:
         evalue = lambda wildcards: config['hmmer_evalue_cutoff'][wildcards.motif]
     shell:

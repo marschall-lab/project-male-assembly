@@ -186,7 +186,7 @@ rule dump_ref_name_mapping_files:
     of the pipeline - late incoming request...
     """
     input:
-        ref = 'references_derived/{sample}_{chrom}.fasta'
+        fasta = 'references_derived/{sample}_{chrom}.fasta'
     output:
         final_names = 'output/subset_wg/25_name_mappings/{sample}.HIFIRW.ONTUL.na.{chrom}.names.txt',
         tsv_otn = 'output/subset_wg/25_name_mappings/{sample}.HIFIRW.ONTUL.na.{chrom}.names.otn-map.tsv',
@@ -321,7 +321,7 @@ rule cache_contig_alignments:
         assert len(PAF_COLUMN_NAMES) == len(PAF_USE_COLS)
 
         df = pd.read_csv(input.paf, sep='\t', header=None, names=PAF_COLUMN_NAMES, usecols=PAF_USE_COLS)
-        df = df.loc[df['tag_tp'] == 'tp:A:P', :].copy()
+        df = df.loc[df['tag_tp'].str.lower().isin(['tp:a:p', 'tp:a:i']), :].copy()
 
         target_size = df.at[df.index[0], 'target_length']
         ctg_cov = np.zeros(target_size, dtype=np.int8)
@@ -404,7 +404,10 @@ rule cache_read_to_assembly_aln:
                 contigs.append((ctg, int(ctg_size)))
 
         hifi_aln = pd.read_csv(input.hifi, sep='\t', header=None, names=PAF_COLUMN_NAMES, usecols=PAF_USE_COLS)
+        hifi_aln = hifi_aln.loc[hifi_aln['tag_tp'].str.lower().isin(['tp:a:p', 'tp:a:i']), :].copy()
+
         ont_aln = pd.read_csv(input.ont, sep='\t', header=None, names=PAF_COLUMN_NAMES, usecols=PAF_USE_COLS)
+        ont_aln = ont_aln.loc[ont_aln['tag_tp'].str.lower().isin(['tp:a:p', 'tp:a:i']), :].copy()
 
         ordered_contigs = []
         for ctg_order, (ctg_name, ctg_size) in enumerate(sorted(contigs), start=1):
@@ -577,3 +580,63 @@ rule extract_read_ref_alignments_paf:
         chroms = lambda wildcards: '(' + '|'.join(REF_CHRY[wildcards.reference]) + ')'
     shell:
         'zgrep -E "{params.chroms}" {input.paf} | pigz -p 2 --best > {output.paf}'
+
+
+rule cache_read_to_reference_aln:
+    input:
+        hifi = 'output/subset_wg/60_subset_rdref/{sample}.HIFIRW_aln-to_{reference}.{chrom}.paf.gz',
+        ont = 'output/subset_wg/60_subset_rdref/{sample}.ONTUL_aln-to_{reference}.{chrom}.paf.gz',
+        fai = 'references_derived/{reference}_{chrom}.fasta.fai',
+    output:
+        hdf = 'output/subset_wg/60_subset_rdref/{sample}.READS_aln-to_{reference}.{chrom}.cache.h5',
+    resources:
+        mem_mb = lambda wildcards, attempt: 2048 * attempt
+    run:
+        import pandas as pd
+        PAF_COLUMN_NAMES = [
+            'query_chrom', 'query_length', 'query_start', 'query_end', 'orientation',
+            'target_chrom', 'target_length', 'target_start', 'target_end', 'res_matches', 'block_length',
+            'mapq', 'tag_nm', 'tag_ms', 'tag_as', 'tag_nn', 'tag_tp'
+        ]
+        PAF_USE_COLS = list(range(0,17))
+        assert len(PAF_COLUMN_NAMES) == len(PAF_USE_COLS)
+
+        contigs = []
+        with open(input.fai, 'r') as faidx:
+            for line in faidx:
+                ctg, ctg_size = line.split()[:2]
+                contigs.append((ctg, int(ctg_size)))
+
+        hifi_aln = pd.read_csv(input.hifi, sep='\t', header=None, names=PAF_COLUMN_NAMES, usecols=PAF_USE_COLS)
+        hifi_aln = hifi_aln.loc[hifi_aln['tag_tp'].str.lower().isin(['tp:a:p', 'tp:a:i']), :].copy()
+
+        ont_aln = pd.read_csv(input.ont, sep='\t', header=None, names=PAF_COLUMN_NAMES, usecols=PAF_USE_COLS)
+        ont_aln = ont_aln.loc[ont_aln['tag_tp'].str.lower().isin(['tp:a:p', 'tp:a:i']), :].copy()
+
+        ordered_contigs = []
+        for ctg_order, (ctg_name, ctg_size) in enumerate(sorted(contigs), start=1):
+            order_key = f'{ctg_order:03}'
+            ordered_contigs.append((order_key, ctg_name, ctg_size))
+
+            hifi_cov = np.zeros(ctg_size, dtype=np.int16)
+            ont_cov = np.zeros(ctg_size, dtype=np.int16)
+
+            hifi_sub = hifi_aln.loc[hifi_aln['target_chrom'] == ctg_name, ['target_start', 'target_end']]
+            for s, e in hifi_sub.itertuples(index=False):
+                hifi_cov[s:e] += 1
+            
+            ont_sub = ont_aln.loc[ont_aln['target_chrom'] == ctg_name, ['target_start', 'target_end']]
+            for s, e in ont_sub.itertuples(index=False):
+                ont_cov[s:e] += 1
+            
+            with pd.HDFStore(output.hdf, mode='a', complib='blosc', complevel=9) as hdf:
+                # contig names are not "Python identifiers", avoid ugly warnings here
+                key = f'{wildcards.sample}/{order_key}/HIFI'
+                hdf.put(key, pd.Series(hifi_cov))
+                key = f'{wildcards.sample}/{order_key}/ONT'
+                hdf.put(key, pd.Series(ont_cov))
+
+        ordered_contigs = pd.DataFrame.from_records(ordered_contigs, names=['order_key', 'contig_name', 'contig_size'])
+        with pd.HDFStore(output.hdf, 'a', complib='blosc', complevel=9) as hdf:
+            hdf.put('contigs', ordered_contigs, format='fixed')
+    # END OF RUN BLOCK

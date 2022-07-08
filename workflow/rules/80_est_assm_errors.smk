@@ -174,12 +174,21 @@ rule normalize_veritymap_bed_file:
             # region(s) instead of a single one with L > 0
             any_zero_length = (records.shape[0] == 2) & ((records['end'] - records['start']) == 0).any()
 
+            # heuristic 4: if the event is small enough
+            # to actually be contained in all reported
+            # regions, then assume the events are indeed
+            # disjoint (could be a problem in repeat
+            # resolution)
+            is_disjoint = (records['end'] - records['start'] > abs(misassm_len)).all()
+
             if is_spanning or is_reaching or any_zero_length:
                 new_record = pd.DataFrame(
                     [[ctg, first_iv_start, last_iv_end, misassm_len]],
                     columns=keep_cols
                 )
                 merged_events.append(new_record)
+            elif is_disjoint:
+                merged_events.append(records.copy())
             else:
                 raise ValueError(f'Cannot process presumably identical events: {records}')
 

@@ -168,7 +168,13 @@ rule normalize_veritymap_bed_file:
             # reach into first and last interval
             is_reaching = (first_iv_end - 1 + misassm_len) >= last_iv_start
 
-            if is_spanning or is_reaching:
+            # heuristic 3: more like a bug fix heuristic;
+            # in some cases, VerityMap seems to mess up
+            # coordinates and reports zero-length
+            # region(s) instead of a single one with L > 0
+            any_zero_length = (records.shape[0] == 2) & ((records['end'] - records['start']) == 0).any()
+
+            if is_spanning or is_reaching or any_zero_length:
                 new_record = pd.DataFrame(
                     [[ctg, first_iv_start, last_iv_end, misassm_len]],
                     columns=keep_cols

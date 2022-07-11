@@ -304,6 +304,35 @@ rule copy_motif_files:
     # END OF RUN BLOCK
 
 
+rule copy_reference_motif_files:
+    input:
+        tsv = 'output/subset_wg/50_subset_motif/{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.{motif}.norm.tsv',
+        bed = 'output/subset_wg/50_subset_motif/{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.{motif}.norm-hiq.bed',
+        fasta = 'output/subset_wg/50_subset_motif/{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.{motif}.hiq-seq.fasta',
+    output:
+        ok = 'output/share/reference_motifs/{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.{motif}.copied.ok'
+    wildcard_constraints:
+        sample = 'T2T'
+    resources:
+        walltime = lambda wildcards, attempt: f'{attempt*attempt:02}:59:00'
+    run:
+        import pathlib as pl
+
+        subfolder = pl.Path(config['path_root_share_references']).resolve(strict=True)
+
+        check_file = ''
+        for source in [input.bed, input.fasta, input.tsv]:
+            source_path = pl.Path(source)
+            target = subfolder / source_path.name
+            rsync(source_path, target)
+            check_file += f'{source_path}\t{target}\n'
+
+        with open(output.ok, 'w') as dump:
+            _ = dump.write(check_file)
+    # END OF RUN BLOCK
+
+
+
 rule copy_repeatmasker_files:
     input:
         version = 'output/hybrid/verkko/{sample}.{hifi_type}.{ont_type}.{mapq}.wg.verkko.info',
@@ -326,6 +355,34 @@ rule copy_repeatmasker_files:
         for source in [input.fasta, input.table, input.tar]:
             source_path = pl.Path(source)
             target = verkko_subfolder / source_path.name
+            rsync(source_path, target)
+            check_file += f'{source_path}\t{target}\n'
+
+        with open(output.ok, 'w') as dump:
+            _ = dump.write(check_file)
+    # END OF RUN BLOCK
+
+
+rule copy_reference_repeatmasker_files:
+    input:
+        fasta = 'output/motif_search/45_rm_norm/{sample}/{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.rm-mask.fasta',
+        table = 'output/motif_search/45_rm_norm/{sample}/{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.matches.tsv',
+        tar = 'output/motif_search/45_rm_norm/{sample}/{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.rm-out.tar.gz',
+    output:
+        ok = 'output/share/reference_repmask/{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.copied.ok'
+    wildcard_constraints:
+        sample = 'T2T'
+    resources:
+        walltime = lambda wildcards, attempt: f'{attempt*attempt:02}:59:00'
+    run:
+        import pathlib as pl
+
+        subfolder = pl.Path(config['path_root_share_references']).resolve(strict=True)
+
+        check_file = ''
+        for source in [input.fasta, input.table, input.tar]:
+            source_path = pl.Path(source)
+            target = subfolder / source_path.name
             rsync(source_path, target)
             check_file += f'{source_path}\t{target}\n'
 

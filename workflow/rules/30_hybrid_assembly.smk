@@ -69,6 +69,8 @@ rule run_verkko_whole_genome_assembly:
         'log/output/hybrid/{sample}.{hifi_type}.{ont_type}.na.wg.verkko.log'
     conda:
         '../envs/verkko.yaml'
+    wildcard_constraints:
+        sample = SAMPLE_NAME_CONSTRAINT
     params:
         workdir = lambda wildcards, output: pathlib.Path(output.assembly[0]).parent,
         # verkko_bin = lambda wildcards, input: pathlib.Path(input.verkko_install, 'bin').resolve(strict=True),

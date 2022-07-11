@@ -389,6 +389,8 @@ rule cache_read_to_assembly_aln:
         mem_mb = lambda wildcards, attempt: 2048 * attempt
     run:
         import pandas as pd
+        import numpy as np
+
         PAF_COLUMN_NAMES = [
             'query_chrom', 'query_length', 'query_start', 'query_end', 'orientation',
             'target_chrom', 'target_length', 'target_start', 'target_end', 'res_matches', 'block_length',
@@ -586,13 +588,15 @@ rule cache_read_to_reference_aln:
     input:
         hifi = 'output/subset_wg/60_subset_rdref/{sample}.HIFIRW_aln-to_{reference}.{chrom}.paf.gz',
         ont = 'output/subset_wg/60_subset_rdref/{sample}.ONTUL_aln-to_{reference}.{chrom}.paf.gz',
-        fai = 'references_derived/{reference}_{chrom}.fasta.fai',
+        fai = 'references_derived/T2T_{chrom}.fasta.fai',
     output:
         hdf = 'output/subset_wg/60_subset_rdref/{sample}.READS_aln-to_{reference}.{chrom}.cache.h5',
     resources:
         mem_mb = lambda wildcards, attempt: 2048 * attempt
     run:
         import pandas as pd
+        import numpy as np
+
         PAF_COLUMN_NAMES = [
             'query_chrom', 'query_length', 'query_start', 'query_end', 'orientation',
             'target_chrom', 'target_length', 'target_start', 'target_end', 'res_matches', 'block_length',

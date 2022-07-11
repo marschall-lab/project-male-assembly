@@ -327,21 +327,22 @@ rule populate_share:
 rule run_ref_motifs:
     input:
         motif_sub_ref = expand(
-            'output/share/motif_search/verkko_{major}_{minor}/{sample}.{hifi_type}.{ont_type}.na.chrY.{motif}.copied.ok',
+            'output/share/reference_motifs/{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.{motif}.copied.ok',
             sample=['T2T'],
             hifi_type=['HIFIRW'],
             ont_type=['ONTUL'],
-            motif=config['motif_search'],
-            major=config['verkko_major'].strip('"'),
-            minor=config['verkko_minor'].strip('"'),
+            mapq=['na'],
+            chrom=['chrY'],
+            motif=config['motif_search']
+
         ),
         repmask_out_ref = expand(
-            'output/share/repeatmasker/verkko_{major}_{minor}/{sample}.{hifi_type}.{ont_type}.na.chrY.copied.ok',
+            'output/share/reference_repmask/{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.copied.ok',
             sample=['T2T'],
             hifi_type=['HIFIRW'],
             ont_type=['ONTUL'],
-            major=config['verkko_major'].strip('"'),
-            minor=config['verkko_minor'].strip('"'),
+            mapq=['na'],
+            chrom=['chrY']
         ),
 
 
@@ -363,7 +364,7 @@ rule cache_all_aln:
         cache_rdref_aln = expand(
             'output/subset_wg/60_subset_rdref/{sample}.READS_aln-to_{reference}.{chrom}.cache.h5',
             sample=COMPLETE_SAMPLES,
-            reference=['T2T'],
+            reference=['T2TXY'],
             chrom=['chrY']
         ),
         close_samples = [

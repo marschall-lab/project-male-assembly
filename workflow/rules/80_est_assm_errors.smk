@@ -81,6 +81,11 @@ rule build_veritymap:
         'touch {output}'
 
 
+VERITYMAP_MEM_FACTOR = {
+    'ONTUL': 4
+}
+
+
 rule run_chrom_veritymap:
     """
     NB: important to execute the main.py at the right
@@ -106,7 +111,7 @@ rule run_chrom_veritymap:
         f'{config["container_store"]}/{config["container"]["veritymap_env"]}'
     threads: config['num_cpu_low']
     resources:
-        mem_mb = lambda wildcards, attempt: 8192 * attempt,
+        mem_mb = lambda wildcards, attempt: 8192 * attempt * VERITYMAP_MEM_FACTOR.get(wildcards.other_reads, 1),
         walltime = lambda wildcards, attempt: f'{11*attempt}:59:00'
     params:
         preset = lambda wildcards: {'HIFIRW': 'hifi', 'ONTUL': 'ont'}[wildcards.other_reads],

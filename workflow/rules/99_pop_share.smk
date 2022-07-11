@@ -306,9 +306,9 @@ rule copy_motif_files:
 
 rule copy_reference_motif_files:
     input:
-        tsv = 'output/subset_wg/50_subset_motif/{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.{motif}.norm.tsv',
-        bed = 'output/subset_wg/50_subset_motif/{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.{motif}.norm-hiq.bed',
-        fasta = 'output/subset_wg/50_subset_motif/{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.{motif}.hiq-seq.fasta',
+        tsv = 'output/motif_search/10_norm//20_refseq/{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.{motif}.norm.tsv',
+        bed = 'output/motif_search/10_norm//20_refseq/{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.{motif}.norm-hiq.bed',
+        fasta = 'output/motif_search/10_norm/20_refseq/{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.{motif}.hiq-seq.fasta',
     output:
         ok = 'output/share/reference_motifs/{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.{motif}.copied.ok'
     wildcard_constraints:

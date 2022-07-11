@@ -540,6 +540,27 @@ rule extract_motif_hit_sequences:
         bed = 'output/subset_wg/50_subset_motif/{sample}.{hifi_type}.{ont_type}.na.chrY.{motif}.norm-hiq.bed',
     output:
         fasta = 'output/subset_wg/50_subset_motif/{sample}.{hifi_type}.{ont_type}.na.chrY.{motif}.hiq-seq.fasta',
+    wildcard_constraints:
+        sample = SAMPLE_NAME_CONSTRAINT
+    conda:
+        '../envs/biotools.yaml'
+    resources:
+        mem_mb = lambda wildcards, attempt: 2048 * attempt,
+    shell:
+        'seqtk subseq {input.fasta} {input.bed} > {output.fasta}'
+
+
+rule extract_motif_hit_sequences_in_reference:
+    """
+    Just exists for the motif annotation in T2T-Y
+    """
+    input:
+        fasta = 'references_derived/{sample}_chrY.fasta',
+        bed = 'output/motif_search/10_norm/20_refseq/{sample}.HIFIRW.ONTUL.na.chrY.{motif}.norm-hiq.bed',
+    output:
+        fasta = 'output/motif_search/10_norm/20_refseq/{sample}.HIFIRW.ONTUL.na.chrY.{motif}.hiq-seq.fasta',
+    wildcard_constraints:
+        sample = 'T2T'
     conda:
         '../envs/biotools.yaml'
     resources:

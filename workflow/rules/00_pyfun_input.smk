@@ -25,14 +25,14 @@ def read_sample_table():
     for row in samples.itertuples(index=False):
         try:
             _ = pathlib.Path(row.hifi).resolve(strict=True)
-        except (FileNotFoundError, TypeError):
+        except (FileNotFoundError, TypeError, AttributeError):
             if debug:
                 sys.stderr.write(f'\nError skip: no (valid) HiFi path for sample {row.sample}\n')
             selector.append(False)
             continue
         try:
             _ = pathlib.Path(row.ont).resolve(strict=True)
-        except (FileNotFoundError, TypeError):
+        except (FileNotFoundError, TypeError, AttributeError):
             if debug:
                 sys.stderr.write(f'\nError skip: no (valid) ONT path set for sample {row.sample}\n')
             selector.append(False)
@@ -40,7 +40,7 @@ def read_sample_table():
         selector.append(True)
         try:
             _ = pathlib.Path(row.short).resolve(strict=True)
-        except (FileNotFoundError, TypeError):
+        except (FileNotFoundError, TypeError, AttributeError):
             if debug:
                 sys.stderr.write(f'\nError skip: no (valid) short-read path set for sample {row.sample}\n')
             has_short_reads.append(False)

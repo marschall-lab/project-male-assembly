@@ -308,6 +308,8 @@ rule cache_contig_alignments:
         paf = 'output/subset_wg/30_extract_ctgaln/{sample}.{hifi_type}.{ont_type}.na.chrY_aln-to_{reference}.paf.gz'
     output:
         hdf = 'output/subset_wg/30_extract_ctgaln/{sample}.{hifi_type}.{ont_type}.na.chrY_aln-to_{reference}.cache.h5'
+    resources:
+        mem_mb = lambda wildcards, attempt: 2048 * attempt
     run:
         import pandas as pd
         import numpy as np
@@ -413,7 +415,7 @@ rule cache_read_to_assembly_aln:
 
         ordered_contigs = []
         for ctg_order, (ctg_name, ctg_size) in enumerate(sorted(contigs), start=1):
-            order_key = f'{ctg_order:03}'
+            order_key = f'CTG{ctg_order:03}'
             ordered_contigs.append((order_key, ctg_name, ctg_size))
 
             hifi_cov = np.zeros(ctg_size, dtype=np.int16)
@@ -434,7 +436,7 @@ rule cache_read_to_assembly_aln:
                 key = f'{wildcards.sample}/{order_key}/ONT'
                 hdf.put(key, pd.Series(ont_cov))
 
-        ordered_contigs = pd.DataFrame.from_records(ordered_contigs, names=['order_key', 'contig_name', 'contig_size'])
+        ordered_contigs = pd.DataFrame.from_records(ordered_contigs, columns=['order_key', 'contig_name', 'contig_size'])
         with pd.HDFStore(output.hdf, 'a', complib='blosc', complevel=9) as hdf:
             hdf.put('contigs', ordered_contigs, format='fixed')
     # END OF RUN BLOCK
@@ -640,7 +642,7 @@ rule cache_read_to_reference_aln:
 
         ordered_contigs = []
         for ctg_order, (ctg_name, ctg_size) in enumerate(sorted(contigs), start=1):
-            order_key = f'{ctg_order:03}'
+            order_key = f'CTG{ctg_order:03}'
             ordered_contigs.append((order_key, ctg_name, ctg_size))
 
             hifi_cov = np.zeros(ctg_size, dtype=np.int16)
@@ -661,7 +663,7 @@ rule cache_read_to_reference_aln:
                 key = f'{wildcards.sample}/{order_key}/ONT'
                 hdf.put(key, pd.Series(ont_cov))
 
-        ordered_contigs = pd.DataFrame.from_records(ordered_contigs, names=['order_key', 'contig_name', 'contig_size'])
+        ordered_contigs = pd.DataFrame.from_records(ordered_contigs, columns=['order_key', 'contig_name', 'contig_size'])
         with pd.HDFStore(output.hdf, 'a', complib='blosc', complevel=9) as hdf:
             hdf.put('contigs', ordered_contigs, format='fixed')
     # END OF RUN BLOCK

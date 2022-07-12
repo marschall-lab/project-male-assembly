@@ -85,7 +85,7 @@ rule cache_close_contig_alignments:
 
         target_contigs = []
         for ctg_order_key, (target_ctg, ctg_aln) in enumerate(df.groupby('target_chrom'), start=1):
-            ctg_key = f'{ctg_order_key:03}'
+            ctg_key = f'CTG{ctg_order_key:03}'
             ctg_size = ctg_aln.at[ctg_aln.index[0], 'target_length']
 
             target_contigs.append((ctg_key, target_ctg, ctg_size))
@@ -102,7 +102,7 @@ rule cache_close_contig_alignments:
                     store_key = f'{wildcards.sample}/{ctg_key}/{type_label}'
                     hdf.put(store_key, pd.Series(aln_cov), format='fixed')
 
-        target_contigs = pd.DataFrame.from_records(target_contigs, names=['order_key', 'contig_name', 'contig_size'])
+        target_contigs = pd.DataFrame.from_records(target_contigs, columns=['order_key', 'contig_name', 'contig_size'])
         with pd.HDFStore(output.hdf, 'a', complib='blosc', complevel=9) as hdf:
             hdf.put('contigs', target_contigs, format='fixed')
 

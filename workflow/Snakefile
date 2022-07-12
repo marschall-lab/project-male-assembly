@@ -324,6 +324,20 @@ rule populate_share:
         )
 
 
+rule run_verkko_wg:
+    input:
+        ctg_agg = expand(
+            'output/alignments/contigs-to-ref/{sub_folder}/{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}_aln-to_{reference}.ctg-agg.tsv',
+            sub_folder=['00_raw'],
+            sample=COMPLETE_SAMPLES,
+            hifi_type=['HIFIRW'],
+            ont_type=['ONTUL'],
+            mapq=['na'],
+            chrom=['wg'],
+            reference=['T2TXY']
+        )
+
+
 rule run_ref_motifs:
     input:
         motif_sub_ref = expand(

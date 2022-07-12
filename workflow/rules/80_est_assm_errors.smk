@@ -372,7 +372,7 @@ rule merge_agg_seqclass_errors:
     input:
         tables = expand(
             'output/eval/error_clusters/20_aggregate/{sample}.{{hifi_type}}.{{ont_type}}.{{mapq}}.{{chrom}}.agg-seqclass-errors.tsv',
-            sample=COMPLETE_SAMPLES
+            sample=[s for s in COMPLETE_SAMPLES if s != 'NA24385']
         )
     output:
         table = 'output/eval/error_clusters/SAMPLES.{hifi_type}.{ont_type}.{mapq}.{chrom}.mrg-seqclass-errors.tsv'

@@ -224,11 +224,11 @@ rule norm_expert_seqclasses_file:
 
 rule compute_read_stats:
     input:
-        reads = lambda wildcards: SAMPLE_DATA[wildcards.sample][wildcards.reads][wildcards.partnum]
+        reads = lambda wildcards: SAMPLE_DATA[wildcards.sample][wildcards.reads][int(wildcards.partnum)]
     output:
         table = 'output/stats/reads/parts/{sample}.{reads}.part{partnum}.tsv.gz'
     conda:
-        '../envs/biotools.yml'
+        '../envs/biotools.yaml'
     threads: 2
     resources:
         mem_mb = lambda wildcards, attempt: 2048 * attempt,
@@ -239,11 +239,11 @@ rule compute_read_stats:
 
 rule compute_read_checksum:
     input:
-        reads = lambda wildcards: SAMPLE_DATA[wildcards.sample][wildcards.reads][wildcards.partnum]
+        reads = lambda wildcards: SAMPLE_DATA[wildcards.sample][wildcards.reads][int(wildcards.partnum)]
     output:
         md5 = 'output/checksums/{sample}.{reads}.part{partnum}.md5'
     conda:
-        '../envs/biotools.yml'
+        '../envs/biotools.yaml'
     resources:
         walltime = lambda wildcards, attempt: f'{attempt*6:02}:59:59'
     shell:
@@ -253,7 +253,7 @@ rule compute_read_checksum:
 rule merge_read_stats:
     input:
         tables = lambda wildcards: expand(
-            'output/stats/reads/merged/{{sample}}.{{reads}}.part{partnum}.tsv.gz',
+            'output/stats/reads/parts/{{sample}}.{{reads}}.part{partnum}.tsv.gz',
             partnum=list(range(0,len(SAMPLE_DATA[wildcards.sample][wildcards.reads])))
         ),
         md5 = lambda wildcards: expand(

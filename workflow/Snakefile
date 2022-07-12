@@ -338,6 +338,22 @@ rule run_verkko_wg:
         )
 
 
+rule cache_read_stats:
+    input:
+        hdf = expand(
+            'output/stats/reads/cached/{sample}.{reads}.read-stats.h5',
+            sample=COMPLETE_SAMPLES,
+            reads=['HIFIRW', 'ONTUL']
+        ),
+        agg_err = expand(
+            'output/eval/error_clusters/SAMPLES.{hifi_type}.{ont_type}.{mapq}.{chrom}.mrg-seqclass-errors.tsv',
+            hifi_type=['HIFIRW'],
+            ont_type=['ONTUL'],
+            mapq=['na'],
+            chrom=['chrY']
+        )
+
+
 rule run_ref_motifs:
     input:
         motif_sub_ref = expand(

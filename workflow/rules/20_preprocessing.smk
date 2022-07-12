@@ -1,6 +1,6 @@
 import pathlib as pl
 
-localrules: deselect_decoy_chroms_grch38
+localrules: deselect_decoy_chroms_grch38, norm_expert_seqclasses_file
 
 rule t2t_convert_to_ucsc_ids:
     input:
@@ -201,3 +201,85 @@ rule sync_expert_reference_file:
         'rsync --checksum {input.infile} {output.outfile}'
             ' && '
         'md5sum {output.outfile} > {output.outfile}.md5'
+
+
+rule norm_expert_seqclasses_file:
+    """
+    This rule is needed to first get rid
+    of the CR line terminators from Pille's
+    seq. classes annotation files.
+
+    cut: sometime strand info is present
+    """
+    input:
+        bed_dos = ancient(
+            pl.Path(f"{config['path_root_share_working']}",
+            "assemblies/verkko_1.0_release/chrY/{sample}.HIFIRW.ONTUL.na.chrY_SeqClasses.bed")
+        )
+    output:
+        bed_unix = 'references_derived/{sample}.HIFIRW.ONTUL.na.chrY.seqclasses.bed'
+    shell:
+        'cat {input.bed_dos} | dos2unix | cut -f 1-4 > {output.bed_unix}'
+
+
+rule compute_read_stats:
+    input:
+        reads = lambda wildcards: SAMPLE_DATA[wildcards.sample][wildcards.reads][wildcards.partnum]
+    output:
+        table = 'output/stats/reads/parts/{sample}.{reads}.part{partnum}.tsv.gz'
+    conda:
+        '../envs/biotools.yml'
+    threads: 2
+    resources:
+        mem_mb = lambda wildcards, attempt: 2048 * attempt,
+        walltime = lambda wildcards, attempt: f'{attempt*6:02}:59:59'
+    shell:
+        'seqtk comp {input.reads} | cut -f 1-6 | pigz -p {threads} --best > {output.table}'
+
+
+rule compute_read_checksum:
+    input:
+        reads = lambda wildcards: SAMPLE_DATA[wildcards.sample][wildcards.reads][wildcards.partnum]
+    output:
+        md5 = 'output/checksums/{sample}.{reads}.part{partnum}.md5'
+    conda:
+        '../envs/biotools.yml'
+    resources:
+        walltime = lambda wildcards, attempt: f'{attempt*6:02}:59:59'
+    shell:
+        'md5sum {input.reads} > {output.md5}'
+
+
+rule merge_read_stats:
+    input:
+        tables = lambda wildcards: expand(
+            'output/stats/reads/merged/{{sample}}.{{reads}}.part{partnum}.tsv.gz',
+            partnum=list(range(0,len(SAMPLE_DATA[wildcards.sample][wildcards.reads])))
+        ),
+        md5 = lambda wildcards: expand(
+            'output/checksums/{{sample}}.{{reads}}.part{partnum}.md5',
+            partnum=list(range(0,len(SAMPLE_DATA[wildcards.sample][wildcards.reads])))
+        )
+    output:
+        hdf = 'output/stats/reads/cached/{sample}.{reads}.read-stats.h5'
+    resources:
+        mem_mb = lambda wildcards, attempt: 4096 * attempt,
+        walltime = lambda wildcards, attempt: f'{attempt*attempt:02}:59:59'
+    run:
+        import pandas as pd
+
+        checksums = []
+        stat_cols = ['read_name', 'read_length', 'num_A', 'num_C', 'num_G', 'num_T']
+        with pd.HDFStore(output.hdf, mode='w', complib='blosc', complevel=9) as hdf:
+            for stats_file, chk_file in zip(input.tables, input.md5):
+                partnum = chk_file.rsplit('.', 2)[-2]
+                assert partnum.startswith('part')
+                assert partnum in stats_file
+                df = pd.read_csv(stats_file, sep='\t', header=None, names=stat_cols)
+                hdf.put(f'stats/{partnum}', df, format='fixed')
+                with open(chk_file, 'r') as text:
+                    md5sum, filename = text.read().strip().split()
+                    checksums.append((partnum, filename, md5sum))
+            df = pd.DataFrame.from_records(checksums, columns=['part', 'filename', 'md5'])
+            hdf.put('checksums', df, format='fixed')
+    # END OF RUN BLOCK

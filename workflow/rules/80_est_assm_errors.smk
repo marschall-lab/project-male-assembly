@@ -16,7 +16,9 @@ localrules: clone_veritymap_repo, \
             build_veritymap, \
             clean_veritymap_build, \
             merge_error_annotations, \
-            merge_all_error_stats
+            merge_all_error_stats, \
+            aggregate_errors_per_seqclass, \
+            merge_agg_seqclass_errors
 
 
 rule clone_veritymap_repo:
@@ -290,6 +292,99 @@ rule merge_all_error_stats:
         all_stats.sort_values('sample', ascending=True, inplace=True)
 
         all_stats.to_csv(output.tsv, sep='\t', header=True, index=False)
+    # END OF RUN BLOCK
+
+
+rule intersect_errors_with_seqclasses:
+    input:
+        errors = 'output/eval/merged_errors/{sample}.{hifi_type}.{ont_type}.na.{chrom}.errors.tsv',
+        seqclasses = 'references_derived/{sample}.{hifi_type}.{ont_type}.na.{chrom}.seqclasses.bed'
+    output:
+        table = 'output/eval/error_clusters/10_intersect/{sample}.{hifi_type}.{ont_type}.na.{chrom}.isect.tsv',
+        tmp = temp('output/eval/error_clusters/{sample}.{hifi_type}.{ont_type}.na.{chrom}.errors.bed')
+    wildcard_constraints:
+        chrom = 'chrY'
+    conda:
+        '../envs/biotools.yml'
+    shell:
+        'tail -n +2 {input.errors} > {output.tmp}'
+            ' && '
+        'bedtools intersect -wao -a {input.seqclasses} -b {output.tmp} > {output.table}'
+
+
+rule aggregate_errors_per_seqclass:
+    input:
+        table = 'output/eval/error_clusters/10_intersect/{sample}.{hifi_type}.{ont_type}.na.{chrom}.isect.tsv'
+    output:
+        table = 'output/eval/error_clusters/20_aggregate/{sample}.{hifi_type}.{ont_type}.na.{chrom}.agg-seqclass-errors.tsv'
+    run:
+        import pandas as pd
+        import re as re
+
+        columns = [
+            'contig', 'start', 'end', 'region_type',
+            'contig2', 'err_start', 'err_end', 'err_size',
+            'sample', 'err_source', 'err_reads', 'overlap'
+        ]
+
+        def norm_region_name(regname):
+            new_name = regname
+            if 'unplaced' in new_name:
+                new_name = new_name.split('_unplaced_')[0]
+            # next is heuristic...
+            if re.search('_[0-9]+$', new_name) is not None:
+                new_name = new_name.rsplit('_', 1)[0]
+            return new_name
+
+        df = pd.read_csv(input.table, sep='\t', header=None, names=columns)
+        df['region_type'] = df['region_type'].apply(norm_region_name)
+        df['err_size'].replace('.', '0', inplace=True)
+        df['err_size'] = df['err_size'].astype(int)
+        df['err_size'] = df['err_size'].abs()  # DEL are given as neg.
+
+        records = []
+        for (ctg, region), errors in df.groupby(['contig', 'region_type']):
+            sample = errors.at[errors.index[0], 'sample']
+            assert sample in ctg
+            total_err_bp = errors['err_size'].sum()
+            total_err_num = errors.shape[0]
+            if total_err_bp == 0:
+                total_err_num = 0
+            region_size = errors.at[errors.index[0], 'end'] - errors.at[errors.index[0], 'start']
+            assert region_size > 0
+            records.append((sample, ctg, region, region_size, total_err_bp, total_err_num))
+
+        out_columns = ['sample', 'contig', 'region_type', 'region_size', 'errors_bp', 'errors_num']
+        split_stats = pd.DataFrame.from_records(records, columns=out_columns)
+
+        agg_stats = split_stats.groupby(['sample', 'region_type']).agg(
+            contigs_num=('contig', 'nunique'),
+            errors_bp=('errors_bp', sum),
+            errors_num=('errors_num', sum),
+            region_size=('region_size', sum)
+        )
+        agg_stats.reset_index(drop=False, inplace=True)
+        agg_stats.to_csv(output.table, sep='\t', header=True, index=False)
+    # END OF RUN BLOCK
+
+
+rule merge_agg_seqclass_errors:
+    input:
+        tables = expand(
+            'output/eval/error_clusters/20_aggregate/{sample}.{{hifi_type}}.{{ont_type}}.{{mapq}}.{{chrom}}.agg-seqclass-errors.tsv',
+            sample=COMPLETE_SAMPLES
+        )
+    output:
+        table = 'output/eval/error_clusters/SAMPLES.{hifi_type}.{ont_type}.{mapq}.{chrom}.mrg-seqclass-errors.tsv'
+    run:
+        import pandas as pd
+        merged = []
+        for table in input.tables:
+            df = pd.read_csv(table, sep='\t', header=0)
+            merged.append(df)
+        merged = pd.concat(merged, axis=0, ignore_index=False)
+        merged.sort_values(['sample', 'region_type'], ascending=True, inplace=True)
+        merged.to_csv(output.table, sep='\t', header=True)
     # END OF RUN BLOCK
 
 

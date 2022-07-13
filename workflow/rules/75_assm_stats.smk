@@ -204,7 +204,8 @@ rule difference_meryl_ref_sample_kmer_dbs:
     conda:
         '../envs/biotools.yaml'
     wildcard_constraints:
-        reference = '(GRCh38|T2T)'
+        reference = '(GRCh38|T2T)',
+        sample = SAMPLE_NAME_CONSTRAINT
     resources:
         mem_mb = lambda wildcards, input, attempt: 2048 * attempt,
         walltime = lambda wildcards, attempt: f'{attempt*attempt:02}:59:00'
@@ -225,7 +226,8 @@ rule difference_meryl_ref_ref_kmer_dbs:
         '../envs/biotools.yaml'
     wildcard_constraints:
         ref1 = '(GRCh38|T2T)',
-        ref2 = '(GRCh38|T2T)'
+        ref2 = '(GRCh38|T2T)',
+        chrom = 'chrY'
     resources:
         mem_mb = lambda wildcards, input, attempt: 2048 * attempt,
         walltime = lambda wildcards, attempt: f'{attempt*attempt:02}:59:00'
@@ -240,10 +242,14 @@ def match_kmer_samples(*args, **kwargs):
     samples1 = [s for _, s in args[0]]
     samples2 = [s for _, s in args[1]]
 
+    refs = ['T2T', 'GRCh38']
+
     pairs = []
     for s1 in samples1:
         for s2 in samples2:
             if s1 == s2:
+                continue
+            if s1 in refs and s2 in refs:
                 continue
             pairs.append(
                 {'sample1': s1, 'sample2': s2}

@@ -213,8 +213,8 @@ rule dump_reference_genome_sizes:
                     num_auto += 1
 
         gsizes = [
-            ('autosomal', 'haploid', autosomes, num_auto),
-            ('autosomal', 'diploid', autosomes * 2, num_auto * 2),
+            ('auto_mito', 'haploid', autosomes, num_auto),
+            ('auto_mito', 'diploid', autosomes * 2, num_auto * 2),
             ('female', 'haploid', autosomes + sex_female, num_auto + num_female),
             ('female', 'diploid', (autosomes + sex_female) * 2, (num_auto + num_female) * 2),
             ('male', 'diploid', autosomes * 2 + sex_male + sex_female, num_auto * 2 + num_male + num_female),

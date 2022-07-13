@@ -334,6 +334,12 @@ rule aggregate_errors_per_seqclass:
             # next is heuristic...
             if re.search('_[0-9]+$', new_name) is not None:
                 new_name = new_name.rsplit('_', 1)[0]
+            # this is a bugfix specifically for HG02953,
+            # where Pille annotated a region as "XTR1_centro",
+            # which does not exist as region type. Given the
+            # size, that is probably a piece of XTR1
+            if 'XTR1_centro' in new_name:
+                new_name = 'XTR1'
             return new_name
 
         df = pd.read_csv(input.table, sep='\t', header=None, names=columns)

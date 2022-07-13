@@ -13,7 +13,7 @@ rule compute_wg_assembly_stats:
     resources:
         mem_mb = lambda wildcards, attempt: 6144 * attempt
     params:
-        ref_size = 6017864545, # this is the size for a diploid male assembly (T2T-based) incl. 1 MT
+        ref_size = 6017864545, # this is the size for a diploid male assembly (T2T-based) incl. 2 MT
         out_dir = lambda wildcards, output: pathlib.Path(output.report).parent
     shell:
         'quast --no-plots --no-html --no-icarus --min-contig 1 '

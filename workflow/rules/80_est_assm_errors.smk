@@ -385,7 +385,7 @@ rule merge_agg_seqclass_errors:
             merged.append(df)
         merged = pd.concat(merged, axis=0, ignore_index=False)
         merged.sort_values(['sample', 'region_type'], ascending=True, inplace=True)
-        merged.to_csv(output.table, sep='\t', header=True)
+        merged.to_csv(output.table, sep='\t', header=True, index=False)
     # END OF RUN BLOCK
 
 

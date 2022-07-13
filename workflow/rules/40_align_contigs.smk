@@ -61,9 +61,9 @@ rule cache_close_contig_alignments:
     and secondary alignment information intact
     """
     input:
-        paf = 'output/alignments/contigs-to-contigs/{sample}.{hifi_type}.{ont_type}.na.chrY_aln-to_{query_sample}.paf.gz'
+        paf = 'output/alignments/contigs-to-contigs/{sample}.{hifi_type}.{ont_type}.na.chrY_aln-to_{target_sample}.paf.gz'
     output:
-        hdf = 'output/alignments/contigs-to-contigs/{sample}.{hifi_type}.{ont_type}.na.chrY_aln-to_{query_sample}.cache.h5'
+        hdf = 'output/alignments/contigs-to-contigs/{sample}.{hifi_type}.{ont_type}.na.chrY_aln-to_{target_sample}.cache.h5'
     run:
         import pandas as pd
         import numpy as np
@@ -78,7 +78,7 @@ rule cache_close_contig_alignments:
 
         df = pd.read_csv(input.paf, sep='\t', header=None, names=PAF_COLUMN_NAMES, usecols=PAF_USE_COLS)
         df['tag_tp'] = df['tag_tp'].str.lower()
-        df.sort_values(['target_name', 'target_start'], ascending=True, inplace=True)
+        df.sort_values(['target_chrom', 'target_start'], ascending=True, inplace=True)
 
         with pd.HDFStore(output.hdf, mode='w', complib='blosc', complevel=9) as hdf:
             pass

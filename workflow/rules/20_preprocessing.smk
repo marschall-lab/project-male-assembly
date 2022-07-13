@@ -2,7 +2,8 @@ import pathlib as pl
 
 localrules: deselect_decoy_chroms_grch38, \
             norm_expert_seqclasses_file, \
-            prep_t2t_seq_class_cache_file
+            prep_t2t_seq_class_cache_file, \
+            dump_reference_genome_sizes
 
 rule t2t_convert_to_ucsc_ids:
     input:
@@ -180,6 +181,41 @@ rule prep_t2t_seq_class_cache_file:
         df[['red', 'green', 'blue', 'alpha']] = rgb_colors
     
         df.to_csv(output.tsv, sep='\t', header=True, index=False)
+    # END OF RUN BLOCK
+
+
+rule dump_reference_genome_sizes:
+    input:
+        fai = lambda wildcards: select_reference_genome(wildcards.reference, True),
+    output:
+        table = 'references_derived/{reference}.gsize.tsv'
+    run:
+        import pandas as pd
+
+        autosomes = 0
+        sex_male = 0
+        sex_female = 0 
+
+        with open(input.fai, 'r') as faidx:
+            for line in faidx:
+                chrom, chrom_size = line.split()[:2]
+                if 'chrY' in chrom:
+                    sex_male += int(chrom_size)
+                elif 'chrX' in chrom:
+                    sex_female += int(chrom_size)
+                else:
+                    autosomes += int(chrom_size)
+
+        gsizes = [
+            ('autosomal', 'haploid', autosomes),
+            ('autosomal', 'diploid', autosomes * 2),
+            ('female', 'haploid', autosomes + sex_female),
+            ('female', 'diploid', (autosomes + sex_female) * 2),
+            ('male', 'diploid', autosomes * 2 + sex_male + sex_female),
+            ('unisex', 'linear', autosomes + sex_male + sex_female)
+        ]
+        gsizes = pd.DataFrame.from_records(gsizes, columns=['karyotype', 'ploidy', 'size'])
+        gsizes.to_csv(output.table, sep='\t', header=True, index=False)
     # END OF RUN BLOCK
 
 

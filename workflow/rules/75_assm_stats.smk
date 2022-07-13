@@ -131,11 +131,13 @@ rule dump_meryl_chrom_kmer_db:
         'log/output/kmer_dump/{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.k{kmer}.meryl.log'
     benchmark:
         'rsrc/output/kmer_dump/{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.k{kmer}.meryl.rsrc'
+    wildcard_constraints:
+        sample = SAMPLE_NAME_CONSTRAINT
     conda:
         '../envs/biotools.yaml'
     resources:
         mem_mb = lambda wildcards, input, attempt: 2048 * attempt,
-        mem_gb = lambda wildcards, input, attempt: 2 * attempt
+        mem_gb = lambda wildcards, input, attempt: 2 * attempt,
         walltime = lambda wildcards, attempt: f'{attempt*attempt:02}:59:00'
     params:
         kmer_size = lambda wildcards: int(wildcards.kmer)
@@ -155,11 +157,13 @@ rule dump_meryl_ref_chrom_kmer_db:
         'log/output/kmer_dump/{reference}.chrY.k{kmer}.meryl.log'
     benchmark:
         'rsrc/output/kmer_dump/{reference}.chrY.k{kmer}.meryl.rsrc'
+    wildcard_constraints:
+        reference = '(T2T|GRCh38)'
     conda:
         '../envs/biotools.yaml'
     resources:
         mem_mb = lambda wildcards, input, attempt: 2048 * attempt,
-        mem_gb = lambda wildcards, input, attempt: 2 * attempt
+        mem_gb = lambda wildcards, input, attempt: 2 * attempt,
         walltime = lambda wildcards, attempt: f'{attempt*attempt:02}:59:00'
     params:
         kmer_size = lambda wildcards: int(wildcards.kmer)
@@ -220,7 +224,8 @@ rule difference_meryl_ref_ref_kmer_dbs:
     conda:
         '../envs/biotools.yaml'
     wildcard_constraints:
-        reference = '(GRCh38|T2T)'
+        ref1 = '(GRCh38|T2T)',
+        ref2 = '(GRCh38|T2T)'
     resources:
         mem_mb = lambda wildcards, input, attempt: 2048 * attempt,
         walltime = lambda wildcards, attempt: f'{attempt*attempt:02}:59:00'

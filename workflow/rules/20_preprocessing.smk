@@ -1,6 +1,8 @@
 import pathlib as pl
 
-localrules: deselect_decoy_chroms_grch38, norm_expert_seqclasses_file
+localrules: deselect_decoy_chroms_grch38, \
+            norm_expert_seqclasses_file, \
+            prep_t2t_seq_class_cache_file
 
 rule t2t_convert_to_ucsc_ids:
     input:
@@ -168,6 +170,7 @@ rule prep_t2t_seq_class_cache_file:
         df = pd.read_csv(input.bed, sep='\t', header=None, names=names)
         # next line: manual fix for OBO
         df.loc[df['name'] == 'PAR2', 'end'] -= 1
+        assert df.at[df.index[-1], 'end'] == 62460029
         # convert HEX to RGBA
         df[['red', 'green', 'blue', 'alpha']] = 0.
         rgb_colors = []

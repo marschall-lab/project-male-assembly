@@ -193,28 +193,34 @@ rule dump_reference_genome_sizes:
         import pandas as pd
 
         autosomes = 0
+        num_auto = 0
         sex_male = 0
-        sex_female = 0 
+        num_male = 0
+        sex_female = 0
+        num_female = 0
 
         with open(input.fai, 'r') as faidx:
             for line in faidx:
                 chrom, chrom_size = line.split()[:2]
                 if 'chrY' in chrom:
                     sex_male += int(chrom_size)
+                    num_male += 1
                 elif 'chrX' in chrom:
                     sex_female += int(chrom_size)
+                    num_female += 1
                 else:
                     autosomes += int(chrom_size)
+                    num_auto += 1
 
         gsizes = [
-            ('autosomal', 'haploid', autosomes),
-            ('autosomal', 'diploid', autosomes * 2),
-            ('female', 'haploid', autosomes + sex_female),
-            ('female', 'diploid', (autosomes + sex_female) * 2),
-            ('male', 'diploid', autosomes * 2 + sex_male + sex_female),
-            ('unisex', 'linear', autosomes + sex_male + sex_female)
+            ('autosomal', 'haploid', autosomes, num_auto),
+            ('autosomal', 'diploid', autosomes * 2, num_auto * 2),
+            ('female', 'haploid', autosomes + sex_female, num_auto + num_female),
+            ('female', 'diploid', (autosomes + sex_female) * 2, (num_auto + num_female) * 2),
+            ('male', 'diploid', autosomes * 2 + sex_male + sex_female, num_auto * 2 + num_male + num_female),
+            ('unisex', 'linear', autosomes + sex_male + sex_female, num_auto + num_male + num_female)
         ]
-        gsizes = pd.DataFrame.from_records(gsizes, columns=['karyotype', 'ploidy', 'size'])
+        gsizes = pd.DataFrame.from_records(gsizes, columns=['karyotype', 'ploidy', 'size', 'chromosomes'])
         gsizes.to_csv(output.table, sep='\t', header=True, index=False)
     # END OF RUN BLOCK
 

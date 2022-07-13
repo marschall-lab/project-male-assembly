@@ -305,7 +305,7 @@ rule intersect_errors_with_seqclasses:
     wildcard_constraints:
         chrom = 'chrY'
     conda:
-        '../envs/biotools.yml'
+        '../envs/biotools.yaml'
     shell:
         'tail -n +2 {input.errors} > {output.tmp}'
             ' && '
@@ -341,6 +341,7 @@ rule aggregate_errors_per_seqclass:
         df['err_size'].replace('.', '0', inplace=True)
         df['err_size'] = df['err_size'].astype(int)
         df['err_size'] = df['err_size'].abs()  # DEL are given as neg.
+        df['sample'] = wildcards.sample  # no-hits in the intersection have "." as sample
 
         records = []
         for (ctg, region), errors in df.groupby(['contig', 'region_type']):

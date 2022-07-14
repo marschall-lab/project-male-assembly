@@ -256,16 +256,80 @@ def match_kmer_samples(*args, **kwargs):
             )
     return pairs
 
-localrules: collect_all_kmer_stats
+
+localrules: collect_all_kmer_stats, collect_all_kmer_differences
+
 rule collect_all_kmer_stats:
     input:
-        t2t_hg38 = 'output/eval/kmer_stats/T2T_not-in_GRCh38.chrY.k31.count.txt',
-        hg38_t2t = 'output/eval/kmer_stats/GRCh38_not-in_T2T.chrY.k31.count.txt',
+        sample_stats = expand(
+            'output/kmer_dump/{sample}.{{hifi_type}}.{{ont_type}}.{{mapq}}.{{chrom}}.k{{kmer}}.meryl-stats.txt',
+            sample=SAMPLE_NAMES
+        ),
+        ref_stats = expand(
+            'output/kmer_dump/{reference}.{{chrom}}.k{{kmer}}.meryl-stats.txt'
+            reference=['T2T', 'GRCh38'],
+        ),
+        
+    output:
+        table = 'output/stats/kmers/SAMPLES.{hifi_type}.{ont_type}.{mapq}.{chrom}.k{kmer}.counts.tsv'
+    run:
+        import pandas as pd
+        import itertools as itt
+        import pathlib as pl
+
+        keywords = ['unique', 'distinct']
+        records = []
+        for stats_file in itt.chain(input.sample_stats, input.ref_stats):
+            assert pl.Path(stats_file).is_file()
+            sample = pl.Path(stats_file).stem.split('.')[0]
+            with open(stats_file, 'r') as table:
+                for line in table:
+                    if not any(k in line for k in keywords):
+                        continue
+                    parts = line.strip().split()
+                    kmer_type = parts[0]
+                    assert kmer_type in keywords
+                    type_abundance = int(parts[1])
+                    records.append({'sample': sample, kmer_type: type_abundance})
+                    if kmer_type == 'distinct':
+                        break
+        df = pd.DataFrame.from_records(records)
+        df.sort_values('sample', ascending=True, inplace=True)
+        df.to_csv(output.table, sep='\t', header=True, index=False)
+    # END OF RUN BLOCK
+
+
+rule collect_all_kmer_differences:
+    input:
+        t2t_hg38 = 'output/eval/kmer_stats/T2T_not-in_GRCh38.{chrom}.k{kmer}.count.txt',
+        hg38_t2t = 'output/eval/kmer_stats/GRCh38_not-in_T2T.{chrom}.k{kmer}.count.txt',
         samples = expand(
-            'output/eval/kmer_stats/{sample1}_not-in_{sample2}.HIFIRW.ONTUL.na.chrY.k31.count.txt',
+            'output/eval/kmer_stats/{sample1}_not-in_{sample2}.{{HIFIRW}}.{{ONTUL}}.{{mapq}}.{{chrom}}.k{{kmer}}.count.txt',
             match_kmer_samples,
             sample1=SAMPLE_NAMES + ['T2T', 'GRCh38'],
             sample2=SAMPLE_NAMES + ['T2T', 'GRCh38'],
-        )
+        ),
+        counts = 'output/stats/kmers/SAMPLES.{hifi_type}.{ont_type}.{mapq}.{chrom}.k{kmer}.counts.tsv'
     output:
-        touch('output/eval/kmer_stats/all-vs-all.ok')
+        table = 'output/stats/kmers/SAMPLES.{hifi_type}.{ont_type}.{mapq}.{chrom}.k{kmer}.diffs.tsv'
+    run:
+        import itertools as itt
+        import pathlib as pl
+        import pandas as pd
+
+        records = []
+        for counts_file in itt.chain(input.t2t_hg38, input.hg38_t2t, input.samples):
+            assert pl.Path(counts_file).is_file()
+            trg_sample, qry_sample = pl.Path(counts_file).stem.split('.')[0].split('_not-in_')
+            diff_count = int(open(counts_file).read().strip())
+            records.append(
+                {'target_sample': trg_sample, 'query_sample': qry_sample, 'kmers_target_only': diff_count}
+            )
+        diffs = pd.DataFrame.from_records(records)
+        counts = pd.read_csv(input.counts, sep='\t', header=True)
+        diffs = diffs.merge(counts, how='outer', left_on='target_sample', right_on='sample')
+        assert pd.notnull(diffs).any(axis=0).any()
+        diffs['kmers_target_only_pct'] = (diffs['kmers_target_only'] / diffs['distinct'] * 100).round(1)
+        diffs.sort_values('target_sample', ascending=True, inplace=True)
+        diffs.to_csv(output.table, sep='\t', header=True, index=False)
+    # END OF RUN BLOCK

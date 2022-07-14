@@ -323,7 +323,7 @@ rule collect_all_kmer_differences:
 
         records = []
         for counts_file in itt.chain([input.t2t_hg38], [input.hg38_t2t], input.samples):
-            assert pl.Path(counts_file).is_file(), f'Not a valid file: {counts_file}'
+            #assert pl.Path(counts_file).is_file(), f'Not a valid file: {counts_file}'
             trg_sample, qry_sample = pl.Path(counts_file).stem.split('.')[0].split('_not-in_')
             diff_count = int(open(counts_file).read().strip())
             records.append(
@@ -331,12 +331,12 @@ rule collect_all_kmer_differences:
             )
         diffs = pd.DataFrame.from_records(records)
         counts = pd.read_csv(input.counts, sep='\t', header=0,
-            {'sample': str, 'unique': int, 'distinct': int}
+            dtype={'sample': str, 'unique': int, 'distinct': int}
         )
         diffs = diffs.merge(counts, how='outer', left_on='target_sample', right_on='sample')
         assert pd.notnull(diffs).all(axis=0).all()
-        diffs['kmers_target_only_pct'] = (diffs['kmers_target_only'] / diffs['distinct'] * 100).round(1)
-        diffs.sort_values('target_sample', ascending=True, inplace=True)
+        diffs['kmers_target_only_pct'] = (diffs['kmers_target_only'] / diffs['distinct'] * 100).round(3)
+        diffs.sort_values(['target_sample', 'query_sample'], ascending=True, inplace=True)
         diffs.drop('sample', axis=1, inplace=True)
         diffs.to_csv(output.table, sep='\t', header=True, index=False)
     # END OF RUN BLOCK

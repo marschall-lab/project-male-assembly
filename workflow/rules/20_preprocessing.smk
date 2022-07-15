@@ -331,14 +331,14 @@ rule merge_read_stats:
     # END OF RUN BLOCK
 
 
-localrules: compute_read_coverage_stats
-
 rule compute_read_coverage_stats:
     input:
         gsize = 'references_derived/T2TXY.gsize.tsv',
         read_cache = 'output/stats/reads/cached/{sample}.{reads}.read-stats.h5'
     output:
         table = 'output/stats/reads/{sample}.{reads}.read-stats.tsv'
+    resources:
+        mem_mb = lambda wildcards, attempt: 2048 * attempt
     run:
         import pandas as pd
         import numpy as np
@@ -385,7 +385,7 @@ rule compute_read_coverage_stats:
             stats[f'num_reads_{t_label}'] = num_reads
             if t_label != 'geq_0bp':
                 pct_reads = round(num_reads / stats['num_reads_geq_0bp'] * 100, 1)
-                stats[f'pct_reads_{t_label}']
+                stats[f'pct_reads_{t_label}'] = pct_reads
             t_num_bp = reads[reads >= t].sum()
             stats[f'num_bp_{t_label}'] = t_num_bp
             stats[f'num_Gbp_{t_label}'] = round(t_num_bp / 1e9, 2)
@@ -411,4 +411,30 @@ rule compute_read_coverage_stats:
 
         df = pd.DataFrame.from_records([stats])
         df.to_csv(output.table, sep='\t', header=True, index=False)
+    # END OF RUN BLOCK
+
+
+localrules: merge_all_read_stats
+
+rule merge_all_read_stats:
+    input:
+        tables = expand(
+            'output/stats/reads/{sample}.{reads}.read-stats.tsv',
+            sample=SAMPLE_NAMES,
+            reads=['HIFIRW', 'ONTUL']
+        )
+    output:
+        table = 'output/stats/reads/SAMPLES.READS.read-stats.tsv'
+    run:
+        import pandas as pd
+
+        merged = []
+        for table in input.tables:
+            df = pd.read_csv(table, sep='\t', header=0)
+            merged.append(df)
+
+        merged = pd.concat(merged, axis=0, ignore_index=False)
+        merged.sort_values(['sample', 'read_type'], ascending=True, inplace=True)
+
+        merged.to_csv(output.table, sep='\t', header=True, index=False)
     # END OF RUN BLOCK

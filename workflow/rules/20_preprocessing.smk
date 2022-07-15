@@ -346,22 +346,22 @@ rule compute_read_coverage_stats:
         use_sizes = [(('unisex', 'linear'), 'T2TXYM_linear'), (('male', 'diploid'), 'T2TXYM_diploid')]
         gsizes = pd.read_csv(input.gsize, sep="\t", header=0)
 
-        refsizes = {}
+        ref_sizes = {}
         for (karyo, ploidy), size_label in use_sizes:
             select_k = gsizes['karyotype'] == karyo
             select_p = gsizes['ploidy'] == ploidy
             selector = select_k & select_p
             ref_size = gsizes.loc[selector, 'size'].values[0]
-            refsizes[size_label] = ref_size
+            ref_sizes[size_label] = ref_size
 
 
         reads = []
         with pd.HDFStore(input.read_cache, 'r') as hdf:
             for k in hdf.keys():
-                if k == 'checksums':
+                if 'checksums' in k:
                     continue
                 read_lengths = hdf[k]['read_length'].values
-                parts.append(read_lengths)
+                reads.append(read_lengths)
         reads = np.concatenate(reads, dtype=np.int32)
         reads.sort()
 
@@ -381,14 +381,18 @@ rule compute_read_coverage_stats:
         thresholds = [(0, 'geq_0bp'), (15000, 'geq_15kbp'), (1e5, 'geq_100kbp'), (1e6, 'geq_1Mbp')]
 
         for t, t_label in thresholds:
-            stats[f'num_reads_{t_label}'] = int((reads >= t).sum())
+            num_reads = int((reads >= t).sum())
+            stats[f'num_reads_{t_label}'] = num_reads
+            if t_label != 'geq_0bp':
+                pct_reads = round(num_reads / stats['num_reads_geq_0bp'] * 100, 1)
+                stats[f'pct_reads_{t_label}']
             t_num_bp = reads[reads >= t].sum()
             stats[f'num_bp_{t_label}'] = t_num_bp
-            stats[f'num_Gbp_{t_label}'] = round(t_num_bp / 1e6, 1)
+            stats[f'num_Gbp_{t_label}'] = round(t_num_bp / 1e9, 2)
 
             for ref_label, ref_size in ref_sizes.items():
                 label = f'cov_{t_label}_{ref_label}'
-                cov = round(t_num_bp / ref_size, 1)
+                cov = int(round(t_num_bp / ref_size, 0))
                 stats[label] = cov
         
         stats.update(col.OrderedDict({
@@ -402,8 +406,8 @@ rule compute_read_coverage_stats:
         }))
 
         for ref_label, ref_size in ref_sizes.items():
-            stats[f'{label}_bp'] = ref_size
-            stats[f'{label}_Gbp'] = round(ref_size / 1e6, 2)
+            stats[f'{ref_label}_bp'] = ref_size
+            stats[f'{ref_label}_Gbp'] = round(ref_size / 1e9, 2)
 
         df = pd.DataFrame.from_records([stats])
         df.to_csv(output.table, sep='\t', header=True, index=False)

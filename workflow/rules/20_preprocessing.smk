@@ -312,6 +312,7 @@ rule merge_read_stats:
         walltime = lambda wildcards, attempt: f'{attempt*attempt:02}:59:59'
     run:
         import pandas as pd
+        import pathlib as pl
 
         checksums = []
         stat_cols = ['read_name', 'read_length', 'num_A', 'num_C', 'num_G', 'num_T']
@@ -324,7 +325,86 @@ rule merge_read_stats:
                 hdf.put(f'stats/{partnum}', df, format='fixed')
                 with open(chk_file, 'r') as text:
                     md5sum, filename = text.read().strip().split()
-                    checksums.append((partnum, filename, md5sum))
+                checksums.append((partnum, pl.Path(filename).name, md5sum))
             df = pd.DataFrame.from_records(checksums, columns=['part', 'filename', 'md5'])
             hdf.put('checksums', df, format='fixed')
+    # END OF RUN BLOCK
+
+
+localrules: compute_read_coverage_stats
+
+rule compute_read_coverage_stats:
+    input:
+        gsize = 'references_derived/T2TXY.gsize.tsv',
+        read_cache = 'output/stats/reads/cached/{sample}.{reads}.read-stats.h5'
+    output:
+        table = 'output/stats/reads/{sample}.{reads}.read-stats.tsv'
+    run:
+        import pandas as pd
+        import numpy as np
+        import collections as col
+        use_sizes = [(('unisex', 'linear'), 'T2TXYM_linear'), (('male', 'diploid'), 'T2TXYM_diploid')]
+        gsizes = pd.read_csv(input.gsize, sep="\t", header=0)
+
+        refsizes = {}
+        for (karyo, ploidy), size_label in use_sizes:
+            select_k = gsizes['karyotype'] == karyo
+            select_p = gsizes['ploidy'] == ploidy
+            selector = select_k & select_p
+            ref_size = gsizes.loc[selector, 'size'].values[0]
+            refsizes[size_label] = ref_size
+
+
+        reads = []
+        with pd.HDFStore(input.read_cache, 'r') as hdf:
+            for k in hdf.keys():
+                if k == 'checksums':
+                    continue
+                read_lengths = hdf[k]['read_length'].values
+                parts.append(read_lengths)
+        reads = np.concatenate(reads, dtype=np.int32)
+        reads.sort()
+
+        read_length_median = reads[reads.size // 2]
+        read_length_mean = int(round(reads.mean(), 0))
+
+        num_bp = reads.sum()
+        read_length_n50 = reads[reads.cumsum() >= (num_bp // 2)].min()
+
+        stats = col.OrderedDict({
+            'sample': wildcards.sample,
+            'read_type': wildcards.reads,
+            'read_length_N50_bp': read_length_n50,
+            'read_length_N50_kbp': int(round(read_length_n50 / 1e3, 0))
+        })
+
+        thresholds = [(0, 'geq_0bp'), (15000, 'geq_15kbp'), (1e5, 'geq_100kbp'), (1e6, 'geq_1Mbp')]
+
+        for t, t_label in thresholds:
+            stats[f'num_reads_{t_label}'] = int((reads >= t).sum())
+            t_num_bp = reads[reads >= t].sum()
+            stats[f'num_bp_{t_label}'] = t_num_bp
+            stats[f'num_Gbp_{t_label}'] = round(t_num_bp / 1e6, 1)
+
+            for ref_label, ref_size in ref_sizes.items():
+                label = f'cov_{t_label}_{ref_label}'
+                cov = round(t_num_bp / ref_size, 1)
+                stats[label] = cov
+        
+        stats.update(col.OrderedDict({
+            'read_length_min_bp': reads.min(),
+            'read_length_median_bp': read_length_median,
+            'read_length_median_kbp': int(round(read_length_median / 1e3, 0)),
+            'read_length_mean_bp': read_length_mean,
+            'read_length_mean_kbp': int(round(read_length_mean / 1e3, 0)),
+            'read_length_max_bp': reads.max(),
+            'read_length_max_kbp': int(round(reads.max() / 1e3, 0))
+        }))
+
+        for ref_label, ref_size in ref_sizes.items():
+            stats[f'{label}_bp'] = ref_size
+            stats[f'{label}_Gbp'] = round(ref_size / 1e6, 2)
+
+        df = pd.DataFrame.from_records([stats])
+        df.to_csv(output.table, sep='\t', header=True, index=False)
     # END OF RUN BLOCK

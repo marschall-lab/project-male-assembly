@@ -415,6 +415,12 @@ rule cache_all_aln:
             ont_type=['ONTUL'],
             reference=['T2TXY', 'GRCh38'],
         ),
+        cache_hifiasm_aln = expand(
+            'output/alignments/contigs-to-contigs/{sample}.{hifi_type}.{ont_type}.na.chrY_aln-to_hifasm.cache.h5',
+            sample=['HC01457', 'HC02666', 'HC18989', 'HC19384', 'HG00358', 'HG01890', 'NA19317', 'NA19347'],
+            hifi_type=['HIFIRW'],
+            ont_type=['ONTUL'],
+        )
 
 
 rule run_veritymap:

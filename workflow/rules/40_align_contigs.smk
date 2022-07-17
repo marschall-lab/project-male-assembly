@@ -53,12 +53,46 @@ rule align_contigs_close_samples:
         '--cs -c --paf-no-hit {input.na19347} {input.na19317} | pigz -p {threads} --best > {output.ref_347}'
 
 
+rule align_contigs_hifiasm_assemblies:
+    """
+    TODO
+    move abs path to config
+    """
+    input:
+        h1 = '/gpfs/project/projects/medbioinf/data/share/globus/sig_chrY/working/assemblies/hifiasm/{sample}/{sample}_hifiasm.asm.bp.hap1.p_ctg.fa',
+        h2 = '/gpfs/project/projects/medbioinf/data/share/globus/sig_chrY/working/assemblies/hifiasm/{sample}/{sample}_hifiasm.asm.bp.hap2.p_ctg.fa',
+        ctg_y = 'output/subset_wg/20_extract_contigs/{sample}.{hifi_type}.{ont_type}.na.chrY.fasta',
+    output:
+        paf = 'output/alignments/contigs-to-contigs/{sample}.{hifi_type}.{ont_type}.na.chrY_aln-to_hifiasm.paf.gz',
+        tmp = temp('output/alignments/contigs-to-contigs/{sample}.{hifi_type}.{ont_type}.na.chrY_aln-to_hifiasm.paf.tmp',)
+    conda:
+        '../envs/biotools.yaml'
+    threads: config['num_cpu_low']
+    resources:
+        mem_mb = lambda wildcards, attempt: 24576 * attempt,
+        walltime = lambda wildcards, attempt: f'{attempt * attempt:02}:59:00',
+    params:
+        sec_aln = "-p 0.95 --secondary=yes -N 1"
+    shell:
+        'minimap2 -t {threads} -x asm5 -Y {params.sec_aln} '
+        '--cs -c --paf-no-hit {input.h1} {input.ctg_y} > {output.tmp}'
+            ' && '
+        'minimap2 -t {threads} -x asm5 -Y {params.sec_aln} '
+        '--cs -c --paf-no-hit {input.na19347} {input.na19317} >> {output.tmp}'
+            ' && '
+        'pigz -p {threads} --best --stdout {output.tmp} > {output.paf}'
+
+
 rule cache_close_contig_alignments:
     """
     Store all contig alignments
     for later plotting (more efficient binning);
     for the two benchmark samples, keep primary
     and secondary alignment information intact
+
+    2022-07-17
+    Adapt rule to also cache contig alignments
+    to hifiasm assemblies
     """
     input:
         paf = 'output/alignments/contigs-to-contigs/{sample}.{hifi_type}.{ont_type}.na.chrY_aln-to_{target_sample}.paf.gz'
@@ -78,23 +112,57 @@ rule cache_close_contig_alignments:
 
         df = pd.read_csv(input.paf, sep='\t', header=None, names=PAF_COLUMN_NAMES, usecols=PAF_USE_COLS)
         df['tag_tp'] = df['tag_tp'].str.lower()
-        df.sort_values(['target_chrom', 'target_start'], ascending=True, inplace=True)
+
+        # for unaligned contigs, some of the operations below may fail, hence fix data types
+        object_columns = df.select_dtypes(include=['object'])
+        fix_columns = ['target_start', 'target_end', 'query_start', 'query_end']
+        needs_fixing = []
+        for c in object_columns.columns.values:
+            if c not in fix_columns:
+                continue
+            needs_fixing.append(c)
+
+        if len(needs_fixing) > 0:
+            replacements = {}
+            
+            for col in needs_fixing:
+                replacements[col] = {
+                    '.': '0',
+                    '*': '0'
+                }
+            df.replace(replacements, value=None, inplace=True)
+            for col in needs_fixing:
+                df[col] = df[col].astype(int)
+
+        if wildcards.target_sample == 'hifiasm':
+            sort_by = 'query_chrom'
+            take_length = 'query_length'
+            aln_start = 'query_start'
+            aln_end = 'query_end'
+        else:
+            sort_by = 'target_chrom'
+            take_length = 'target_length'
+            aln_start = 'target_start'
+            aln_end = 'target_end'
+
+
+        df.sort_values([sort_by, aln_start], ascending=True, inplace=True)
 
         with pd.HDFStore(output.hdf, mode='w', complib='blosc', complevel=9) as hdf:
             pass
 
         target_contigs = []
-        for ctg_order_key, (target_ctg, ctg_aln) in enumerate(df.groupby('target_chrom'), start=1):
+        for ctg_order_key, (target_ctg, ctg_aln) in enumerate(df.groupby(sort_by), start=1):
             ctg_key = f'CTG{ctg_order_key:03}'
-            ctg_size = ctg_aln.at[ctg_aln.index[0], 'target_length']
+            ctg_size = ctg_aln.at[ctg_aln.index[0], take_length]
 
             target_contigs.append((ctg_key, target_ctg, ctg_size))
 
             for aln_type, type_label in zip([['tp:a:p', 'tp:a:i'], ['tp:a:s']], ['primary', 'secondary']):
                 sub_aln = ctg_aln.loc[ctg_aln['tag_tp'].isin(aln_type), :]
                 aln_cov = np.zeros(ctg_size, dtype=np.int8)
-                for tstart, tend in sub_aln[['target_start', 'target_end']].itertuples(index=False):
-                    aln_cov[tstart:tend] += 1
+                for start, end in sub_aln[[aln_start, aln_end]].itertuples(index=False):
+                    aln_cov[start:end] += 1
                     if aln_cov.max() > 254:
                         raise
                 
@@ -105,7 +173,6 @@ rule cache_close_contig_alignments:
         target_contigs = pd.DataFrame.from_records(target_contigs, columns=['order_key', 'contig_name', 'contig_size'])
         with pd.HDFStore(output.hdf, 'a', complib='blosc', complevel=9) as hdf:
             hdf.put('contigs', target_contigs, format='fixed')
-
     # END OF RUN BLOCK
 
 

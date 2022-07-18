@@ -78,7 +78,7 @@ rule align_contigs_hifiasm_assemblies:
         '--cs -c --paf-no-hit {input.h1} {input.ctg_y} > {output.tmp}'
             ' && '
         'minimap2 -t {threads} -x asm5 -Y {params.sec_aln} '
-        '--cs -c --paf-no-hit {input.na19347} {input.na19317} >> {output.tmp}'
+        '--cs -c --paf-no-hit {input.h2} {input.ctg_y} >> {output.tmp}'
             ' && '
         'pigz -p {threads} --best --stdout {output.tmp} > {output.paf}'
 

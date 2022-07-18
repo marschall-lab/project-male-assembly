@@ -38,6 +38,7 @@ include: 'rules/65_call_variants.smk'
 include: 'rules/70_est_assm_qv.smk'
 include: 'rules/75_assm_stats.smk'
 include: 'rules/80_est_assm_errors.smk'
+include: 'rules/85_quality_factors.smk'
 include: 'rules/99_pop_share.smk'
 
 localrules: run_all
@@ -416,7 +417,7 @@ rule cache_all_aln:
             reference=['T2TXY', 'GRCh38'],
         ),
         cache_hifiasm_aln = expand(
-            'output/alignments/contigs-to-contigs/{sample}.{hifi_type}.{ont_type}.na.chrY_aln-to_hifasm.cache.h5',
+            'output/alignments/contigs-to-contigs/{sample}.{hifi_type}.{ont_type}.na.chrY_aln-to_hifiasm.cache.h5',
             sample=['HC01457', 'HC02666', 'HC18989', 'HC19384', 'HG00358', 'HG01890', 'NA19317', 'NA19347'],
             hifi_type=['HIFIRW'],
             ont_type=['ONTUL'],

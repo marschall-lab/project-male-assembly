@@ -29,7 +29,7 @@ rule one_hot_encoding_projects_haplogroups:
                 continue
             features[col] = features[col].astype(int)
 
-        df.to_csv(output.table, sep='\t', header=True, index=False)
+        features.to_csv(output.table, sep='\t', header=True, index=False)
     # END OF RUN BLOCK
 
 

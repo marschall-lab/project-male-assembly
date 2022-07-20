@@ -88,6 +88,43 @@ rule create_complete_feature_table:
     # END OF RUN BLOCK
 
 
+rule train_regression_model:
+    input:
+        table = 'output/quality_factors/feature_table.{hifi_type}.{ont_type}.tsv',
+    output:
+        model = 'output/quality_factors/model_stats.{hifi_type}.{ont_type}.{target}.tsv',
+        data = 'output/quality_factors/model_data.{hifi_type}.{ont_type}.{target}.tsv',
+    wildcard_constraints:
+        target = '(ctgng50|assmlen|ctgnum)'
+    conda:
+        '../envs/pyscript.yaml'
+    threads: 6
+    resources:
+        mem_mb = lambda wildcards, attempt: 1024 * attempt
+    params:
+        script_exec = find_script_path('model_assm_quality.py'),
+    shell:
+        '{params.script_exec} --data-table {input.table} --regression-target {wildcards.target} '
+            '--num-cpu {threads} --out-data {output.data} --out-model {output.model}'
 
 
+rule merge_model_summary_stats:
+    input:
+        tables = expand(
+            'output/quality_factors/model_stats.{{hifi_type}}.{{ont_type}}.{target}.tsv',
+            target=['ctgng50', 'assmlen', 'ctgnum']
+        )
+    output:
+        table = 'output/quality_factors/model_stats.{{hifi_type}}.{{ont_type}}.all-targets.tsv',
+    run:
+        import pandas as pd
 
+        model_stats = []
+        for table in input.tables:
+            df = pd.read_csv(table, header=0, sep='\t')
+            model_stats.append(df)
+
+        model_stats = pd.concat(model_stats, axis=0, ignore_index=False)
+
+        model_stats.to_csv(output.table, sep='\t', header=True, index=False)
+    # END OF RUN BLOCK

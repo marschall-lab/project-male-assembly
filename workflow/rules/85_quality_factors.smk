@@ -115,7 +115,7 @@ rule merge_model_summary_stats:
             target=['ctgng50', 'assmlen', 'ctgnum']
         )
     output:
-        table = 'output/quality_factors/model_stats.{{hifi_type}}.{{ont_type}}.all-targets.tsv',
+        table = 'output/quality_factors/model_stats.{hifi_type}.{ont_type}.all-targets.tsv',
     run:
         import pandas as pd
 

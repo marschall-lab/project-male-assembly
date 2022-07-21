@@ -340,3 +340,76 @@ rule collect_all_kmer_differences:
         diffs.drop('sample', axis=1, inplace=True)
         diffs.to_csv(output.table, sep='\t', header=True, index=False)
     # END OF RUN BLOCK
+
+
+rule aggregate_contig_sequence_class_coverage:
+    input:
+        seqclasses = 'references_derived/T2T.chrY-seq-classes.tsv',
+        fasta_idx = expand(
+            'output/subset_wg/20_extract_contigs/{sample}.{{hifi_type}}.{{ont_type}}.na.chrY.fasta',
+            sample=COMPLETE_SAMPLES
+        )
+    output:
+        cov = 'output/stats/contigs/contig-cov.{hifi_type}.{ont_type}.na.chrY.tsv',
+        ctg = 'output/stats/contigs/contig-ctg.{hifi_type}.{ont_type}.na.chrY.tsv',
+    resources:
+        mem_mb = lambda wildcards, attempt: 1024 * attempt
+    run:
+        import pandas as pd
+        import numpy as np
+        import pathlib as pl
+
+        t2t = pd.read_csv(input.seqclasses, sep='\t', header=0)
+        name_idx_map = dict(
+            (n,i) for n,i in zip(t2t['name'].values, t2t.index.values)
+        )
+        num_regions = len(name_idx_map)
+        region_names = t2t['name'].values
+
+        ignore_samples = ['HG02666', 'HG01457', 'NA19384', 'NA18989', 'NA24385']
+
+        sample_contigs = []
+        contig_covs = []
+        contig_ctgs = []
+
+        for idx_file in input.fasta_idx:
+            sample = pl.Path(idx_file).stem.split('.')[0]
+            if sample in ignore_samples:
+                continue
+            with open(idx_file, 'r') as faidx:
+                for line in faidx:
+                    cov = np.zeros(num_regions, dtype=np.bool)
+                    ctg = np.zeros(num_regions, dtype=np.bool)
+
+                    contig = line.split()[0]
+                    from_class, to_class = contig.split('.')[3].split('-')
+                    from_idx = name_idx_map[from_class]
+                    to_idx = name_idx_map[to_class]
+                    cov[from_idx:to_idx+1] = 1
+                    sample_contigs.append(
+                        (sample, contig)
+                    )
+                    contig_covs.append(cov)
+                    is_ctg_assm = (from_idx - to_idx) > 1
+                    if is_ctg_assm:
+                        ctg[from_idx+1:to_idx] = 1
+                    contig_ctgs.append(ctg)
+
+        multi_idx = pd.MultiIndex(levels=sample_contigs, names=['sample', 'contig'])
+        coverages = pd.DataFrame.from_records(
+            contig_covs,
+            columns=region_names,
+            index=multi_idx
+        )
+        contiguity = pd.DataFrame.from_records(
+            contig_ctgs,
+            columns=region_names,
+            index=multi_idx
+        )
+
+        # drop sample/contigs w/o contiguous assembly
+        contiguity.drop(
+            contiguity.index[(contiguity == 0).all(axis=1)],
+            axis=0,
+            inplace=True,
+        )

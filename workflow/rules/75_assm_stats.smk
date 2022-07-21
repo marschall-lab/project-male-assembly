@@ -378,8 +378,8 @@ rule aggregate_contig_sequence_class_coverage:
                 continue
             with open(idx_file, 'r') as faidx:
                 for line in faidx:
-                    cov = np.zeros(num_regions, dtype=np.bool)
-                    ctg = np.zeros(num_regions, dtype=np.bool)
+                    cov = np.zeros(num_regions, dtype=np.int8)
+                    ctg = np.zeros(num_regions, dtype=np.int8)
 
                     contig = line.split()[0]
                     from_class, to_class = contig.split('.')[3].split('-')
@@ -390,7 +390,7 @@ rule aggregate_contig_sequence_class_coverage:
                         (sample, contig)
                     )
                     contig_covs.append(cov)
-                    is_ctg_assm = (from_idx - to_idx) > 1
+                    is_ctg_assm = (to_idx - from_idx) > 1
                     if is_ctg_assm:
                         ctg[from_idx+1:to_idx] = 1
                     contig_ctgs.append(ctg)
@@ -419,5 +419,6 @@ rule aggregate_contig_sequence_class_coverage:
 
         # drop PAR1/PAR2
         contiguity.drop(['PAR1', 'PAR2'], axis=1, inplace=True)
+        contiguity.sort_index(axis=0, ascending=True, inplace=True)
         contiguity.to_csv(output.ctg, header=True, index=True, sep='\t')
     # END OF RUN BLOCK

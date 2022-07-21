@@ -346,7 +346,7 @@ rule aggregate_contig_sequence_class_coverage:
     input:
         seqclasses = 'references_derived/T2T.chrY-seq-classes.tsv',
         fasta_idx = expand(
-            'output/subset_wg/20_extract_contigs/{sample}.{{hifi_type}}.{{ont_type}}.na.chrY.fasta',
+            'output/subset_wg/20_extract_contigs/{sample}.{{hifi_type}}.{{ont_type}}.na.chrY.fasta.fai',
             sample=COMPLETE_SAMPLES
         )
     output:
@@ -395,12 +395,15 @@ rule aggregate_contig_sequence_class_coverage:
                         ctg[from_idx+1:to_idx] = 1
                     contig_ctgs.append(ctg)
 
-        multi_idx = pd.MultiIndex(levels=sample_contigs, names=['sample', 'contig'])
+        multi_idx = pd.MultiIndex.from_tuples(sample_contigs, names=['sample', 'contig'])
         coverages = pd.DataFrame.from_records(
             contig_covs,
             columns=region_names,
             index=multi_idx
         )
+        coverages.sort_index(axis=0, ascending=True, inplace=True)
+        coverages.to_csv(output.cov, header=True, index=True, sep='\t')
+
         contiguity = pd.DataFrame.from_records(
             contig_ctgs,
             columns=region_names,
@@ -413,3 +416,8 @@ rule aggregate_contig_sequence_class_coverage:
             axis=0,
             inplace=True,
         )
+
+        # drop PAR1/PAR2
+        contiguity.drop(['PAR1', 'PAR2'], axis=1, inplace=True)
+        contiguity.to_csv(output.ctg, header=True, index=True, sep='\t')
+    # END OF RUN BLOCK

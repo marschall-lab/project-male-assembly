@@ -412,6 +412,12 @@ rule cache_all_aln:
             'output/alignments/contigs-to-contigs/HG01457.HIFIRW.ONTUL.na.chrY_aln-to_HC01457.cache.h5',
             'output/alignments/contigs-to-contigs/HC01457.HIFIRW.ONTUL.na.chrY_aln-to_HG01457.cache.h5',
         ],
+        cache_self_aln = expand(
+            'output/alignments/contigs-to-contigs/{sample}.{hifi_type}.{ont_type}.na.chrY_aln-to_{sample}.cache.h5',
+            sample=['HC01457', 'HC02666', 'HC18989', 'HC19384', 'HG00358', 'HG01890', 'NA19317', 'NA19347'],
+            hifi_type=['HIFIRW'],
+            ont_type=['ONTUL'],
+        ),
         cache_read_aln = expand(
             'output/subset_wg/40_extract_rdaln/{sample}.READS_aln-to_{hifi_type}.{ont_type}.na.{chrom}.cache.h5',
             sample=COMPLETE_SAMPLES,

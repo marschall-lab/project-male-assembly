@@ -34,6 +34,7 @@ rule align_contigs_close_samples:
     """
     Align AFR pair
     Align COV pairs
+    Align high-cov to self
     """
     input:
         asm1 = 'output/subset_wg/20_extract_contigs/{sample1}.{hifi_type}.{ont_type}.na.chrY.fasta',
@@ -42,13 +43,13 @@ rule align_contigs_close_samples:
         ref_asm1 = 'output/alignments/contigs-to-contigs/{sample2}.{hifi_type}.{ont_type}.na.chrY_aln-to_{sample1}.paf.gz',
         ref_asm2 = 'output/alignments/contigs-to-contigs/{sample1}.{hifi_type}.{ont_type}.na.chrY_aln-to_{sample2}.paf.gz',
     wildcard_constraints:
-        sample1 = CONSTRAINT_ALL_SAMPLES,
-        sample2 = CONSTRAINT_ALL_SAMPLES
+        sample1 = SAMPLE_NAME_CONSTRAINT,
+        sample2 = SAMPLE_NAME_CONSTRAINT
     conda:
         '../envs/biotools.yaml'
     threads: config['num_cpu_low']
     resources:
-        mem_mb = lambda wildcards, attempt: 4096 * attempt,
+        mem_mb = lambda wildcards, attempt: 16384 * attempt,
         walltime = lambda wildcards, attempt: f'{attempt * attempt:02}:59:00',
     params:
         sec_aln = "-p 0.95 --secondary=yes -N 1"
@@ -84,7 +85,7 @@ rule align_contigs_hifiasm_assemblies:
         '../envs/biotools.yaml'
     threads: config['num_cpu_low']
     resources:
-        mem_mb = lambda wildcards, attempt: 24576 * attempt,
+        mem_mb = lambda wildcards, attempt: 32768 * attempt,
         walltime = lambda wildcards, attempt: f'{attempt * attempt:02}:59:00',
     params:
         sec_aln = "-p 0.95 --secondary=yes -N 1"

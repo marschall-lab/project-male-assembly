@@ -1,0 +1,17 @@
+desc="""
+This notebook uses the output of the rule
+--- 75_assm_stats.smk::aggregate_quast_reports
+as input, and produces panels for figure 1.
+"""
+
+print(desc)
+
+exec_dir = pl.Path('.').resolve(strict=True)
+wd_dir = exec_dir
+out_dir = pl.Path('/home/local/work/data/sig_chrY/paper/output/figures').resolve(strict=True)
+
+print('Execution directory: ', exec_dir)
+print('Working directory: ', wd_dir)
+print('Output directory: ', out_dir)
+print('=================================')
+

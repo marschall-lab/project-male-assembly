@@ -31,12 +31,19 @@ rule align_contigs_to_reference_paf:
 
 
 rule align_contigs_close_samples:
+    """
+    Align AFR pair
+    Align COV pairs
+    """
     input:
-        na19317 = 'output/subset_wg/20_extract_contigs/NA19317.{hifi_type}.{ont_type}.na.chrY.fasta',
-        na19347 = 'output/subset_wg/20_extract_contigs/NA19347.{hifi_type}.{ont_type}.na.chrY.fasta',
+        asm1 = 'output/subset_wg/20_extract_contigs/{sample1}.{hifi_type}.{ont_type}.na.chrY.fasta',
+        asm2 = 'output/subset_wg/20_extract_contigs/{sample2}.{hifi_type}.{ont_type}.na.chrY.fasta',
     output:
-        ref_317 = 'output/alignments/contigs-to-contigs/NA19347.{hifi_type}.{ont_type}.na.chrY_aln-to_NA19317.paf.gz',
-        ref_347 = 'output/alignments/contigs-to-contigs/NA19317.{hifi_type}.{ont_type}.na.chrY_aln-to_NA19347.paf.gz',
+        ref_asm1 = 'output/alignments/contigs-to-contigs/{sample2}.{hifi_type}.{ont_type}.na.chrY_aln-to_{sample1}.paf.gz',
+        ref_asm2 = 'output/alignments/contigs-to-contigs/{sample1}.{hifi_type}.{ont_type}.na.chrY_aln-to_{sample2}.paf.gz',
+    wildcard_constraints:
+        sample1 = CONSTRAINT_ALL_SAMPLES,
+        sample2 = CONSTRAINT_ALL_SAMPLES
     conda:
         '../envs/biotools.yaml'
     threads: config['num_cpu_low']
@@ -46,14 +53,14 @@ rule align_contigs_close_samples:
     params:
         sec_aln = "-p 0.95 --secondary=yes -N 1"
     shell:
-        'minimap2 -t {threads} -x asm20 -Y {params.sec_aln} '
-        '--cs -c --paf-no-hit {input.na19317} {input.na19347} | pigz -p {threads} --best > {output.ref_317}'
+        'minimap2 -t {threads} -x asm5 -Y {params.sec_aln} '
+        '--cs -c --paf-no-hit {input.asm1} {input.asm2} | pigz -p {threads} --best > {output.ref_asm1}'
             ' && '
-        'minimap2 -t {threads} -x asm20 -Y {params.sec_aln} '
-        '--cs -c --paf-no-hit {input.na19347} {input.na19317} | pigz -p {threads} --best > {output.ref_347}'
+        'minimap2 -t {threads} -x asm5 -Y {params.sec_aln} '
+        '--cs -c --paf-no-hit {input.asm2} {input.asm1} | pigz -p {threads} --best > {output.ref_asm2}'
 
 
-rule align_contigs_hifiasm_assemblies:
+rule merge_hifiasm_haplotypes:
     """
     TODO
     move abs path to config
@@ -61,10 +68,18 @@ rule align_contigs_hifiasm_assemblies:
     input:
         h1 = '/gpfs/project/projects/medbioinf/data/share/globus/sig_chrY/working/assemblies/hifiasm/{sample}/{sample}_hifiasm.asm.bp.hap1.p_ctg.fa',
         h2 = '/gpfs/project/projects/medbioinf/data/share/globus/sig_chrY/working/assemblies/hifiasm/{sample}/{sample}_hifiasm.asm.bp.hap2.p_ctg.fa',
+    output:
+        dip = 'references_derived/hifiasm/{sample}.asm.dip.p_ctg.fa'
+    shell:
+        'cat {input.h1} {input.h2} > {output.dip}'
+
+
+rule align_contigs_hifiasm_assemblies:
+    input:
+        asm = 'references_derived/hifiasm/{sample}.asm.dip.p_ctg.fa',
         ctg_y = 'output/subset_wg/20_extract_contigs/{sample}.{hifi_type}.{ont_type}.na.chrY.fasta',
     output:
         paf = 'output/alignments/contigs-to-contigs/{sample}.{hifi_type}.{ont_type}.na.chrY_aln-to_hifiasm.paf.gz',
-        tmp = temp('output/alignments/contigs-to-contigs/{sample}.{hifi_type}.{ont_type}.na.chrY_aln-to_hifiasm.paf.tmp',)
     conda:
         '../envs/biotools.yaml'
     threads: config['num_cpu_low']
@@ -75,12 +90,8 @@ rule align_contigs_hifiasm_assemblies:
         sec_aln = "-p 0.95 --secondary=yes -N 1"
     shell:
         'minimap2 -t {threads} -x asm5 -Y {params.sec_aln} '
-        '--cs -c --paf-no-hit {input.h1} {input.ctg_y} > {output.tmp}'
-            ' && '
-        'minimap2 -t {threads} -x asm5 -Y {params.sec_aln} '
-        '--cs -c --paf-no-hit {input.h2} {input.ctg_y} >> {output.tmp}'
-            ' && '
-        'pigz -p {threads} --best --stdout {output.tmp} > {output.paf}'
+            '--cs -c --paf-no-hit {input.asm} {input.ctg_y} | '
+        'pigz -p {threads} --best > {output.paf}'
 
 
 rule cache_close_contig_alignments:

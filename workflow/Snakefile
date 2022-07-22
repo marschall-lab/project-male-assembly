@@ -402,6 +402,16 @@ rule cache_all_aln:
             'output/alignments/contigs-to-contigs/NA19347.HIFIRW.ONTUL.na.chrY_aln-to_NA19317.cache.h5',
             'output/alignments/contigs-to-contigs/NA19317.HIFIRW.ONTUL.na.chrY_aln-to_NA19347.cache.h5',
         ],
+        coverage_pairs = [
+            'output/alignments/contigs-to-contigs/NA19384.HIFIRW.ONTUL.na.chrY_aln-to_HC19384.cache.h5',
+            'output/alignments/contigs-to-contigs/HC19384.HIFIRW.ONTUL.na.chrY_aln-to_NA19384.cache.h5',
+            'output/alignments/contigs-to-contigs/NA18989.HIFIRW.ONTUL.na.chrY_aln-to_HC18989.cache.h5',
+            'output/alignments/contigs-to-contigs/HC18989.HIFIRW.ONTUL.na.chrY_aln-to_NA18989.cache.h5',
+            'output/alignments/contigs-to-contigs/HC02666.HIFIRW.ONTUL.na.chrY_aln-to_HG02666.cache.h5',
+            'output/alignments/contigs-to-contigs/HG02666.HIFIRW.ONTUL.na.chrY_aln-to_HC02666.cache.h5',
+            'output/alignments/contigs-to-contigs/HG01457.HIFIRW.ONTUL.na.chrY_aln-to_HC01457.cache.h5',
+            'output/alignments/contigs-to-contigs/HC01457.HIFIRW.ONTUL.na.chrY_aln-to_HG01457.cache.h5',
+        ],
         cache_read_aln = expand(
             'output/subset_wg/40_extract_rdaln/{sample}.READS_aln-to_{hifi_type}.{ont_type}.na.{chrom}.cache.h5',
             sample=COMPLETE_SAMPLES,

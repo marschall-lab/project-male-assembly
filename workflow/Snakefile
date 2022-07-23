@@ -433,7 +433,7 @@ rule cache_all_aln:
             reference=['T2TXY', 'GRCh38'],
         ),
         cache_hifiasm_aln = expand(
-            'output/alignments/contigs-to-contigs/{sample}.{hifi_type}.{ont_type}.na.chrY_aln-to_hifiasm.cache.h5',
+            'output/eval/contigs-to-contigs/{sample}.{hifi_type}.{ont_type}.na.chrY_aln-to_hifiasm.stats.tsv',
             sample=['HC01457', 'HC02666', 'HC18989', 'HC19384', 'HG00358', 'HG01890', 'NA19317', 'NA19347'],
             hifi_type=['HIFIRW'],
             ont_type=['ONTUL'],

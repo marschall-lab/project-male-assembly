@@ -128,5 +128,7 @@ rule determine_majority_haplotype_hifiasm:
             columns=['hap', 'contig', 'statistic', 'value']
         )
         summary.sort_values(['contig', 'hap', 'statistic'], ascending=True, inplace=True)
+        summary['sample'] = wildcards.sample
+        summary['target'] = 'hifiasm'
         summary.to_csv(output.table, sep='\t', header=True, index=False)
     # END OF RUN BLOCK

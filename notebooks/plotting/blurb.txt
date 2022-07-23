@@ -6,6 +6,7 @@ as input, and produces panels for figure 1.
 
 print(desc)
 
+repo_dir = pl.Path('/home/local/work/code/github/project-male-assembly').resolve(strict=True)
 exec_dir = pl.Path('.').resolve(strict=True)
 wd_dir = exec_dir
 out_dir = pl.Path('/home/local/work/data/sig_chrY/paper/output/figures').resolve(strict=True)

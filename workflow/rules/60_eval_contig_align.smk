@@ -114,8 +114,8 @@ rule determine_majority_haplotype_hifiasm:
         max_hap = None
         max_avg = 0
         for hap in ['h1', 'h2']:
-            hap_aln_pct = [t[3] for t in records if t[0] == 'h1' and t[1] != 'all' and t[2] == 'query_aligned_pct']
-            hap_aln_wt = [t[3] for t in records if t[0] == 'h1' and t[1] != 'all' and t[2] == 'query_size']
+            hap_aln_pct = [t[3] for t in records if t[0] == hap and t[1] != 'all' and t[2] == 'query_aligned_pct']
+            hap_aln_wt = [t[3] for t in records if t[0] == hap and t[1] != 'all' and t[2] == 'query_size']
             wtavg = np.average(hap_aln_pct, weights=hap_aln_wt)
             records.append((hap, 'all', 'wtavg_qalign_pct', wtavg))
             if wtavg > max_avg:

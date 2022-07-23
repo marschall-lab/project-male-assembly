@@ -42,11 +42,17 @@ rule determine_majority_haplotype_hifiasm:
             'tname', 'tlen', 'tstart', 'tend', 'nmatch', 'blen', 'mapq',
             'tag_nm', 'tag_ms', 'tag_as', 'tag_nn', 'tag_tp' ]
 
-        df = pd.read_csv(input.paf, sep='\t', header=None, names=paf_columns, usecols=len(paf_columns))
+        df = pd.read_csv(input.paf, sep='\t', header=None, names=paf_columns, usecols=range(len(paf_columns)))
         df['tag_tp'] = df['tag_tp'].str.lower()
 
         df['hap'] = df['tname'].str.slice(0,2)  # specific to tig-naming in hifiasm
-        assert (df['hap'].isin(['h1', 'h2'])).all()
+        # fix for HG01890 - one unaligned contig
+        rename_haps = {
+            'h1': 'h1',
+            'h2': 'h2'
+        }
+        df['hap'] = df['hap'].apply(lambda x: rename_haps.get(x, 'un'))
+        assert (df['hap'].isin(['h1', 'h2', 'un'])).all()
 
         records = []  # collect records for flat table
         for hap, aligns in df.groupby('hap'):
@@ -54,6 +60,8 @@ rule determine_majority_haplotype_hifiasm:
                 (hap, 'all', 'alignments_total', aligns.shape[0]),
                 (hap, 'all', 'queries_total', aligns['qname'].nunique())
             ])
+            if hap == 'un':
+                continue
             
             is_primary = aligns['tag_tp'].isin(['tp:a:p', 'tp:a:i'])
             aln = aligns.loc[is_primary, :].copy()

@@ -28,7 +28,8 @@ rule hmmer_motif_search:
     benchmark:
         'rsrc/output/motif_search/00_detection/{sub_folder}/{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.{motif}.hmmer.rsrc',
     wildcard_constraints:
-        sub_folder = '(00_raw|10_renamed)'
+        sub_folder = '(00_raw|10_renamed)',
+        mapq = '(na|ha)'
     singularity:
         'hmmer.sif'
 #    conda:
@@ -214,18 +215,18 @@ rule repmsk_chry_contigs:
     so create a temp copy with original names, and rename output later
     """
     input:
-        fasta = 'output/subset_wg/20_extract_contigs/{sample}.{hifi_type}.{ont_type}.na.chrY.fasta',
-        rename = 'output/subset_wg/25_name_mappings/{sample}.{hifi_type}.{ont_type}.na.chrY.names.nto-map.sed'
+        fasta = 'output/subset_wg/20_extract_contigs/{sample}.{hifi_type}.{ont_type}.{mapq}.chrY.fasta',
+        rename = 'output/subset_wg/25_name_mappings/{sample}.{hifi_type}.{ont_type}.{mapq}.chrY.names.nto-map.sed'
     output:
-        tmp_fasta = temp('output/motif_search/40_repmask/{sample}.{hifi_type}.{ont_type}.na.chrY.fasta'),
+        tmp_fasta = temp('output/motif_search/40_repmask/{sample}.{hifi_type}.{ont_type}.{mapq}.chrY.fasta'),
         repmask_output = multiext(
-            'output/motif_search/40_repmask/{sample}.{hifi_type}.{ont_type}.na.chrY/{sample}.{hifi_type}.{ont_type}.na.chrY',
+            'output/motif_search/40_repmask/{sample}.{hifi_type}.{ont_type}.{mapq}.chrY/{sample}.{hifi_type}.{ont_type}.{mapq}.chrY',
             '.fasta.cat.gz', '.fasta.masked', '.fasta.out', '.fasta.tbl'
         )
     log:
-        'log/output/motif_search/40_repmask/{sample}.{hifi_type}.{ont_type}.na.chrY.repmask.log',
+        'log/output/motif_search/40_repmask/{sample}.{hifi_type}.{ont_type}.{mapq}.chrY.repmask.log',
     benchmark:
-        'rsrc/output/motif_search/40_repmask/{sample}.{hifi_type}.{ont_type}.na.chrY.repmask.rsrc',
+        'rsrc/output/motif_search/40_repmask/{sample}.{hifi_type}.{ont_type}.{mapq}.chrY.repmask.rsrc',
     conda:
         '../envs/biotools.yaml'
     wildcard_constraints:
@@ -277,14 +278,14 @@ rule repmsk_ref_chry_contigs:
 
 rule collect_repeatmasker_output:
     input:
-        report = 'output/motif_search/40_repmask/{sample}.{hifi_type}.{ont_type}.na.chrY/{sample}.{hifi_type}.{ont_type}.na.chrY.fasta.tbl',
-        masked = 'output/motif_search/40_repmask/{sample}.{hifi_type}.{ont_type}.na.chrY/{sample}.{hifi_type}.{ont_type}.na.chrY.fasta.masked',
-        aln = 'output/motif_search/40_repmask/{sample}.{hifi_type}.{ont_type}.na.chrY/{sample}.{hifi_type}.{ont_type}.na.chrY.fasta.cat.gz',
-        table = 'output/motif_search/40_repmask/{sample}.{hifi_type}.{ont_type}.na.chrY/{sample}.{hifi_type}.{ont_type}.na.chrY.fasta.out',
-        rename = 'output/subset_wg/25_name_mappings/{sample}.{hifi_type}.{ont_type}.na.chrY.names.otn-map.sed',
+        report = 'output/motif_search/40_repmask/{sample}.{hifi_type}.{ont_type}.{mapq}.chrY/{sample}.{hifi_type}.{ont_type}.{mapq}.chrY.fasta.tbl',
+        masked = 'output/motif_search/40_repmask/{sample}.{hifi_type}.{ont_type}.{mapq}.chrY/{sample}.{hifi_type}.{ont_type}.{mapq}.chrY.fasta.masked',
+        aln = 'output/motif_search/40_repmask/{sample}.{hifi_type}.{ont_type}.{mapq}.chrY/{sample}.{hifi_type}.{ont_type}.{mapq}.chrY.fasta.cat.gz',
+        table = 'output/motif_search/40_repmask/{sample}.{hifi_type}.{ont_type}.{mapq}.chrY/{sample}.{hifi_type}.{ont_type}.{mapq}.chrY.fasta.out',
+        rename = 'output/subset_wg/25_name_mappings/{sample}.{hifi_type}.{ont_type}.{mapq}.chrY.names.otn-map.sed',
     output:
-        fasta_rn = 'output/motif_search/45_rm_norm/{sample}/{sample}.{hifi_type}.{ont_type}.na.chrY.rm-mask.fasta',
-        result_tar = 'output/motif_search/45_rm_norm/{sample}/{sample}.{hifi_type}.{ont_type}.na.chrY.rm-out.tar.gz',
+        fasta_rn = 'output/motif_search/45_rm_norm/{sample}/{sample}.{hifi_type}.{ont_type}.{mapq}.chrY.rm-mask.fasta',
+        result_tar = 'output/motif_search/45_rm_norm/{sample}/{sample}.{hifi_type}.{ont_type}.{mapq}.chrY.rm-out.tar.gz',
     conda:
         '../envs/biotools.yaml'
     resources:
@@ -304,10 +305,10 @@ rule collect_repeatmasker_output:
 
 rule normalize_repeatmasker_table:
     input:
-        table = 'output/motif_search/40_repmask/{sample}.{hifi_type}.{ont_type}.na.chrY/{sample}.{hifi_type}.{ont_type}.na.chrY.fasta.out',
-        rename = 'output/subset_wg/25_name_mappings/{sample}.{hifi_type}.{ont_type}.na.chrY.names.otn-map.json',
+        table = 'output/motif_search/40_repmask/{sample}.{hifi_type}.{ont_type}.{mapq}.chrY/{sample}.{hifi_type}.{ont_type}.{mapq}.chrY.fasta.out',
+        rename = 'output/subset_wg/25_name_mappings/{sample}.{hifi_type}.{ont_type}.{mapq}.chrY.names.otn-map.json',
     output:
-        tsv = 'output/motif_search/45_rm_norm/{sample}/{sample}.{hifi_type}.{ont_type}.na.chrY.matches.tsv',
+        tsv = 'output/motif_search/45_rm_norm/{sample}/{sample}.{hifi_type}.{ont_type}.{mapq}.chrY.matches.tsv',
     resources:
         mem_mb = lambda wildcards, attempt: 1024 * attempt
     run:

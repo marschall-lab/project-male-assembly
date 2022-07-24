@@ -77,7 +77,8 @@ rule merge_hifiasm_haplotypes:
 
 rule align_contigs_hifiasm_assemblies:
     input:
-        asm = 'references_derived/hifiasm/{sample}.asm.dip.p_ctg.fa',
+        #asm = 'references_derived/hifiasm/{sample}.asm.dip.p_ctg.fa',
+        asm = 'output/subset_wg/20_extract_contigs/{sample}.{hifi_type}.{ont_type}.ha.chrY.fasta',
         ctg_y = 'output/subset_wg/20_extract_contigs/{sample}.{hifi_type}.{ont_type}.na.chrY.fasta',
     output:
         paf = 'output/alignments/contigs-to-contigs/{sample}.{hifi_type}.{ont_type}.na.chrY_aln-to_hifiasm.paf.gz',

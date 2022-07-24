@@ -40,14 +40,23 @@ def select_reference_genome(ref_name, fasta_index=False):
 
 def select_whole_genome_assembly(wildcards):
 
-    assert hasattr(wildcards, 'sub_folder'), f'no sub_folder wildcard: {wildcards}'
+    #assert hasattr(wildcards, 'sub_folder'), f'no sub_folder wildcard: {wildcards}'
     formatter = dict(wildcards)
-    if wildcards.sub_folder == '00_raw':
-        assm = 'output/hybrid/verkko/{sample}.{hifi_type}.{ont_type}.na.wg/assembly.fasta'.format(**formatter)
-    elif wildcards.sub_folder == '10_renamed':
-        assm = 'output/hybrid/renamed/{sample}.{hifi_type}.{ont_type}.na.wg.fasta'.format(**formatter)
+    if hasattr(wildcards, 'sub_folder'):
+        if wildcards.sub_folder == '00_raw':
+            if wildcards.mapq == 'ha':
+                assm = 'references_derived/hifiasm/{sample}.asm.dip.p_ctg.fa'.format(**formatter)
+            else:
+                assm = 'output/hybrid/verkko/{sample}.{hifi_type}.{ont_type}.{mapq}.wg/assembly.fasta'.format(**formatter)
+        elif wildcards.sub_folder == '10_renamed':
+            assm = 'output/hybrid/renamed/{sample}.{hifi_type}.{ont_type}.{mapq}.wg.fasta'.format(**formatter)
+        else:
+            raise ValueError(wildcards)
     else:
-        raise ValueError(wildcards)
+        if wildcards.mapq == 'ha':
+            assm = 'references_derived/hifiasm/{sample}.asm.dip.p_ctg.fa'.format(**formatter)
+        else:
+            assm = 'output/hybrid/verkko/{sample}.{hifi_type}.{ont_type}.{mapq}.wg/assembly.fasta'.format(**formatter)
     return assm
 
 
@@ -55,7 +64,7 @@ def select_input_contig_alignment(wildcards):
 
     s_to_s = 'output/alignments/contigs-to-contigs/{sample}.{hifi_type}.{ont_type}.na.chrY_aln-to_{target}.paf.gz'
     s_to_ref = 'output/subset_wg/30_extract_ctgaln/{sample}.{hifi_type}.{ont_type}.na.chrY_aln-to_{target}.paf.gz'
-    if sample.target in config['reference_genomes']:
+    if wildcards.target in config['reference_genomes']:
         path = s_to_ref
     else:
         path = s_to_s

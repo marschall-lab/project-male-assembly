@@ -440,7 +440,7 @@ rule cache_all_aln:
         )
 
 
-rule summarize_contig_alignments:
+rule summarize_all_contig_alignments:
     input:
         ctg_self = expand(
             'output/eval/contigs-to-contigs/{sample}.HIFIRW.ONTUL.na.chrY_aln-to_{sample}.stats.tsv',

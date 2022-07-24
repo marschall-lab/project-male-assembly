@@ -32,11 +32,12 @@ rule determine_chrom_contigs:
             mapq='na'
         )
     output:
-        table = 'output/subset_wg/10_find_contigs/{sample}.{hifi_type}.{ont_type}.na.{chrom}.stats.tsv',
-        names = 'output/subset_wg/10_find_contigs/{sample}.{hifi_type}.{ont_type}.na.{chrom}.names.txt',
-        bed = 'output/subset_wg/10_find_contigs/{sample}.{hifi_type}.{ont_type}.na.{chrom}.bed',
+        table = 'output/subset_wg/10_find_contigs/{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.stats.tsv',
+        names = 'output/subset_wg/10_find_contigs/{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.names.txt',
+        bed = 'output/subset_wg/10_find_contigs/{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.bed',
     wildcard_constraints:
-        chrom = '(chrY|chrX)'
+        chrom = '(chrY|chrX)',
+        mapq = '(na|ha)'
     conda:
         '../envs/pyscript.yaml'
     resources:
@@ -63,19 +64,20 @@ rule determine_contig_order:
     dumped the subset FASTA files, and keep only the JSON output mapping of this rule
     """
     input:
-        ctg_names = 'output/subset_wg/10_find_contigs/{sample}.{hifi_type}.{ont_type}.na.{chrom}.names.txt',
-        ctg_aln = 'output/alignments/contigs-to-ref/00_raw/{sample}.{hifi_type}.{ont_type}.na.wg_aln-to_T2TXY.paf.gz',
+        ctg_names = 'output/subset_wg/10_find_contigs/{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.names.txt',
+        ctg_aln = 'output/alignments/contigs-to-ref/00_raw/{sample}.{hifi_type}.{ont_type}.{mapq}.wg_aln-to_T2TXY.paf.gz',
         seq_classes = lambda wildcards: f'references_derived/{config["reference_y_seq_classes"]["T2TXY"]}.bed',
-        ref_cov = 'output/eval/contigs-to-ref/00_raw/{sample}.{hifi_type}.{ont_type}.na.wg_aln-to_T2TXY.ref-cov.tsv',
+        ref_cov = 'output/eval/contigs-to-ref/00_raw/{sample}.{hifi_type}.{ont_type}.{mapq}.wg_aln-to_T2TXY.ref-cov.tsv',
     output:
-        new_names = 'output/subset_wg/15_order_contigs/{sample}.{hifi_type}.{ont_type}.na.{chrom}.names.txt',
+        new_names = 'output/subset_wg/15_order_contigs/{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.names.txt',
         name_maps = multiext(
-            'output/subset_wg/15_order_contigs/{sample}.{hifi_type}.{ont_type}.na.{chrom}.names',
+            'output/subset_wg/15_order_contigs/{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.names',
             '.otn-map.tsv', '.otn-map.json', '.otn-map.sed',
             '.nto-map.tsv', '.nto-map.json', '.nto-map.sed'
         )
     wildcard_constraints:
-        chrom = '(chrY|chrX)'
+        chrom = '(chrY|chrX)',
+        mapq = '(ha|na)'
     conda:
         '../envs/pyscript.yaml'
     resources:
@@ -91,13 +93,16 @@ rule determine_contig_order:
 
 rule extract_chrom_contigs:
     input:
-        wg_assm = 'output/hybrid/verkko/{sample}.{hifi_type}.{ont_type}.na.wg/assembly.fasta',
-        ren_y_json = 'output/subset_wg/15_order_contigs/{sample}.{hifi_type}.{ont_type}.na.chrY.names.otn-map.json',
-        ren_x_json = 'output/subset_wg/15_order_contigs/{sample}.{hifi_type}.{ont_type}.na.chrX.names.otn-map.json',
+        #wg_assm = 'output/hybrid/verkko/{sample}.{hifi_type}.{ont_type}.na.wg/assembly.fasta',
+        wg_assm = select_whole_genome_assembly
+        ren_y_json = 'output/subset_wg/15_order_contigs/{sample}.{hifi_type}.{ont_type}.{mapq}.chrY.names.otn-map.json',
+        ren_x_json = 'output/subset_wg/15_order_contigs/{sample}.{hifi_type}.{ont_type}.{mapq}.chrX.names.otn-map.json',
     output:
-        ren_assm = 'output/hybrid/renamed/{sample}.{hifi_type}.{ont_type}.na.wg.fasta',
-        sub_y_assm = 'output/subset_wg/20_extract_contigs/{sample}.{hifi_type}.{ont_type}.na.chrY.fasta',
-        sub_x_assm = 'output/subset_wg/20_extract_contigs/{sample}.{hifi_type}.{ont_type}.na.chrX.fasta',
+        ren_assm = 'output/hybrid/renamed/{sample}.{hifi_type}.{ont_type}.{mapq}.wg.fasta',
+        sub_y_assm = 'output/subset_wg/20_extract_contigs/{sample}.{hifi_type}.{ont_type}.{mapq}.chrY.fasta',
+        sub_x_assm = 'output/subset_wg/20_extract_contigs/{sample}.{hifi_type}.{ont_type}.{mapq}.chrX.fasta',
+    wildcard_constraints:
+        mapq = '(na|ha)'
     conda:
         '../envs/pyscript.yaml'
     resources:
@@ -113,18 +118,19 @@ rule extract_chrom_contigs:
 
 rule dump_contig_name_mapping_files:
     input:
-        fasta = 'output/subset_wg/20_extract_contigs/{sample}.{hifi_type}.{ont_type}.na.{chrom}.fasta'
+        fasta = 'output/subset_wg/20_extract_contigs/{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.fasta'
     output:
-        final_names = 'output/subset_wg/25_name_mappings/{sample}.{hifi_type}.{ont_type}.na.{chrom}.names.txt',
-        tsv_otn = 'output/subset_wg/25_name_mappings/{sample}.{hifi_type}.{ont_type}.na.{chrom}.names.otn-map.tsv',
-        tsv_nto = 'output/subset_wg/25_name_mappings/{sample}.{hifi_type}.{ont_type}.na.{chrom}.names.nto-map.tsv',
-        json_otn = 'output/subset_wg/25_name_mappings/{sample}.{hifi_type}.{ont_type}.na.{chrom}.names.otn-map.json',
-        json_nto = 'output/subset_wg/25_name_mappings/{sample}.{hifi_type}.{ont_type}.na.{chrom}.names.nto-map.json',
-        sed_otn = 'output/subset_wg/25_name_mappings/{sample}.{hifi_type}.{ont_type}.na.{chrom}.names.otn-map.sed',
-        sed_nto = 'output/subset_wg/25_name_mappings/{sample}.{hifi_type}.{ont_type}.na.{chrom}.names.nto-map.sed',
+        final_names = 'output/subset_wg/25_name_mappings/{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.names.txt',
+        tsv_otn = 'output/subset_wg/25_name_mappings/{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.names.otn-map.tsv',
+        tsv_nto = 'output/subset_wg/25_name_mappings/{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.names.nto-map.tsv',
+        json_otn = 'output/subset_wg/25_name_mappings/{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.names.otn-map.json',
+        json_nto = 'output/subset_wg/25_name_mappings/{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.names.nto-map.json',
+        sed_otn = 'output/subset_wg/25_name_mappings/{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.names.otn-map.sed',
+        sed_nto = 'output/subset_wg/25_name_mappings/{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.names.nto-map.sed',
     wildcard_constraints:
         chrom = '(chrY|chrX)',
-        sample = SAMPLE_NAME_CONSTRAINT
+        sample = SAMPLE_NAME_CONSTRAINT,
+        mapq = '(na|ha)'
     resources:
         mem_mb = lambda wildcards, attempt: 1024 * attempt
     run:
@@ -287,10 +293,10 @@ rule rename_verkko_coverage_tables:
 
 rule extract_contig_alignments_paf:
     input:
-        paf = 'output/alignments/contigs-to-ref/10_renamed/{sample}.{hifi_type}.{ont_type}.na.wg_aln-to_{reference}.paf.gz',
-        names = 'output/subset_wg/25_name_mappings/{sample}.{hifi_type}.{ont_type}.na.chrY.names.txt'
+        paf = 'output/alignments/contigs-to-ref/10_renamed/{sample}.{hifi_type}.{ont_type}.{mapq}.wg_aln-to_{reference}.paf.gz',
+        names = 'output/subset_wg/25_name_mappings/{sample}.{hifi_type}.{ont_type}.{mapq}.chrY.names.txt'
     output:
-        paf = 'output/subset_wg/30_extract_ctgaln/{sample}.{hifi_type}.{ont_type}.na.chrY_aln-to_{reference}.paf.gz'
+        paf = 'output/subset_wg/30_extract_ctgaln/{sample}.{hifi_type}.{ont_type}.{mapq}.chrY_aln-to_{reference}.paf.gz'
     conda:
         '../envs/biotools.yaml'
     resources:
@@ -305,9 +311,9 @@ rule cache_contig_alignments:
     for later plotting (more efficient binning)
     """
     input:
-        paf = 'output/subset_wg/30_extract_ctgaln/{sample}.{hifi_type}.{ont_type}.na.chrY_aln-to_{reference}.paf.gz'
+        paf = 'output/subset_wg/30_extract_ctgaln/{sample}.{hifi_type}.{ont_type}.{mapq}.chrY_aln-to_{reference}.paf.gz'
     output:
-        hdf = 'output/subset_wg/30_extract_ctgaln/{sample}.{hifi_type}.{ont_type}.na.chrY_aln-to_{reference}.cache.h5'
+        hdf = 'output/subset_wg/30_extract_ctgaln/{sample}.{hifi_type}.{ont_type}.{mapq}.chrY_aln-to_{reference}.cache.h5'
     resources:
         mem_mb = lambda wildcards, attempt: 2048 * attempt
     run:
@@ -511,12 +517,12 @@ rule subset_motif_hits:
     to be empty, but better safe than sorry.
     """
     input:
-        names = 'output/subset_wg/25_name_mappings/{sample}.{hifi_type}.{ont_type}.na.chrY.names.txt',
-        tsv = 'output/motif_search/10_norm/10_renamed/{sample}.{hifi_type}.{ont_type}.na.wg.{motif}.norm.tsv',
-        bed = 'output/motif_search/10_norm/10_renamed/{sample}.{hifi_type}.{ont_type}.na.wg.{motif}.norm-hiq.bed',
+        names = 'output/subset_wg/25_name_mappings/{sample}.{hifi_type}.{ont_type}.{mapq}.chrY.names.txt',
+        tsv = 'output/motif_search/10_norm/10_renamed/{sample}.{hifi_type}.{ont_type}.{mapq}.wg.{motif}.norm.tsv',
+        bed = 'output/motif_search/10_norm/10_renamed/{sample}.{hifi_type}.{ont_type}.{mapq}.wg.{motif}.norm-hiq.bed',
     output:
-        tsv = 'output/subset_wg/50_subset_motif/{sample}.{hifi_type}.{ont_type}.na.chrY.{motif}.norm.tsv',
-        bed = 'output/subset_wg/50_subset_motif/{sample}.{hifi_type}.{ont_type}.na.chrY.{motif}.norm-hiq.bed',
+        tsv = 'output/subset_wg/50_subset_motif/{sample}.{hifi_type}.{ont_type}.{mapq}.chrY.{motif}.norm.tsv',
+        bed = 'output/subset_wg/50_subset_motif/{sample}.{hifi_type}.{ont_type}.{mapq}.chrY.{motif}.norm-hiq.bed',
     shell:
         'if [ -s {input.bed} ]; then '
         'grep -w -F -f {input.names} {input.bed} | sort -V -k1 -k2n,3n > {output.bed} ; '
@@ -538,10 +544,10 @@ rule extract_motif_hit_sequences:
     NB: if the input BED is empty, seqtk will simply produce an empty output FASTA
     """
     input:
-        fasta = 'output/subset_wg/20_extract_contigs/{sample}.{hifi_type}.{ont_type}.na.chrY.fasta',
-        bed = 'output/subset_wg/50_subset_motif/{sample}.{hifi_type}.{ont_type}.na.chrY.{motif}.norm-hiq.bed',
+        fasta = 'output/subset_wg/20_extract_contigs/{sample}.{hifi_type}.{ont_type}.{mapq}.chrY.fasta',
+        bed = 'output/subset_wg/50_subset_motif/{sample}.{hifi_type}.{ont_type}.{mapq}.chrY.{motif}.norm-hiq.bed',
     output:
-        fasta = 'output/subset_wg/50_subset_motif/{sample}.{hifi_type}.{ont_type}.na.chrY.{motif}.hiq-seq.fasta',
+        fasta = 'output/subset_wg/50_subset_motif/{sample}.{hifi_type}.{ont_type}.{mapq}.chrY.{motif}.hiq-seq.fasta',
     wildcard_constraints:
         sample = SAMPLE_NAME_CONSTRAINT
     conda:

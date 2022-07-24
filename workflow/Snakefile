@@ -433,11 +433,47 @@ rule cache_all_aln:
             reference=['T2TXY', 'GRCh38'],
         ),
         cache_hifiasm_aln = expand(
-            'output/eval/contigs-to-contigs/{sample}.{hifi_type}.{ont_type}.na.chrY_aln-to_hifiasm.stats.tsv',
+            'output/eval/contigs-to-contigs/{sample}.{hifi_type}.{ont_type}.na.chrY_aln-to_hifiasm.cache.h5',
             sample=['HC01457', 'HC02666', 'HC18989', 'HC19384', 'HG00358', 'HG01890', 'NA19317', 'NA19347'],
             hifi_type=['HIFIRW'],
             ont_type=['ONTUL'],
         )
+
+
+rule summarize_contig_alignments:
+    input:
+        ctg_self = expand(
+            'output/eval/contigs-to-contigs/{sample}.HIFIRW.ONTUL.na.chrY_aln-to_{sample}.stats.tsv',
+            sample=['HC01457', 'HC02666', 'HC18989', 'HC19384', 'HG00358', 'HG01890', 'NA19317', 'NA19347'],
+            hifi_type=['HIFIRW'],
+            ont_type=['ONTUL'],
+        ),
+        ctg_hifiasm = expand(
+            'output/eval/contigs-to-contigs/{sample}.HIFIRW.ONTUL.na.chrY_aln-to_hifiasm.stats.tsv',
+            sample=['HC01457', 'HC02666', 'HC18989', 'HC19384', 'HG00358', 'HG01890', 'NA19317', 'NA19347'],
+            hifi_type=['HIFIRW'],
+            ont_type=['ONTUL'],
+        ),
+        ctg_ref = expand(
+            'output/eval/contigs-to-contigs/{sample}.HIFIRW.ONTUL.na.chrY_aln-to_T2TXY.stats.tsv',
+            sample=['HC01457', 'HC02666', 'HC18989', 'HC19384', 'HG00358', 'HG01890', 'NA19317', 'NA19347'],
+            hifi_type=['HIFIRW'],
+            ont_type=['ONTUL'],
+        ),
+        ctg_afr_pair = [
+            'output/eval/contigs-to-contigs/NA19347.HIFIRW.ONTUL.na.chrY_aln-to_NA19317.stats.tsv',
+            'output/eval/contigs-to-contigs/NA19317.HIFIRW.ONTUL.na.chrY_aln-to_NA19347.stats.tsv',
+        ],
+        ctg_cov_pair = [
+            'output/eval/contigs-to-contigs/NA18989.HIFIRW.ONTUL.na.chrY_aln-to_HC18989.stats.tsv',
+            'output/eval/contigs-to-contigs/HC18989.HIFIRW.ONTUL.na.chrY_aln-to_NA18989.stats.tsv',
+            'output/eval/contigs-to-contigs/NA19384.HIFIRW.ONTUL.na.chrY_aln-to_HC19384.stats.tsv',
+            'output/eval/contigs-to-contigs/HC19384.HIFIRW.ONTUL.na.chrY_aln-to_NA19384.stats.tsv',
+            'output/eval/contigs-to-contigs/HC02666.HIFIRW.ONTUL.na.chrY_aln-to_HG02666.stats.tsv',
+            'output/eval/contigs-to-contigs/HG02666.HIFIRW.ONTUL.na.chrY_aln-to_HC02666.stats.tsv',
+            'output/eval/contigs-to-contigs/HG01457.HIFIRW.ONTUL.na.chrY_aln-to_HC01457.stats.tsv',
+            'output/eval/contigs-to-contigs/HC01457.HIFIRW.ONTUL.na.chrY_aln-to_HG01457.stats.tsv',
+        ],
 
 
 rule run_veritymap:

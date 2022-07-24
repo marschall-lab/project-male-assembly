@@ -29,11 +29,15 @@ rule intersect_contig_align_chry_seq_classes:
         'bedtools intersect -wao -a {input.ref_bed} -b {input.align_bed} > {output.tsv}'
 
 
-rule determine_majority_haplotype_hifiasm:
+rule summarize_contig_alignments:
+    """
+    If the target is hifiasm, this will also
+    determine the majority haplotype
+    """
     input:
-        paf = 'output/alignments/contigs-to-contigs/{sample}.{hifi_type}.{ont_type}.na.chrY_aln-to_hifiasm.paf.gz',
+        paf = select_input_contig_alignment
     output:
-        table = 'output/eval/contigs-to-contigs/{sample}.{hifi_type}.{ont_type}.na.chrY_aln-to_hifiasm.stats.tsv',
+        table = 'output/eval/contigs-to-contigs/{sample}.{hifi_type}.{ont_type}.na.chrY_aln-to_{target}.stats.tsv',
     run:
         import pandas as pd
         import numpy as np
@@ -45,14 +49,17 @@ rule determine_majority_haplotype_hifiasm:
         df = pd.read_csv(input.paf, sep='\t', header=None, names=paf_columns, usecols=range(len(paf_columns)))
         df['tag_tp'] = df['tag_tp'].str.lower()
 
-        df['hap'] = df['tname'].str.slice(0,2)  # specific to tig-naming in hifiasm
-        # fix for HG01890 - one unaligned contig
-        rename_haps = {
-            'h1': 'h1',
-            'h2': 'h2'
-        }
-        df['hap'] = df['hap'].apply(lambda x: rename_haps.get(x, 'un'))
-        assert (df['hap'].isin(['h1', 'h2', 'un'])).all()
+        if wildcards.target == 'hifiasm':
+            df['hap'] = df['tname'].str.slice(0,2)  # specific to tig-naming in hifiasm
+            # fix for HG01890 - one unaligned contig
+            rename_haps = {
+                'h1': 'h1',
+                'h2': 'h2'
+            }
+            df['hap'] = df['hap'].apply(lambda x: rename_haps.get(x, 'un'))
+        else:
+            df['hap'] = df['tname'].apply(lambda x: 'un' if x == '*' else 'aln')
+        assert (df['hap'].isin(['h1', 'h2', 'un', 'aln'])).all()
 
         records = []  # collect records for flat table
         for hap, aligns in df.groupby('hap'):
@@ -111,17 +118,18 @@ rule determine_majority_haplotype_hifiasm:
                     (hap, contig, 'alignment_spread', 0),            
                 ])
 
-        max_hap = None
-        max_avg = 0
-        for hap in ['h1', 'h2']:
-            hap_aln_pct = [t[3] for t in records if t[0] == hap and t[1] != 'all' and t[2] == 'query_aligned_pct']
-            hap_aln_wt = [t[3] for t in records if t[0] == hap and t[1] != 'all' and t[2] == 'query_size']
-            wtavg = np.average(hap_aln_pct, weights=hap_aln_wt)
-            records.append((hap, 'all', 'wtavg_qalign_pct', wtavg))
-            if wtavg > max_avg:
-                max_hap = hap
-                max_avg = wtavg
-        records.append((max_hap, 'all', 'select_majority_hap', int(max_hap.strip('h'))))
+        if wildcards.target == 'hifiasm':
+            max_hap = None
+            max_avg = 0
+            for hap in ['h1', 'h2']:
+                hap_aln_pct = [t[3] for t in records if t[0] == hap and t[1] != 'all' and t[2] == 'query_aligned_pct']
+                hap_aln_wt = [t[3] for t in records if t[0] == hap and t[1] != 'all' and t[2] == 'query_size']
+                wtavg = np.average(hap_aln_pct, weights=hap_aln_wt)
+                records.append((hap, 'all', 'wtavg_qalign_pct', wtavg))
+                if wtavg > max_avg:
+                    max_hap = hap
+                    max_avg = wtavg
+            records.append((max_hap, 'all', 'select_majority_hap', int(max_hap.strip('h'))))
 
         summary = pd.DataFrame.from_records(
             records,
@@ -129,6 +137,6 @@ rule determine_majority_haplotype_hifiasm:
         )
         summary.sort_values(['contig', 'hap', 'statistic'], ascending=True, inplace=True)
         summary['sample'] = wildcards.sample
-        summary['target'] = 'hifiasm'
+        summary['target'] = wildcards.target
         summary.to_csv(output.table, sep='\t', header=True, index=False)
     # END OF RUN BLOCK

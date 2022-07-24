@@ -51,6 +51,18 @@ def select_whole_genome_assembly(wildcards):
     return assm
 
 
+def select_input_contig_alignment(wildcards):
+
+    s_to_s = 'output/alignments/contigs-to-contigs/{sample}.{hifi_type}.{ont_type}.na.chrY_aln-to_{target}.paf.gz'
+    s_to_ref = 'output/subset_wg/30_extract_ctgaln/{sample}.{hifi_type}.{ont_type}.na.chrY_aln-to_{target}.paf.gz'
+    if sample.target in config['reference_genomes']:
+        path = s_to_ref
+    else:
+        path = s_to_s
+    path = path.format(**dict(wildcards))
+    return path
+
+
 def parse_verkko_version(file_path):
 
     major = None

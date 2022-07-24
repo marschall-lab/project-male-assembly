@@ -20,16 +20,14 @@ rule determine_chrom_contigs:
     """
     input:
         agg_ctg_aln = expand(
-            'output/alignments/contigs-to-ref/00_raw/{{sample}}.{{hifi_type}}.{{ont_type}}.{mapq}.{chrom}_aln-to_{reference}.ctg-agg.tsv',
+            'output/alignments/contigs-to-ref/00_raw/{{sample}}.{{hifi_type}}.{{ont_type}}.{{mapq}}.{chrom}_aln-to_{reference}.ctg-agg.tsv',
             reference='T2TXY',
             chrom='wg',
-            mapq='na'
         ),
         agg_motifs = expand(
-            'output/motif_search/20_target_agg/00_raw/{{sample}}.{{hifi_type}}.{{ont_type}}.{mapq}.{chrom}.{motif}.agg-trg.tsv',
+            'output/motif_search/20_target_agg/00_raw/{{sample}}.{{hifi_type}}.{{ont_type}}.{{mapq}}.{chrom}.{motif}.agg-trg.tsv',
             motif=config['contig_id_motifs'],
             chrom='wg',
-            mapq='na'
         )
     output:
         table = 'output/subset_wg/10_find_contigs/{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.stats.tsv',
@@ -94,7 +92,7 @@ rule determine_contig_order:
 rule extract_chrom_contigs:
     input:
         #wg_assm = 'output/hybrid/verkko/{sample}.{hifi_type}.{ont_type}.na.wg/assembly.fasta',
-        wg_assm = select_whole_genome_assembly
+        wg_assm = select_whole_genome_assembly,
         ren_y_json = 'output/subset_wg/15_order_contigs/{sample}.{hifi_type}.{ont_type}.{mapq}.chrY.names.otn-map.json',
         ren_x_json = 'output/subset_wg/15_order_contigs/{sample}.{hifi_type}.{ont_type}.{mapq}.chrX.names.otn-map.json',
     output:

@@ -49,45 +49,51 @@ rule summarize_contig_alignments:
         df = pd.read_csv(input.paf, sep='\t', header=None, names=paf_columns, usecols=range(len(paf_columns)))
         df['tag_tp'] = df['tag_tp'].str.lower()
 
-        if wildcards.target == 'hifiasm':
-            df['hap'] = df['tname'].str.slice(0,2)  # specific to tig-naming in hifiasm
-            # fix for HG01890 - one unaligned contig
-            rename_haps = {
-                'h1': 'h1',
-                'h2': 'h2'
-            }
-            df['hap'] = df['hap'].apply(lambda x: rename_haps.get(x, 'un'))
-        else:
-            df['hap'] = df['tname'].apply(lambda x: 'un' if x == '*' else 'aln')
-        assert (df['hap'].isin(['h1', 'h2', 'un', 'aln'])).all()
+        # update 2022-07-25
+        # since the hifiasm assemblies have also been reduced
+        # to just chrY (including contig renaming), the operations
+        # to determine the majority haplotype are no longer needed
+        # --------------------------------------------------------
+        # if wildcards.target == 'hifiasm':
+        #     df['hap'] = df['tname'].str.slice(0,2)  # specific to tig-naming in hifiasm
+        #     # fix for HG01890 - one unaligned contig
+        #     rename_haps = {
+        #         'h1': 'h1',
+        #         'h2': 'h2'
+        #     }
+        #     df['hap'] = df['hap'].apply(lambda x: rename_haps.get(x, 'un'))
+        # else:
+        df['paf_record'] = df['tname'].apply(lambda x: 'un' if x == '*' else 'aln')
+        assert (df['paf_record'].isin(['un', 'aln'])).all()
 
         records = []  # collect records for flat table
-        for hap, aligns in df.groupby('hap'):
+        for paf_record, aligns in df.groupby('paf_record'):
             records.extend([
-                (hap, 'all', 'alignments_total', aligns.shape[0]),
-                (hap, 'all', 'queries_total', aligns['qname'].nunique())
+                (paf_record, 'all', 'records_total', aligns.shape[0]),
+                (paf_record, 'all', 'queries_total', aligns['qname'].nunique()),
+                (paf_record, 'all', 'queries_total_bp', aligns.drop_duplicates(subset='qname', inplace=False)['qlen'].sum())
             ])
-            if hap == 'un':
+            if paf_record == 'un':
                 continue
             
             is_primary = aligns['tag_tp'].isin(['tp:a:p', 'tp:a:i'])
             aln = aligns.loc[is_primary, :].copy()
             records.extend([
-                (hap, 'all', 'alignments_not_2nd', aln.shape[0]),
-                (hap, 'all', 'queries_not_2nd', aln['qname'].nunique())
+                (paf_record, 'all', 'alignments_not_2nd', aln.shape[0]),
+                (paf_record, 'all', 'queries_not_2nd', aln['qname'].nunique())
             ])
             
             aln['qalign_len'] = aln['qend'] - aln['qstart']    
             avg_mapq = np.average(aln['mapq'], weights=aln['qalign_len'])
             records.append(
-                (hap, 'all', 'wtavg_mapq', avg_mapq)
+                (paf_record, 'all', 'wtavg_mapq', avg_mapq)
             )
 
             is_hq = aln['mapq'] == 60
             aln = aln.loc[is_hq, :].copy()
             records.extend([
-                (hap, 'all', 'alignments_is_hq', aln.shape[0]),
-                (hap, 'all', 'queries_is_hq', aln['qname'].nunique())
+                (paf_record, 'all', 'alignments_is_hq', aln.shape[0]),
+                (paf_record, 'all', 'queries_is_hq', aln['qname'].nunique())
             ])
 
             aligned_contigs = set()
@@ -99,43 +105,59 @@ rule summarize_contig_alignments:
                 hasm_contigs = ctg_aln['tname'].nunique()
                 hasm_contig_lens = ctg_aln[['tname', 'tlen']].drop_duplicates(inplace=False)['tlen'].sum()
                 records.extend([
-                    (hap, contig, 'query_size', contig_size),
-                    (hap, contig, 'query_aligned_bp', sum_aligned),
-                    (hap, contig, 'query_aligned_pct', round(sum_aligned / contig_size * 100, 2)),
-                    (hap, contig, 'target_contigs', hasm_contigs),
-                    (hap, contig, 'target_length_total', hasm_contig_lens),
-                    (hap, contig, 'alignment_spread', hasm_contig_lens / contig_size),            
+                    (paf_record, contig, 'query_size', contig_size),
+                    (paf_record, contig, 'query_aligned_bp', sum_aligned),
+                    (paf_record, contig, 'query_aligned_pct', round(sum_aligned / contig_size * 100, 2)),
+                    (paf_record, contig, 'target_contigs', hasm_contigs),
+                    (paf_record, contig, 'target_length_total', hasm_contig_lens),
+                    (paf_record, contig, 'alignment_spread', hasm_contig_lens / contig_size),            
                 ])
 
             for contig, ctg_aln in aligns.loc[~aligns['qname'].isin(aligned_contigs), :].groupby('qname'):
                 contig_size = ctg_aln.at[ctg_aln.index[0], 'qlen']
                 records.extend([
-                    (hap, contig, 'query_size', contig_size),
-                    (hap, contig, 'query_aligned_bp', 0),
-                    (hap, contig, 'query_aligned_pct', 0),
-                    (hap, contig, 'target_contigs', 0),
-                    (hap, contig, 'target_length_total', 0),
-                    (hap, contig, 'alignment_spread', 0),            
+                    ('un', contig, 'query_size', contig_size),
+                    ('un', contig, 'query_aligned_bp', 0),
+                    ('un', contig, 'query_aligned_pct', 0),
+                    ('un', contig, 'target_contigs', 0),
+                    ('un', contig, 'target_length_total', 0),
+                    ('un', contig, 'alignment_spread', 0),            
                 ])
 
-        if wildcards.target == 'hifiasm':
-            max_hap = None
-            max_avg = 0
-            for hap in ['h1', 'h2']:
-                hap_aln_pct = [t[3] for t in records if t[0] == hap and t[1] != 'all' and t[2] == 'query_aligned_pct']
-                hap_aln_wt = [t[3] for t in records if t[0] == hap and t[1] != 'all' and t[2] == 'query_size']
-                wtavg = np.average(hap_aln_pct, weights=hap_aln_wt)
-                records.append((hap, 'all', 'wtavg_qalign_pct', wtavg))
-                if wtavg > max_avg:
-                    max_hap = hap
-                    max_avg = wtavg
-            records.append((max_hap, 'all', 'select_majority_hap', int(max_hap.strip('h'))))
+        # same as above
+        # -------------
+        # if wildcards.target == 'hifiasm':
+        #     max_hap = None
+        #     max_avg = 0
+        #     for hap in ['h1', 'h2']:
+        #         hap_aln_pct = [t[3] for t in records if t[0] == hap and t[1] != 'all' and t[2] == 'query_aligned_pct']
+        #         hap_aln_wt = [t[3] for t in records if t[0] == hap and t[1] != 'all' and t[2] == 'query_size']
+        #         wtavg = np.average(hap_aln_pct, weights=hap_aln_wt)
+        #         records.append((hap, 'all', 'wtavg_qalign_pct', wtavg))
+        #         if wtavg > max_avg:
+        #             max_hap = hap
+        #             max_avg = wtavg
+        #     records.append((max_hap, 'all', 'select_majority_hap', int(max_hap.strip('h'))))
+
+        # compute weighted average qalign for QC/summary plot
+        qalign_pct = [t[3] for t in records if t[1] != 'all' and t[2] == 'query_aligned_pct']
+        qsizes = [t[3] for t in records if t[1] != 'all' and t[2] == 'query_size']
+        wtavg_qalign_pct = np.average(qalign_pct, weights=qsizes)
+        records.append(
+            ('any', 'all', 'wtavg_qalign_pct', wtavg_qalign_pct)
+        )
+
+        qalign_spread = [t[3] for t in records if t[1] != 'all' and t[2] == 'alignment_spread']
+        wt_aln_spread = np.average(qalign_spread, weights=qsizes)
+        records.append(
+            ('any', 'all', 'wtavg_aln_spread', wtavg_qalign_pct)
+        )
 
         summary = pd.DataFrame.from_records(
             records,
-            columns=['hap', 'contig', 'statistic', 'value']
+            columns=['paf_record', 'contig', 'statistic', 'value']
         )
-        summary.sort_values(['contig', 'hap', 'statistic'], ascending=True, inplace=True)
+        summary.sort_values(['contig', 'paf_record', 'statistic'], ascending=True, inplace=True)
         summary['sample'] = wildcards.sample
         summary['target'] = wildcards.target
         summary.to_csv(output.table, sep='\t', header=True, index=False)

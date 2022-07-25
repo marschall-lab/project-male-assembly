@@ -342,6 +342,57 @@ rule collect_all_kmer_differences:
     # END OF RUN BLOCK
 
 
+localrules: determine_contiguous_assembly_in_par
+rule determine_contiguous_assembly_in_par:
+    """
+    Because the PAR regions cannot be spanned by a contiguously
+    assembled contig, this checks of (i) only a single contig
+    has been assembled (ii) to at least 95% of the size in the
+    T2T-Y reference
+    """
+    input:
+        t2t = 'references_derived/T2T.chrY-seq-classes.tsv',
+        seqclasses = expand(
+            'references_derived/{sample}.{{hifi_type}}.{{ont_type}}.na.{chrom}.seqclasses.bed',
+            sample=COMPLETE_SAMPLES,
+            chrom=['chrY']
+        )
+    output:
+        table = 'output/stats/contigs/contig-par.{hifi_type}.{ont_type}.na.chrY.tsv',
+    run:
+        import pandas as pd
+        import pathlib as pl
+
+        t2t = pd.read_csv(input.t2t, sep='\t', header=0)
+        t2t['length'] = t2t['end'] - t2t['start']
+
+        sample_stats = []
+        for sc_file in input.seqclasses:
+            sample = pl.Path(sc_file).stem.split('.')[0]
+            df = pd.read_csv(sc_file, sep='\t', header=None, names=['contig', 'start', 'end', 'class_name'])
+            df['length'] = df['end'] - df['start']
+            stats = {
+                'sample': sample,
+                'PAR1_contigs': int(df['class_name'].str.contains('PAR1').sum()),
+                'PAR2_contigs': int(df['class_name'].str.contains('PAR2').sum())
+            }
+            for par in ['PAR1', 'PAR2']:
+                ref_len = t2t.loc[t2t['name'] == par, 'length'].values[0]
+                assm_len = df.loc[df['class_name'] == par, 'length'].values[0]
+                stats[f'{par}_assembled_bp'] = assm_len
+                pct_assm = round(assm_len / ref_len * 100, 1)
+                stats[f'{par}_assembled_pct'] = pct_assm
+                stats[f'{par}_is_contiguous'] = 0
+                if stats[f'{par}_contigs'] == 1 and pct_assm > 95:
+                    stats[f'{par}_is_contiguous'] = 1
+            sample_stats.append(stats)
+
+        sample_stats = pd.DataFrame.from_record(sample_stats)
+        sample_stats.sort_values(['sample'], inplace=True)
+        sample_stats.to_csv(output.table, sep='\t', header=True, index=False)
+    # END OF RUN BLOCK
+
+
 rule aggregate_contig_sequence_class_coverage:
     input:
         seqclasses = 'references_derived/T2T.chrY-seq-classes.tsv',

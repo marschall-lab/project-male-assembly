@@ -354,7 +354,7 @@ rule determine_contiguous_assembly_in_par:
         t2t = 'references_derived/T2T.chrY-seq-classes.tsv',
         seqclasses = expand(
             'references_derived/{sample}.{{hifi_type}}.{{ont_type}}.na.{chrom}.seqclasses.bed',
-            sample=COMPLETE_SAMPLES,
+            sample=sorted(set(COMPLETE_SAMPLES) - set(['NA24385'])),
             chrom=['chrY']
         )
     output:
@@ -387,19 +387,21 @@ rule determine_contiguous_assembly_in_par:
                     stats[f'{par}_is_contiguous'] = 1
             sample_stats.append(stats)
 
-        sample_stats = pd.DataFrame.from_record(sample_stats)
+        sample_stats = pd.DataFrame.from_records(sample_stats)
         sample_stats.sort_values(['sample'], inplace=True)
         sample_stats.to_csv(output.table, sep='\t', header=True, index=False)
     # END OF RUN BLOCK
 
 
+localrules: aggregate_contig_sequence_class_coverage
 rule aggregate_contig_sequence_class_coverage:
     input:
         seqclasses = 'references_derived/T2T.chrY-seq-classes.tsv',
         fasta_idx = expand(
             'output/subset_wg/20_extract_contigs/{sample}.{{hifi_type}}.{{ont_type}}.na.chrY.fasta.fai',
             sample=COMPLETE_SAMPLES
-        )
+        ),
+        par_info = 'output/stats/contigs/contig-par.{hifi_type}.{ont_type}.na.chrY.tsv',
     output:
         cov = 'output/stats/contigs/contig-cov.{hifi_type}.{ont_type}.na.chrY.tsv',
         ctg = 'output/stats/contigs/contig-ctg.{hifi_type}.{ont_type}.na.chrY.tsv',
@@ -460,6 +462,20 @@ rule aggregate_contig_sequence_class_coverage:
             columns=region_names,
             index=multi_idx
         )
+        # special adaptation: contiguous assembly is defined differently
+        # for PAR region, load that info from rule determine_contiguous_assembly_in_par
+        par_info = pd.read_csv(input.par_info, sep='\t', header=0)
+        for par in ['PAR1', 'PAR2']:
+            par_ctg_samples = set(par_info.loc[par_info[f'{par}_is_contiguous'], 'sample'].values)
+            select_samples = np.array(
+                [s in par_ctg_samples for s in contiguity.index.get_level_values('sample')], dtype=np.bool
+            )
+            select_contigs = np.array(
+                [par in value for value in contiguity.index.get_level_values('contig')], dtype=np.bool
+            )
+            select_rows = select_samples & select_contigs
+            contiguity.loc[select_rows, par] = 1
+
 
         # drop sample/contigs w/o contiguous assembly
         contiguity.drop(
@@ -468,8 +484,8 @@ rule aggregate_contig_sequence_class_coverage:
             inplace=True,
         )
 
-        # drop PAR1/PAR2
-        contiguity.drop(['PAR1', 'PAR2'], axis=1, inplace=True)
+        # drop PAR1/PAR2 --- no longer needed, see above
+        #contiguity.drop(['PAR1', 'PAR2'], axis=1, inplace=True)
         contiguity.sort_index(axis=0, ascending=True, inplace=True)
         contiguity.to_csv(output.ctg, header=True, index=True, sep='\t')
     # END OF RUN BLOCK

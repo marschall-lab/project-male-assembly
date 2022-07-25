@@ -466,7 +466,7 @@ rule aggregate_contig_sequence_class_coverage:
         # for PAR region, load that info from rule determine_contiguous_assembly_in_par
         par_info = pd.read_csv(input.par_info, sep='\t', header=0)
         for par in ['PAR1', 'PAR2']:
-            par_ctg_samples = set(par_info.loc[par_info[f'{par}_is_contiguous'], 'sample'].values)
+            par_ctg_samples = set(par_info.loc[par_info[f'{par}_is_contiguous'] == 1, 'sample'].values)
             select_samples = np.array(
                 [s in par_ctg_samples for s in contiguity.index.get_level_values('sample')], dtype=np.bool
             )

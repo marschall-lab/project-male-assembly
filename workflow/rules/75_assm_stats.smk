@@ -505,6 +505,8 @@ rule tabulate_seqclass_length_contiguous_assemblies:
     run:
         import pandas as pd
 
+        contiguity = pd.read_csv(input.ctg, sep='\t', header=0)
+
         seqclasses = []
         for bed_file in input.seqclasses:
             df = pd.read_csv(bed_file, sep='\t', header=None, names=['contig', 'start', 'end', 'seqclass'])

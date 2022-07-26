@@ -489,3 +489,45 @@ rule aggregate_contig_sequence_class_coverage:
         contiguity.sort_index(axis=0, ascending=True, inplace=True)
         contiguity.to_csv(output.ctg, header=True, index=True, sep='\t')
     # END OF RUN BLOCK
+
+
+localrules: tabulate_seqclass_length_contiguous_assemblies
+rule tabulate_seqclass_length_contiguous_assemblies:
+    input:
+        ctg = 'output/stats/contigs/contig-ctg.{hifi_type}.{ont_type}.na.chrY.tsv',
+        seqclasses = expand(
+            'references_derived/{sample}.{{hifi_type}}.{{ont_type}}.na.{chrom}.seqclasses.bed',
+            sample=sorted(set(COMPLETE_SAMPLES) - set(['NA24385'])),
+            chrom=['chrY']
+        )
+    output:
+        table = 'output/stats/contigs/seqclasses-ctg.{hifi_type}.{ont_type}.na.chrY.tsv',
+    run:
+        import pandas as pd
+
+        seqclasses = []
+        for bed_file in input.seqclasses:
+            df = pd.read_csv(bed_file, sep='\t', header=None, names=['contig', 'start', 'end', 'seqclass'])
+            seqclasses.append(df)
+            
+        seqclasses = pd.concat(seqclasses, axis=0, ignore_index=False)
+
+        contiguity = contiguity.merge(seqclasses, left_on='contig', right_on='contig', how='inner')
+        contiguity['length'] = contiguity['end'] - contiguity['start']
+
+        def keep_row(row):
+            seqclass = row.at['seqclass']
+            try:
+                # stuff like unplaced raises
+                is_contig = row[seqclass] == 1
+            except KeyError:
+                is_contig = False
+            return is_contig
+
+        contiguity['keep_row'] = contiguity.apply(keep_row, axis=1)
+        contiguity = contiguity.loc[contiguity['keep_row'], :].copy()
+        contiguity = contiguity[['sample', 'contig', 'start', 'end', 'seqclass', 'length']]
+        contiguity.sort_values(['sample', 'contig', 'start', 'end'], inplace=True)
+
+        contiguity.to_csv(output.table, sep='\t', header=True, index=False)
+    # END OF RUN BLOCK

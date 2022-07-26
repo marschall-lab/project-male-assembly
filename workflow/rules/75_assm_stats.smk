@@ -494,6 +494,7 @@ rule aggregate_contig_sequence_class_coverage:
 localrules: tabulate_seqclass_length_contiguous_assemblies
 rule tabulate_seqclass_length_contiguous_assemblies:
     input:
+        t2t = 'references_derived/T2T.chrY-seq-classes.tsv',
         ctg = 'output/stats/contigs/contig-ctg.{hifi_type}.{ont_type}.na.chrY.tsv',
         seqclasses = expand(
             'references_derived/{sample}.{{hifi_type}}.{{ont_type}}.na.{chrom}.seqclasses.bed',
@@ -506,6 +507,9 @@ rule tabulate_seqclass_length_contiguous_assemblies:
         import pandas as pd
 
         contiguity = pd.read_csv(input.ctg, sep='\t', header=0)
+        t2t = pd.read_csv(input.t2t, sep='\t', header=0)
+        t2t['t2t_length'] = t2t['end'] - t2t['start']
+        t2t = t2t[['name', 't2t_length']]
 
         seqclasses = []
         for bed_file in input.seqclasses:
@@ -529,6 +533,9 @@ rule tabulate_seqclass_length_contiguous_assemblies:
         contiguity['keep_row'] = contiguity.apply(keep_row, axis=1)
         contiguity = contiguity.loc[contiguity['keep_row'], :].copy()
         contiguity = contiguity[['sample', 'contig', 'start', 'end', 'seqclass', 'length']]
+        # merge in info about seqclass length in T2T
+        contiguity = contiguity.merge(t2t, left_on='seqclass', right_on='name', how='outer')
+        contiguity['assm_t2t_pct'] = (contiguity['length'] / contiguity['t2t_length'] * 100).round(3)
         contiguity.sort_values(['sample', 'contig', 'start', 'end'], inplace=True)
 
         contiguity.to_csv(output.table, sep='\t', header=True, index=False)

@@ -382,20 +382,21 @@ rule dump_suppl_tables_contiguity:
         drop_samples = ['HG02666', 'HG01457', 'NA18989', 'NA19384', 'NA24385']
         df = pd.read_csv(input.table, sep='\t', header=0)
         df = df.loc[~df['sample'].isin(drop_samples), :].copy()
-        seqclass_idx = dict((row.seqclass, row.seqclass_idx) for row in df.itertuples())
+        seqclass_idx = sorted(set((row.seqclass, row.seqclass_idx) for row in df.itertuples()))
+        seqclass_order = [t[1] for t in seqclass_idx]
 
         # contiguous assembly per sequence class and sample/contig
         ctgassm_by_contig = df.pivot_table(
             index=['sample', 'contig'],
             columns='seqclass',
             values='is_contiguous',
-            aggunc=max
+            aggfunc=max
         )
         ctgassm_by_contig.fillna(0, inplace=True)
         # drop contigs that do not assemble any sequence class contiguously
         drop_rows = (ctgassm_by_contig == 0).all(axis=1)
         ctgassm_by_contig.drop(ctgassm_by_contig.index[drop_rows], axis=0, inplace=True)
-        ctgassm_by_contig.sort_index(axis=1, key=lambda x: seqclass_idx[x], inplace=True)
+        ctgassm_by_contig = ctgassm_by_contig[seqclass_order]
         ctgassm_by_contig.sort_index(axis=0, inplace=True)
         ctgassm_by_contig.to_csv(output.ctgassm_by_contig, sep='\t', header=True, index=True)
 
@@ -404,10 +405,10 @@ rule dump_suppl_tables_contiguity:
             index='sample',
             columns='seqclass',
             values='is_contiguous',
-            aggunc=max
+            aggfunc=max
         )
         ctgassm_by_sample.fillna(0, inplace=True)
-        ctgassm_by_sample.sort_index(axis=1, key=lambda x: seqclass_idx[x], inplace=True)
+        ctgassm_by_sample = ctgassm_by_sample[seqclass_order]
         ctgassm_by_sample.sort_index(axis=0, inplace=True)
         ctgassm_by_sample.to_csv(output.ctgassm_by_sample, sep='\t', header=True, index=True)
 
@@ -419,7 +420,7 @@ rule dump_suppl_tables_contiguity:
             aggfunc=sum
         )
         numctg_by_sample.fillna(0, inplace=True)
-        numctg_by_sample.sort_index(axis=1, key=lambda x: seqclass_idx[x], inplace=True)
+        numctg_by_sample = numctg_by_sample[seqclass_order]
         numctg_by_sample.sort_index(axis=0, inplace=True)
         numctg_by_sample.to_csv(output.numctg_by_sample, sep='\t', header=True, index=True)
 
@@ -432,7 +433,7 @@ rule dump_suppl_tables_contiguity:
         )
         pct_assm_total.fillna(0, inplace=True)
         # important to sort indices here for next subset operation
-        pct_assm_total.sort_index(axis=1, key=lambda x: seqclass_idx[x], inplace=True)
+        pct_assm_total = pct_assm_total[seqclass_order]
         pct_assm_total.sort_index(axis=0, inplace=True)
         pct_assm_total.to_csv(output.pctassm_total_by_sample, sep='\t', header=True, index=True)
 

@@ -382,7 +382,7 @@ rule dump_suppl_tables_contiguity:
         drop_samples = ['HG02666', 'HG01457', 'NA18989', 'NA19384', 'NA24385']
         df = pd.read_csv(input.table, sep='\t', header=0)
         df = df.loc[~df['sample'].isin(drop_samples), :].copy()
-        seqclass_idx = sorted(set((row.seqclass, row.seqclass_idx) for row in df.itertuples()))
+        seqclass_idx = sorted(set((row.seqclass_idx, row.seqclass) for row in df.itertuples()))
         seqclass_order = [t[1] for t in seqclass_idx]
 
         # contiguous assembly per sequence class and sample/contig

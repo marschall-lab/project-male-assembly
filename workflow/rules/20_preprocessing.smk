@@ -288,6 +288,7 @@ rule normalize_expert_seqclasses_file:
         )
         assm['length'] = assm['end'] - assm['start']
         assm['sample'] = wildcards.sample
+        assm['contigs_total_num'] = assm['contig'].nunique()
 
         # indicator for unplaced contigs
         match_unplaced = re.compile('unplaced')
@@ -370,6 +371,10 @@ rule normalize_expert_seqclasses_file:
         assm = assm.merge(contiguous_regions, left_on='seqclass', right_on='seqclass', how='outer')
         assert pd.notnull(assm).all(axis=0).all()
         assm.sort_values(['contig', 'start', 'end'], ascending=True, inplace=True)
+
+        # count minimal number of contigs required to achieve maximal contiguity
+        min_ctg_num = assm.loc[assm['is_contiguous'] == 1, 'contig'].nunique()
+        assm['contigs_minmax_num'] = min_ctg_num
 
         assm.to_csv(output.table_complete, sep='\t', header=True, index=False, line_terminator="\n")
         assm[['contig', 'start', 'end', 'seqclass']].to_csv(

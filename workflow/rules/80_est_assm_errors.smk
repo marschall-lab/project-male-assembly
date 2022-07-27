@@ -296,9 +296,15 @@ rule merge_all_error_stats:
 
 
 rule intersect_errors_with_seqclasses:
+    """
+    2022-07-27
+    After updating the preprocessing for the sequence class annotation,
+    the input BED has been simplified to just contain plain seq. class
+    names (same as for T2T-Y reference)
+    """
     input:
         errors = 'output/eval/merged_errors/{sample}.{hifi_type}.{ont_type}.na.{chrom}.errors.tsv',
-        seqclasses = 'references_derived/{sample}.{hifi_type}.{ont_type}.na.{chrom}.seqclasses.bed'
+        seqclasses = 'references_derived/seqclasses/{sample}.{hifi_type}.{ont_type}.na.{chrom}.generic-seqcls.bed',
     output:
         table = 'output/eval/error_clusters/10_intersect/{sample}.{hifi_type}.{ont_type}.na.{chrom}.isect.tsv',
         tmp = temp('output/eval/error_clusters/{sample}.{hifi_type}.{ont_type}.na.{chrom}.errors.bed')
@@ -313,6 +319,11 @@ rule intersect_errors_with_seqclasses:
 
 
 rule aggregate_errors_per_seqclass:
+    """
+    2022-07-27
+    See update above; consequently, normalization of region names is
+    no longer needed (removed internal funtion "norm_region_name")
+    """
     input:
         table = 'output/eval/error_clusters/10_intersect/{sample}.{hifi_type}.{ont_type}.na.{chrom}.isect.tsv'
     output:
@@ -327,23 +338,7 @@ rule aggregate_errors_per_seqclass:
             'sample', 'err_source', 'err_reads', 'overlap'
         ]
 
-        def norm_region_name(regname):
-            new_name = regname
-            if 'unplaced' in new_name:
-                new_name = new_name.split('_unplaced_')[0]
-            # next is heuristic...
-            if re.search('_[0-9]+$', new_name) is not None:
-                new_name = new_name.rsplit('_', 1)[0]
-            # this is a bugfix specifically for HG02953,
-            # where Pille annotated a region as "XTR1_centro",
-            # which does not exist as region type. Given the
-            # size, that is probably a piece of XTR1
-            if 'XTR1_centro' in new_name:
-                new_name = 'XTR1'
-            return new_name
-
         df = pd.read_csv(input.table, sep='\t', header=None, names=columns)
-        df['region_type'] = df['region_type'].apply(norm_region_name)
         df['err_size'].replace('.', '0', inplace=True)
         df['err_size'] = df['err_size'].astype(int)
         df['err_size'] = df['err_size'].abs()  # DEL are given as neg.
@@ -393,63 +388,3 @@ rule merge_agg_seqclass_errors:
         merged.sort_values(['sample', 'region_type'], ascending=True, inplace=True)
         merged.to_csv(output.table, sep='\t', header=True, index=False)
     # END OF RUN BLOCK
-
-
-###########################
-# BELOW: DEPRECATED
-# VerityMap cannot process
-# a diploid genome
-###########################
-
-
-rule merge_read_sets:
-    """
-    VerityMap only supports a single
-    input file for the reads...
-    """
-    input:
-        reads = lambda wildcards: SAMPLE_DATA[wildcards.sample][wildcards.read_type]
-    output:
-        reads = temp('temp/merged_reads/{sample}_{read_type}.fa.gz')
-    conda:
-        '../envs/biotools.yaml'
-    threads: config['num_cpu_low']
-    resources:
-        mem_mb = lambda wildcards, attempt: 1024 * attempt,
-        walltime = lambda wildcards, attempt: f'{23*attempt}:59:00'
-    shell:
-        'seqtk seq -A -C {input.reads} | pigz -p {threads} --best > {output.reads}'
-
-
-rule run_wg_veritymap:
-    """
-    NB: important to execute the main.py at the right
-    location due to the setup horror explained above.
-    Since main is messing with sys.path, VerityMap
-    can be properly executed irrespective of the install/setup
-    into "." locations by pip.
-    """
-    input:
-        build_ok = 'repos/veritymap.build.ok',
-        reads = 'temp/merged_reads/{sample}_{read_type}.fa.gz',
-        assembly = 'output/hybrid/renamed/{sample}.{hifi_type}.{ont_type}.na.wg.fasta',
-    output:
-        chk = 'output/eval/assm_errors/{sample}.{hifi_type}.{ont_type}.na.wg.{read_type}.vm.chk'
-    log:
-        'log/output/eval/assm_errors/{sample}.{hifi_type}.{ont_type}.na.wg.{read_type}.vm.log'
-    benchmark:
-        'rsrc/output/eval/assm_errors/{sample}.{hifi_type}.{ont_type}.na.wg.{read_type}.vm.rsrc'
-    singularity:
-        f'{config["container_store"]}/{config["container"]["veritymap_env"]}'
-    threads: config['num_cpu_low']
-    resources:
-        mem_mb = lambda wildcards, attempt: 65536 * attempt,
-        walltime = lambda wildcards, attempt: f'{23*attempt}:59:00'
-    params:
-        preset = lambda wildcards: {'HIFIRW': 'hifi', 'ONTUL': 'ont'}[wildcards.read_type],
-        outdir = lambda wildcards, output: output.chk.rsplit('.', 2)[0]
-    shell:
-        'python repos/VerityMap/veritymap/main.py --no-reuse --reads {input.reads} -t {threads} '
-        '-d {params.preset} -l {wildcards.sample} -o {params.outdir} {input.assembly} &> {log}'
-            ' && '
-        'touch {output.chk}'

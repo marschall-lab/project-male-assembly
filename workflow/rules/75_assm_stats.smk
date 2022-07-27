@@ -342,201 +342,73 @@ rule collect_all_kmer_differences:
     # END OF RUN BLOCK
 
 
-localrules: determine_contiguous_assembly_in_par
-rule determine_contiguous_assembly_in_par:
-    """
-    Because the PAR regions cannot be spanned by a contiguously
-    assembled contig, this checks of (i) only a single contig
-    has been assembled (ii) to at least 95% of the size in the
-    T2T-Y reference
-    """
+localrules: merge_all_sequence_class_annotations
+rule merge_all_sequence_class_annotations:
     input:
-        t2t = 'references_derived/T2T.chrY-seq-classes.tsv',
-        seqclasses = expand(
-            'references_derived/{sample}.{{hifi_type}}.{{ont_type}}.na.{chrom}.seqclasses.bed',
-            sample=sorted(set(COMPLETE_SAMPLES) - set(['NA24385'])),
-            chrom=['chrY']
+        tables = expand(
+            'references_derived/seqclasses/{sample}.{hifi_type}.{ont_type}.na.chrY.seqclasses.tsv',
+            sample=[s for s in COMPLETE_SAMPLES if s != 'NA24385']
         )
     output:
-        table = 'output/stats/contigs/contig-par.{hifi_type}.{ont_type}.na.chrY.tsv',
+        table = 'output/stats/contigs/SAMPLES.{hifi_type}.{ont_type}.na.chrY.seqclasses.tsv'
     run:
-        import pandas as pd
-        import pathlib as pl
+        import pandas
 
-        t2t = pd.read_csv(input.t2t, sep='\t', header=0)
-        t2t['length'] = t2t['end'] - t2t['start']
-
-        sample_stats = []
-        for sc_file in input.seqclasses:
-            sample = pl.Path(sc_file).stem.split('.')[0]
-            df = pd.read_csv(sc_file, sep='\t', header=None, names=['contig', 'start', 'end', 'class_name'])
-            df['length'] = df['end'] - df['start']
-            stats = {
-                'sample': sample,
-                'PAR1_contigs': int(df['class_name'].str.contains('PAR1').sum()),
-                'PAR2_contigs': int(df['class_name'].str.contains('PAR2').sum())
-            }
-            for par in ['PAR1', 'PAR2']:
-                ref_len = t2t.loc[t2t['name'] == par, 'length'].values[0]
-                assm_len = df.loc[df['class_name'] == par, 'length'].values[0]
-                stats[f'{par}_assembled_bp'] = assm_len
-                pct_assm = round(assm_len / ref_len * 100, 1)
-                stats[f'{par}_assembled_pct'] = pct_assm
-                stats[f'{par}_is_contiguous'] = 0
-                if stats[f'{par}_contigs'] == 1 and pct_assm > 95:
-                    stats[f'{par}_is_contiguous'] = 1
-            sample_stats.append(stats)
-
-        sample_stats = pd.DataFrame.from_records(sample_stats)
-        sample_stats.sort_values(['sample'], inplace=True)
-        sample_stats.to_csv(output.table, sep='\t', header=True, index=False)
+        merged = []
+        for table in input.tables:
+            df = pd.read_csv(table, sep='\t', header=0)
+            merged.append(df)
+        merged = pd.concat(merged, axis=0, ignore_index=False)
+        merged.sort_values(['sample', 'contig', 'start', 'end'], ascending=True, inplace=True)
+        merged.to_csv(output.table)
     # END OF RUN BLOCK
 
 
 localrules: aggregate_contig_sequence_class_coverage
-rule aggregate_contig_sequence_class_coverage:
+rule dump_suppl_tables_contiguity:
     input:
-        seqclasses = 'references_derived/T2T.chrY-seq-classes.tsv',
-        fasta_idx = expand(
-            'output/subset_wg/20_extract_contigs/{sample}.{{hifi_type}}.{{ont_type}}.na.chrY.fasta.fai',
-            sample=COMPLETE_SAMPLES
-        ),
-        par_info = 'output/stats/contigs/contig-par.{hifi_type}.{ont_type}.na.chrY.tsv',
+        table = 'output/stats/contigs/SAMPLES.{hifi_type}.{ont_type}.na.chrY.seqclasses.tsv'
     output:
-        cov = 'output/stats/contigs/contig-cov.{hifi_type}.{ont_type}.na.chrY.tsv',
-        ctg = 'output/stats/contigs/contig-ctg.{hifi_type}.{ont_type}.na.chrY.tsv',
+        ctgassm_by_contig = 'output/stats/contigs/ctgassm-seqcls.by-contig.{hifi_type}.{ont_type}.na.chrY.tsv',
+        ctgassm_by_sample = 'output/stats/contigs/ctgassm-seqcls.by-sample.{hifi_type}.{ont_type}.na.chrY.tsv',
+        numctg_by_sample = 'output/stats/contigs/numctg-seqcls.by-sample.{hifi_type}.{ont_type}.na.chrY.tsv',
     resources:
         mem_mb = lambda wildcards, attempt: 1024 * attempt
     run:
         import pandas as pd
-        import numpy as np
-        import pathlib as pl
 
-        t2t = pd.read_csv(input.seqclasses, sep='\t', header=0)
-        name_idx_map = dict(
-            (n,i) for n,i in zip(t2t['name'].values, t2t.index.values)
+        df = pd.read_csv(input.table, sep='\t', header=0)
+        seqclass_idx = dict((row.seqclass, row.seqclass_idx) for row in df.itertuples())
+
+        # contiguous assembly per sequence class and contig
+        contig_assm = df.pivot(
+            index=['sample', 'contig'],
+            columns='seqclass',
+            values='is_contiguous'
         )
-        num_regions = len(name_idx_map)
-        region_names = t2t['name'].values
+        contig_assm.fillna(0, inplace=True)
+        contig_assm.sort_index(axis=1, key=lambda x: seqclass_idx[x], inplace=True)
+        contig_assm.to_csv(output.ctgassm_by_contig, sep='\t', header=True, index=True)
 
-        ignore_samples = ['HG02666', 'HG01457', 'NA19384', 'NA18989', 'NA24385']
+        # # contiguous assembly per sequence class and sample
+        # contig_assm = df.crosstab(
+        #     index='sample',
+        #     columns='seqclass',
+        #     values='is_contiguous',
+        #     aggfunc=sum
+        # )
+        # contig_assm.fillna(0, inplace=True)
+        # contig_assm.sort_index(axis=1, key=lambda x: seqclass_idx[x], inplace=True)
+        # contig_assm.to_csv(output.ctgassm_by_sample, sep='\t', header=True, index=True)
 
-        sample_contigs = []
-        contig_covs = []
-        contig_ctgs = []
-
-        for idx_file in input.fasta_idx:
-            sample = pl.Path(idx_file).stem.split('.')[0]
-            if sample in ignore_samples:
-                continue
-            with open(idx_file, 'r') as faidx:
-                for line in faidx:
-                    cov = np.zeros(num_regions, dtype=np.int8)
-                    ctg = np.zeros(num_regions, dtype=np.int8)
-
-                    contig = line.split()[0]
-                    from_class, to_class = contig.split('.')[3].split('-')
-                    from_idx = name_idx_map[from_class]
-                    to_idx = name_idx_map[to_class]
-                    cov[from_idx:to_idx+1] = 1
-                    sample_contigs.append(
-                        (sample, contig)
-                    )
-                    contig_covs.append(cov)
-                    is_ctg_assm = (to_idx - from_idx) > 1
-                    if is_ctg_assm:
-                        ctg[from_idx+1:to_idx] = 1
-                    contig_ctgs.append(ctg)
-
-        multi_idx = pd.MultiIndex.from_tuples(sample_contigs, names=['sample', 'contig'])
-        coverages = pd.DataFrame.from_records(
-            contig_covs,
-            columns=region_names,
-            index=multi_idx
-        )
-        coverages.sort_index(axis=0, ascending=True, inplace=True)
-        coverages.to_csv(output.cov, header=True, index=True, sep='\t')
-
-        contiguity = pd.DataFrame.from_records(
-            contig_ctgs,
-            columns=region_names,
-            index=multi_idx
-        )
-        # special adaptation: contiguous assembly is defined differently
-        # for PAR region, load that info from rule determine_contiguous_assembly_in_par
-        par_info = pd.read_csv(input.par_info, sep='\t', header=0)
-        for par in ['PAR1', 'PAR2']:
-            par_ctg_samples = set(par_info.loc[par_info[f'{par}_is_contiguous'] == 1, 'sample'].values)
-            select_samples = np.array(
-                [s in par_ctg_samples for s in contiguity.index.get_level_values('sample')], dtype=np.bool
-            )
-            select_contigs = np.array(
-                [par in value for value in contiguity.index.get_level_values('contig')], dtype=np.bool
-            )
-            select_rows = select_samples & select_contigs
-            contiguity.loc[select_rows, par] = 1
-
-
-        # drop sample/contigs w/o contiguous assembly
-        contiguity.drop(
-            contiguity.index[(contiguity == 0).all(axis=1)],
-            axis=0,
-            inplace=True,
-        )
-
-        # drop PAR1/PAR2 --- no longer needed, see above
-        #contiguity.drop(['PAR1', 'PAR2'], axis=1, inplace=True)
-        contiguity.sort_index(axis=0, ascending=True, inplace=True)
-        contiguity.to_csv(output.ctg, header=True, index=True, sep='\t')
-    # END OF RUN BLOCK
-
-
-localrules: tabulate_seqclass_length_contiguous_assemblies
-rule tabulate_seqclass_length_contiguous_assemblies:
-    input:
-        t2t = 'references_derived/T2T.chrY-seq-classes.tsv',
-        ctg = 'output/stats/contigs/contig-ctg.{hifi_type}.{ont_type}.na.chrY.tsv',
-        seqclasses = expand(
-            'references_derived/{sample}.{{hifi_type}}.{{ont_type}}.na.{chrom}.seqclasses.bed',
-            sample=sorted(set(COMPLETE_SAMPLES) - set(['NA24385'])),
-            chrom=['chrY']
-        )
-    output:
-        table = 'output/stats/contigs/seqclasses-ctg.{hifi_type}.{ont_type}.na.chrY.tsv',
-    run:
-        import pandas as pd
-
-        contiguity = pd.read_csv(input.ctg, sep='\t', header=0)
-        t2t = pd.read_csv(input.t2t, sep='\t', header=0)
-        t2t['t2t_length'] = t2t['end'] - t2t['start']
-        t2t = t2t[['name', 't2t_length']]
-
-        seqclasses = []
-        for bed_file in input.seqclasses:
-            df = pd.read_csv(bed_file, sep='\t', header=None, names=['contig', 'start', 'end', 'seqclass'])
-            seqclasses.append(df)
-            
-        seqclasses = pd.concat(seqclasses, axis=0, ignore_index=False)
-
-        contiguity = contiguity.merge(seqclasses, left_on='contig', right_on='contig', how='inner')
-        contiguity['length'] = contiguity['end'] - contiguity['start']
-
-        def keep_row(row):
-            seqclass = row.at['seqclass']
-            try:
-                # stuff like unplaced raises
-                is_contig = row[seqclass] == 1
-            except KeyError:
-                is_contig = False
-            return is_contig
-
-        contiguity['keep_row'] = contiguity.apply(keep_row, axis=1)
-        contiguity = contiguity.loc[contiguity['keep_row'], :].copy()
-        contiguity = contiguity[['sample', 'contig', 'start', 'end', 'seqclass', 'length']]
-        # merge in info about seqclass length in T2T
-        contiguity = contiguity.merge(t2t, left_on='seqclass', right_on='name', how='outer')
-        contiguity['assm_t2t_pct'] = (contiguity['length'] / contiguity['t2t_length'] * 100).round(3)
-        contiguity.sort_values(['sample', 'contig', 'start', 'end'], inplace=True)
-
-        contiguity.to_csv(output.table, sep='\t', header=True, index=False)
+        # # number of contigs per sequence class, needed for heatmap panel fig. 1
+        # num_contigs = df.crosstab(
+        #     index='sample',
+        #     columns='seqclass',
+        #     values='assm_contigs_num',
+        #     aggfunc=sum
+        # )
+        # num_contigs.fillna(0, inplace=True)
+        # num_contigs.sort_index(axis=1, key=lambda x: seqclass_idx[x], inplace=True)
+        # num_contigs.to_csv(output.contiguous, sep='\t', header=True, index=True)
     # END OF RUN BLOCK

@@ -248,23 +248,136 @@ rule sync_expert_reference_file:
         'md5sum {output.outfile} > {output.outfile}.md5'
 
 
-rule norm_expert_seqclasses_file:
+rule normalize_expert_seqclasses_file:
     """
     This rule is needed to first get rid
     of the CR line terminators from Pille's
     seq. classes annotation files.
 
     cut: sometime strand info is present
+
+    2022-07-27
+    adapt this rule to manual preprocessing of the "seqclasses"
+    files to fix the following issues:
+    - check for non-existing sequence class names
+    - add indicator columns to make subsequent data aggregation easier
+    - Pandas-internal: input files may contain CR line terminators
     """
     input:
+        t2t = 'references_derived/T2T.chrY-seq-classes.tsv',
         bed_dos = ancient(
             pl.Path(f"{config['path_root_share_working']}",
             "assemblies/verkko_1.0_release/chrY/{sample}.HIFIRW.ONTUL.na.chrY_SeqClasses.bed")
         )
     output:
-        bed_unix = 'references_derived/{sample}.HIFIRW.ONTUL.na.chrY.seqclasses.bed'
-    shell:
-        'cat {input.bed_dos} | dos2unix | cut -f 1-4 > {output.bed_unix}'
+        bed_generic = 'references_derived/seqclasses/{sample}.HIFIRW.ONTUL.na.chrY.generic-seqcls.bed',
+        bed_specific = 'references_derived/seqclasses/{sample}.HIFIRW.ONTUL.na.chrY.specific-seqcls.bed',
+        table_complete = 'references_derived/seqclasses/{sample}.HIFIRW.ONTUL.na.chrY.seqclasses.tsv',
+    run:
+        import pandas as pd
+        import re as re
+
+        t2t = pd.read_csv(input.t2t, sep='\t', header=0)
+        t2t['t2t_length'] = t2t['end'] - t2t['start']
+        region_indices = dict((row.name, row.Index) for row in t2t.itertuples())
+
+        assm = pd.read_csv(
+            input.bed_dos, sep='\t', header=None,
+            names=['contig', 'start', 'end', 'name'],
+            usecols=[0, 1, 2, 3]  # sometimes, strand is included
+        )
+        assm['length'] = assm['end'] - assm['start']
+
+        # indicator for unplaced contigs
+        match_unplaced = re.compile('unplaced')
+        assm['is_unplaced'] = 0
+        assm['is_unplaced'] = (assm['name'].str.contains(match_unplaced)).astype(int)
+
+        # indicator for split annotations, also triggers for enum unplaced...
+        match_split_num = re.compile('_[0-9]+$')
+        assm['is_split'] = 0
+        assm['is_split'] = (assm['name'].str.contains(match_split_num)).astype(int)
+        # ...correct for that
+        assm.loc[assm['is_unplaced'] == 1, 'is_split'] = 0
+
+        # determine contig span
+        assm[['start_seqclass', 'end_seqclass']] = ['n/a', 'n/a']
+        assm['start_seqclass'] = assm['contig'].apply(lambda x: x.split('.')[3].split('-')[0])
+        assm['end_seqclass'] = assm['contig'].apply(lambda x: x.split('.')[3].split('-')[1])
+        assm['start_idx'] = assm['start_seqclass'].replace(region_indices)
+        assm['end_idx'] = assm['end_seqclass'].replace(region_indices)
+
+        # heuristic to check for unidentifiable names:
+        # after ignoring enumerated seq. classes or unplaced contigs,
+        # all that's left should have a proper name
+        select_not_split = assm['is_split'] == 0
+        select_is_placed = assm['is_unplaced'] == 0
+        normal_names = assm.loc[select_not_split & select_is_placed, 'name'].values
+        error_names = set(normal_names) - set(t2t['name'])
+        if error_names:
+            raise ValueError(error_names)
+
+        match_seqclass = '^(' + '|'.join(sorted(t2t['name'])) + ')'
+        assm['seqclass'] = assm['name'].str.extract(match_seqclass)
+        assm['seqclass_idx'] = assm['seqclass'].replace(region_indices)
+
+        # aggregate contiguity information per sequence class; makes
+        # many operations downstream trivial
+        contiguous_regions = []
+        for seqclass, annotations in assm.groupby('seqclass'):
+            num_contigs = annotations['contig'].nunique()
+            assm_length = annotations['length'].sum()
+            ref_length = t2t.loc[t2t['name'] == seqclass, 't2t_length'].values[0]
+            assm_length_pct = round(assm_length / ref_length * 100, 2)
+            is_contiguous = 1
+            if (annotations['is_unplaced'] == 1).any():
+                is_contiguous = 0
+            if (annotations['is_split'] == 1).any() and num_contigs > 1:
+                is_contiguous = 0
+            if num_contigs == 1:
+                left_idx = annotations['start_idx'].values[0]
+                right_idx = annotations['end_idx'].values[0]
+                my_idx = annotations['seqclass_idx'].values[0]
+                if left_idx < my_idx < right_idx:
+                    is_contiguous = 1
+                elif seqclass in ['PAR1', 'PAR2']:
+                    if assm_length_pct > 95:
+                        is_contiguous = 1
+                else:
+                    is_contiguous = 0
+            contiguous_regions.append(
+                (
+                    seqclass,
+                    num_contigs,
+                    assm_length,
+                    ref_length,
+                    assm_length_pct,
+                    is_contiguous
+                )
+            )
+            
+        cr_columns = [
+            'seqclass', 'assm_contigs_num',
+            'assm_length_bp', 'ref_length_bp',
+            'assm_length_pct', 'is_contiguous'
+        ]
+        contiguous_regions = pd.DataFrame.from_records(
+            contiguous_regions,
+            columns=cr_columns
+        )
+
+        assm = assm.merge(contiguous_regions, left_on='seqclass', right_on='seqclass', how='outer')
+        assert pd.notnull(assm).all(axis=0).all()
+        assm.sort_values(['contig', 'start', 'end'], ascending=True, inplace=True)
+
+        assm.to_csv(output.table_complete, sep='\t', header=True, index=False, line_terminator="\n")
+        assm[['contig', 'start', 'end', 'seqclass']].to_csv(
+            output.bed_generic, sep='\t', header=False, index=False, line_terminator="\n"
+        )
+        assm[['contig', 'start', 'end', 'name']].to_csv(
+            output.bed_specific, sep='\t', header=False, index=False, line_terminator="\n"
+        )
+    # END OF RUN BLOCK
 
 
 rule compute_read_stats:

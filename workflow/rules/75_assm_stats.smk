@@ -346,7 +346,7 @@ localrules: merge_all_sequence_class_annotations
 rule merge_all_sequence_class_annotations:
     input:
         tables = expand(
-            'references_derived/seqclasses/{sample}.{hifi_type}.{ont_type}.na.chrY.seqclasses.tsv',
+            'references_derived/seqclasses/{sample}.{{hifi_type}}.{{ont_type}}.na.chrY.seqclasses.tsv',
             sample=[s for s in COMPLETE_SAMPLES if s != 'NA24385']
         )
     output:
@@ -360,11 +360,11 @@ rule merge_all_sequence_class_annotations:
             merged.append(df)
         merged = pd.concat(merged, axis=0, ignore_index=False)
         merged.sort_values(['sample', 'contig', 'start', 'end'], ascending=True, inplace=True)
-        merged.to_csv(output.table)
+        merged.to_csv(output.table, sep='\t', header=True, index=False)
     # END OF RUN BLOCK
 
 
-localrules: aggregate_contig_sequence_class_coverage
+localrules: dump_suppl_tables_contiguity
 rule dump_suppl_tables_contiguity:
     input:
         table = 'output/stats/contigs/SAMPLES.{hifi_type}.{ont_type}.na.chrY.seqclasses.tsv'
@@ -372,43 +372,73 @@ rule dump_suppl_tables_contiguity:
         ctgassm_by_contig = 'output/stats/contigs/ctgassm-seqcls.by-contig.{hifi_type}.{ont_type}.na.chrY.tsv',
         ctgassm_by_sample = 'output/stats/contigs/ctgassm-seqcls.by-sample.{hifi_type}.{ont_type}.na.chrY.tsv',
         numctg_by_sample = 'output/stats/contigs/numctg-seqcls.by-sample.{hifi_type}.{ont_type}.na.chrY.tsv',
+        pctassm_total_by_sample = 'output/stats/contigs/pctassm-total-seqcls.by-sample.{hifi_type}.{ont_type}.na.chrY.tsv',
+        pctassm_ctg_by_sample = 'output/stats/contigs/pctassm-ctg-seqcls.by-sample.{hifi_type}.{ont_type}.na.chrY.tsv',
     resources:
         mem_mb = lambda wildcards, attempt: 1024 * attempt
     run:
         import pandas as pd
 
+        drop_samples = ['HG02666', 'HG01457', 'NA18989', 'NA19384', 'NA24385']
         df = pd.read_csv(input.table, sep='\t', header=0)
+        df = df.loc[~df['sample'].isin(drop_samples), :].copy()
         seqclass_idx = dict((row.seqclass, row.seqclass_idx) for row in df.itertuples())
 
-        # contiguous assembly per sequence class and contig
-        contig_assm = df.pivot(
+        # contiguous assembly per sequence class and sample/contig
+        ctgassm_by_contig = df.pivot_table(
             index=['sample', 'contig'],
             columns='seqclass',
-            values='is_contiguous'
+            values='is_contiguous',
+            aggunc=max
         )
-        contig_assm.fillna(0, inplace=True)
-        contig_assm.sort_index(axis=1, key=lambda x: seqclass_idx[x], inplace=True)
-        contig_assm.to_csv(output.ctgassm_by_contig, sep='\t', header=True, index=True)
+        ctgassm_by_contig.fillna(0, inplace=True)
+        # drop contigs that do not assemble any sequence class contiguously
+        drop_rows = (ctgassm_by_contig == 0).all(axis=1)
+        ctgassm_by_contig.drop(ctgassm_by_contig.index[drop_rows], axis=0, inplace=True)
+        ctgassm_by_contig.sort_index(axis=1, key=lambda x: seqclass_idx[x], inplace=True)
+        ctgassm_by_contig.sort_index(axis=0, inplace=True)
+        ctgassm_by_contig.to_csv(output.ctgassm_by_contig, sep='\t', header=True, index=True)
 
-        # # contiguous assembly per sequence class and sample
-        # contig_assm = df.crosstab(
-        #     index='sample',
-        #     columns='seqclass',
-        #     values='is_contiguous',
-        #     aggfunc=sum
-        # )
-        # contig_assm.fillna(0, inplace=True)
-        # contig_assm.sort_index(axis=1, key=lambda x: seqclass_idx[x], inplace=True)
-        # contig_assm.to_csv(output.ctgassm_by_sample, sep='\t', header=True, index=True)
+        # contiguous assembly per sequence class and sample
+        ctgassm_by_sample = df.pivot_table(
+            index='sample',
+            columns='seqclass',
+            values='is_contiguous',
+            aggunc=max
+        )
+        ctgassm_by_sample.fillna(0, inplace=True)
+        ctgassm_by_sample.sort_index(axis=1, key=lambda x: seqclass_idx[x], inplace=True)
+        ctgassm_by_sample.sort_index(axis=0, inplace=True)
+        ctgassm_by_sample.to_csv(output.ctgassm_by_sample, sep='\t', header=True, index=True)
 
-        # # number of contigs per sequence class, needed for heatmap panel fig. 1
-        # num_contigs = df.crosstab(
-        #     index='sample',
-        #     columns='seqclass',
-        #     values='assm_contigs_num',
-        #     aggfunc=sum
-        # )
-        # num_contigs.fillna(0, inplace=True)
-        # num_contigs.sort_index(axis=1, key=lambda x: seqclass_idx[x], inplace=True)
-        # num_contigs.to_csv(output.contiguous, sep='\t', header=True, index=True)
+        # number of assembly contigs per sequence class and sample
+        numctg_by_sample = df.pivot_table(
+            index='sample',
+            columns='seqclass',
+            values='assm_contigs_num',
+            aggfunc=sum
+        )
+        numctg_by_sample.fillna(0, inplace=True)
+        numctg_by_sample.sort_index(axis=1, key=lambda x: seqclass_idx[x], inplace=True)
+        numctg_by_sample.sort_index(axis=0, inplace=True)
+        numctg_by_sample.to_csv(output.numctg_by_sample, sep='\t', header=True, index=True)
+
+        # percent assembled sequence (relative to T2T) in total
+        pct_assm_total = df.pivot_table(
+            index='sample',
+            columns='seqclass',
+            values='assm_length_pct',
+            aggfunc=max
+        )
+        pct_assm_total.fillna(0, inplace=True)
+        # important to sort indices here for next subset operation
+        pct_assm_total.sort_index(axis=1, key=lambda x: seqclass_idx[x], inplace=True)
+        pct_assm_total.sort_index(axis=0, inplace=True)
+        pct_assm_total.to_csv(output.pctassm_total_by_sample, sep='\t', header=True, index=True)
+
+        # percent contiguously assembled (relative to T2T)
+        is_contig_assm = ctgassm_by_sample > 0
+        pct_assm_total.values[~is_contig_assm] = 0.
+        # NB: different output file
+        pct_assm_total.to_csv(output.pctassm_ctg_by_sample, sep='\t', header=True, index=True)
     # END OF RUN BLOCK

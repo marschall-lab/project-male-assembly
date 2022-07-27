@@ -1,7 +1,6 @@
 import pathlib as pl
 
 localrules: deselect_decoy_chroms_grch38, \
-            norm_expert_seqclasses_file, \
             prep_t2t_seq_class_cache_file, \
             dump_reference_genome_sizes
 
@@ -248,6 +247,7 @@ rule sync_expert_reference_file:
         'md5sum {output.outfile} > {output.outfile}.md5'
 
 
+localrules: normalize_expert_seqclasses_file
 rule normalize_expert_seqclasses_file:
     """
     This rule is needed to first get rid
@@ -287,6 +287,7 @@ rule normalize_expert_seqclasses_file:
             usecols=[0, 1, 2, 3]  # sometimes, strand is included
         )
         assm['length'] = assm['end'] - assm['start']
+        assm['sample'] = wildcards.sample
 
         # indicator for unplaced contigs
         match_unplaced = re.compile('unplaced')

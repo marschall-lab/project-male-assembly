@@ -352,7 +352,7 @@ rule merge_all_sequence_class_annotations:
     output:
         table = 'output/stats/contigs/SAMPLES.{hifi_type}.{ont_type}.na.chrY.seqclasses.tsv'
     run:
-        import pandas
+        import pandas as pd
 
         merged = []
         for table in input.tables:

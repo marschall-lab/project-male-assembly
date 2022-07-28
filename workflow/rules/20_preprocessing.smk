@@ -328,47 +328,61 @@ rule normalize_expert_seqclasses_file:
         contiguous_regions = []
         for seqclass, annotations in assm.groupby('seqclass'):
             num_contigs = annotations['contig'].nunique()
-            assm_length = annotations['length'].sum()
+            total_assm_length = annotations['length'].sum()
             ref_length = t2t.loc[t2t['name'] == seqclass, 't2t_length'].values[0]
-            assm_length_pct = round(assm_length / ref_length * 100, 2)
-            is_contiguous = 1
-            if (annotations['is_unplaced'] == 1).any():
-                is_contiguous = 0
-            if (annotations['is_split'] == 1).any() and num_contigs > 1:
-                is_contiguous = 0
-            if num_contigs == 1:
-                left_idx = annotations['start_idx'].values[0]
-                right_idx = annotations['end_idx'].values[0]
-                my_idx = annotations['seqclass_idx'].values[0]
-                if left_idx < my_idx < right_idx:
-                    is_contiguous = 1
+            total_assm_length_pct = round(total_assm_length / ref_length * 100, 2)
+            # unplaced info is only relevant to determine contiguity for PAR regions
+            has_unplaced = (annotations['is_unplaced'] == 1).any()
+            # split annotation over several contigs
+            is_scattered = annotations.loc[annotations['is_split'] == 1, 'contig'].nunqiue()
+            is_scattered = is_scattered > 1
+            sqcls_idx = annotations['seqclass_idx'].values[0]
+            is_contiguous = None
+            for contig, infos in annotations.groupby('contig'):
+                this_assm_length = infos.at['length']
+                this_assm_length_pct = round(this_assm_length / ref_length * 100, 2)
+                left_idx = infos.at['start_idx']
+                right_idx = infos.at['end_idx']
+                if is_scattered:
+                    is_contiguous = 0
                 elif seqclass in ['PAR1', 'PAR2']:
-                    if assm_length_pct > 95:
+                    if has_unplaced:
+                        is_contiguous = 0
+                    elif this_assm_length_pct > 95:
                         is_contiguous = 1
+                    else:
+                        is_contiguous = 0
+                elif left_idx < sqcls_idx < right_idx:
+                    is_contiguous = 1
                 else:
                     is_contiguous = 0
-            contiguous_regions.append(
-                (
-                    seqclass,
-                    num_contigs,
-                    assm_length,
-                    ref_length,
-                    assm_length_pct,
-                    is_contiguous
+                assert is_contiguous is not None
+                contiguous_regions.append(
+                    (
+                        seqclass,
+                        contig,
+                        num_contigs,
+                        is_contiguous,
+                        ref_length,
+                        total_assm_length,
+                        total_assm_length_pct,
+                        this_assm_length,
+                        this_assm_length_pct                        
+                    )
                 )
-            )
             
         cr_columns = [
-            'seqclass', 'assm_contigs_num',
-            'assm_length_bp', 'ref_length_bp',
-            'assm_length_pct', 'is_contiguous'
+            'seqclass', 'contig', 'assm_contigs_num',
+            'is_contiguous', 'ref_length_bp',
+            'total_assm_length_bp', 'total_assm_length_pct',
+            'contig_assm_length_bp', 'contig_assm_length_pct'
         ]
         contiguous_regions = pd.DataFrame.from_records(
             contiguous_regions,
             columns=cr_columns
         )
 
-        assm = assm.merge(contiguous_regions, left_on='seqclass', right_on='seqclass', how='outer')
+        assm = assm.merge(contiguous_regions, left_on=['seqclass', 'contig'], right_on=['seqclass', 'contig'], how='outer')
         assert pd.notnull(assm).all(axis=0).all()
         assm.sort_values(['contig', 'start', 'end'], ascending=True, inplace=True)
 

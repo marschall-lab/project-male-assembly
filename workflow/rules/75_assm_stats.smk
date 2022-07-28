@@ -428,7 +428,7 @@ rule dump_suppl_tables_contiguity:
             index='sample',
             columns='seqclass',
             values='assm_contigs_num',
-            aggfunc=sum
+            aggfunc=max
         )
         numctg_by_sample.fillna(0, inplace=True)
         numctg_by_sample = numctg_by_sample[seqclass_order]

@@ -334,15 +334,15 @@ rule normalize_expert_seqclasses_file:
             # unplaced info is only relevant to determine contiguity for PAR regions
             has_unplaced = (annotations['is_unplaced'] == 1).any()
             # split annotation over several contigs
-            is_scattered = annotations.loc[annotations['is_split'] == 1, 'contig'].nunqiue()
+            is_scattered = annotations.loc[annotations['is_split'] == 1, 'contig'].nunique()
             is_scattered = is_scattered > 1
             sqcls_idx = annotations['seqclass_idx'].values[0]
             is_contiguous = None
             for contig, infos in annotations.groupby('contig'):
-                this_assm_length = infos.at['length']
+                this_assm_length = infos.at[infos.index[0], 'length']
                 this_assm_length_pct = round(this_assm_length / ref_length * 100, 2)
-                left_idx = infos.at['start_idx']
-                right_idx = infos.at['end_idx']
+                left_idx = infos.at[infos.index[0], 'start_idx']
+                right_idx = infos.at[infos.index[0], 'end_idx']
                 if is_scattered:
                     is_contiguous = 0
                 elif seqclass in ['PAR1', 'PAR2']:

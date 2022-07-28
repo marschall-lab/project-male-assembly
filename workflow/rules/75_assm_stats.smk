@@ -374,8 +374,7 @@ rule dump_suppl_tables_contiguity:
         numctg_by_sample = 'output/stats/contigs/numctg-seqcls.by-sample.{hifi_type}.{ont_type}.na.chrY.pivot.tsv',
         pctassm_total_by_sample = 'output/stats/contigs/pctassm-total-seqcls.by-sample.{hifi_type}.{ont_type}.na.chrY.pivot.tsv',
         pctassm_ctgly_by_sample = 'output/stats/contigs/pctassm-ctgly-seqcls.by-sample.{hifi_type}.{ont_type}.na.chrY.pivot.tsv',
-        lenassm_total_by_contig = 'output/stats/contigs/lenassm-total-seqcls.by-contig.{hifi_type}.{ont_type}.na.chrY.flat.tsv',
-        lenassm_ctgly_by_contig = 'output/stats/contigs/lenassm-ctgly-seqcls.by-contig.{hifi_type}.{ont_type}.na.chrY.flat.tsv',
+        lenassm_by_contig = 'output/stats/contigs/lenassm-total-seqcls.by-contig.{hifi_type}.{ont_type}.na.chrY.flat.tsv',
     resources:
         mem_mb = lambda wildcards, attempt: 1024 * attempt
     run:
@@ -443,7 +442,7 @@ rule dump_suppl_tables_contiguity:
         pct_assm_total = df.pivot_table(
             index='sample',
             columns='seqclass',
-            values='assm_length_pct',
+            values='total_assm_length_pct',
             aggfunc=max
         )
         pct_assm_total.fillna(0, inplace=True)
@@ -459,8 +458,8 @@ rule dump_suppl_tables_contiguity:
         pct_assm_ctgly = df.loc[df['is_contiguous'] == 1, :].pivot_table(
             index='sample',
             columns='seqclass',
-            values='assm_length_pct',
-            aggfunc=max
+            values='contig_assm_length_pct',
+            aggfunc=sum
         )
         pct_assm_ctgly.fillna(0., inplace=True)
         pct_assm_ctgly = pct_assm_ctgly[seqclass_order]
@@ -473,30 +472,17 @@ rule dump_suppl_tables_contiguity:
 
         # dumped as flat tables
         # total assembled sequence
-        lenassm_total_by_contig_columns = [
-            'sample', 'contig', 'start', 'end', 'seqclass',
-            'is_contiguous', 'length', 'assm_length_bp', 'assm_length_pct'
+        lenassm_by_contig_columns = [
+            'sample', 'contig', 'seqclass', 'is_contiguous',
+            'contig_assm_length_bp', 'contig_assm_length_pct',
+            'total_assm_length_bp', 'total_assm_length_pct'
         ]
-        subset = df.drop_duplicates(['sample', 'contig', 'seqclass'], inplace=False)[lenassm_total_by_contig_columns]
-        with open(output.lenassm_total_by_contig, 'w') as table:
+        subset = df.drop_duplicates(['sample', 'seqclass'], inplace=False)[lenassm_by_contig_columns]
+        with open(output.lenassm_by_contig, 'w') as table:
             _ = table.write('## DESCRIPTION\n')
-            _ = table.write('## Flat table summarizing total assembled length and percent assembled relative to T2T-Y per sample/contig/sequence class\n')
+            _ = table.write('## Flat table summarizing assembled length and percent assembled relative to T2T-Y per sample/contig/sequence class\n')
             _ = table.write('## This table should be uploaded as supplementary table\n')
         subset.to_csv(
-            output.lenassm_total_by_contig, mode='a', sep='\t', header=True, index=False
-        )
-
-        lenassm_ctgly_by_contig_columns = [
-            'sample', 'contig', 'start', 'end', 'seqclass',
-            'is_contiguous', 'length', 'assm_length_bp', 'assm_length_pct'
-        ]
-        subset = df.drop_duplicates(['sample', 'contig', 'seqclass'], inplace=False)
-        subset = subset.loc[subset['is_contiguous'] == 1, lenassm_ctgly_by_contig_columns]
-        with open(output.lenassm_ctgly_by_contig, 'w') as table:
-            _ = table.write('## DESCRIPTION\n')
-            _ = table.write('## Flat table summarizing contiguously assembled length and percent assembled relative to T2T-Y per sample/contig/sequence class\n')
-            _ = table.write('## This table should be uploaded as supplementary table\n')
-        subset.to_csv(
-            output.lenassm_ctgly_by_contig, mode='a', sep='\t', header=True, index=False
+            output.lenassm_by_contig, mode='a', sep='\t', header=True, index=False
         )
     # END OF RUN BLOCK

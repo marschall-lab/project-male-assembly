@@ -369,11 +369,13 @@ rule dump_suppl_tables_contiguity:
     input:
         table = 'output/stats/contigs/SAMPLES.{hifi_type}.{ont_type}.na.chrY.seqclasses.tsv'
     output:
-        ctgassm_by_contig = 'output/stats/contigs/ctgassm-seqcls.by-contig.{hifi_type}.{ont_type}.na.chrY.tsv',
-        ctgassm_by_sample = 'output/stats/contigs/ctgassm-seqcls.by-sample.{hifi_type}.{ont_type}.na.chrY.tsv',
-        numctg_by_sample = 'output/stats/contigs/numctg-seqcls.by-sample.{hifi_type}.{ont_type}.na.chrY.tsv',
-        pctassm_total_by_sample = 'output/stats/contigs/pctassm-total-seqcls.by-sample.{hifi_type}.{ont_type}.na.chrY.tsv',
-        pctassm_ctg_by_sample = 'output/stats/contigs/pctassm-ctg-seqcls.by-sample.{hifi_type}.{ont_type}.na.chrY.tsv',
+        ctgassm_by_contig = 'output/stats/contigs/ctgassm-seqcls.by-contig.{hifi_type}.{ont_type}.na.chrY.pivot.tsv',
+        ctgassm_by_sample = 'output/stats/contigs/ctgassm-seqcls.by-sample.{hifi_type}.{ont_type}.na.chrY.pivot.tsv',
+        numctg_by_sample = 'output/stats/contigs/numctg-seqcls.by-sample.{hifi_type}.{ont_type}.na.chrY.pivot.tsv',
+        pctassm_total_by_sample = 'output/stats/contigs/pctassm-total-seqcls.by-sample.{hifi_type}.{ont_type}.na.chrY.pivot.tsv',
+        pctassm_ctgly_by_sample = 'output/stats/contigs/pctassm-ctgly-seqcls.by-sample.{hifi_type}.{ont_type}.na.chrY.pivot.tsv',
+        lenassm_total_by_contig = 'output/stats/contigs/lenassm-total-seqcls.by-contig.{hifi_type}.{ont_type}.na.chrY.flat.tsv',
+        lenassm_ctgly_by_contig = 'output/stats/contigs/lenassm-ctgly-seqcls.by-contig.{hifi_type}.{ont_type}.na.chrY.flat.tsv',
     resources:
         mem_mb = lambda wildcards, attempt: 1024 * attempt
     run:
@@ -382,6 +384,7 @@ rule dump_suppl_tables_contiguity:
         drop_samples = ['HG02666', 'HG01457', 'NA18989', 'NA19384', 'NA24385']
         df = pd.read_csv(input.table, sep='\t', header=0)
         df = df.loc[~df['sample'].isin(drop_samples), :].copy()
+        df.sort_values(['sample', 'contig', 'start', 'end'], axis=0, inplace=True)
         seqclass_idx = sorted(set((row.seqclass_idx, row.seqclass) for row in df.itertuples()))
         seqclass_order = [t[1] for t in seqclass_idx]
 
@@ -398,7 +401,11 @@ rule dump_suppl_tables_contiguity:
         ctgassm_by_contig.drop(ctgassm_by_contig.index[drop_rows], axis=0, inplace=True)
         ctgassm_by_contig = ctgassm_by_contig[seqclass_order]
         ctgassm_by_contig.sort_index(axis=0, inplace=True)
-        ctgassm_by_contig.to_csv(output.ctgassm_by_contig, sep='\t', header=True, index=True)
+        with open(output.ctgassm_by_contig, 'w') as table:
+            _ = table.write('## DESCRIPTION\n')
+            _ = table.write('## Indicate (1/0) contiguously assembled sequence classes per sample/contig\n')
+            _ = table.write('## Contigs w/o a contiguously assembled sequence class region are omitted from this table\n')
+        ctgassm_by_contig.to_csv(output.ctgassm_by_contig, mode='a', sep='\t', header=True, index=True)
 
         # contiguous assembly per sequence class and sample
         ctgassm_by_sample = df.pivot_table(
@@ -410,7 +417,11 @@ rule dump_suppl_tables_contiguity:
         ctgassm_by_sample.fillna(0, inplace=True)
         ctgassm_by_sample = ctgassm_by_sample[seqclass_order]
         ctgassm_by_sample.sort_index(axis=0, inplace=True)
-        ctgassm_by_sample.to_csv(output.ctgassm_by_sample, sep='\t', header=True, index=True)
+        with open(output.ctgassm_by_sample, 'w') as table:
+            _ = table.write('## DESCRIPTION\n')
+            _ = table.write('## Indicate (1/0) contiguously assembled sequence classes per sample\n')
+            _ = table.write('## This aggregated information is mainly used for visualization\n')
+        ctgassm_by_sample.to_csv(output.ctgassm_by_sample, mode='a', sep='\t', header=True, index=True)
 
         # number of assembly contigs per sequence class and sample
         numctg_by_sample = df.pivot_table(
@@ -422,7 +433,11 @@ rule dump_suppl_tables_contiguity:
         numctg_by_sample.fillna(0, inplace=True)
         numctg_by_sample = numctg_by_sample[seqclass_order]
         numctg_by_sample.sort_index(axis=0, inplace=True)
-        numctg_by_sample.to_csv(output.numctg_by_sample, sep='\t', header=True, index=True)
+        with open(output.numctg_by_sample, 'w') as table:
+            _ = table.write('## DESCRIPTION\n')
+            _ = table.write('## Indicate (N/count) number of assembled contigs per sequence class\n')
+            _ = table.write('## This aggregated information is mainly used for visualization\n')
+        numctg_by_sample.to_csv(output.numctg_by_sample, mode='a', sep='\t', header=True, index=True)
 
         # percent assembled sequence (relative to T2T) in total
         pct_assm_total = df.pivot_table(
@@ -432,14 +447,56 @@ rule dump_suppl_tables_contiguity:
             aggfunc=max
         )
         pct_assm_total.fillna(0, inplace=True)
-        # important to sort indices here for next subset operation
         pct_assm_total = pct_assm_total[seqclass_order]
         pct_assm_total.sort_index(axis=0, inplace=True)
-        pct_assm_total.to_csv(output.pctassm_total_by_sample, sep='\t', header=True, index=True)
+        with open(output.pctassm_total_by_sample, 'w') as table:
+            _ = table.write('## DESCRIPTION\n')
+            _ = table.write('## Indicate percent of total assembled sequence relative to T2T-Y length per sequence class\n')
+            _ = table.write('## This aggregated information is mainly used for visualization\n')
+        pct_assm_total.to_csv(output.pctassm_total_by_sample, mode='a', sep='\t', header=True, index=True)
 
         # percent contiguously assembled (relative to T2T)
-        is_contig_assm = ctgassm_by_sample > 0
-        pct_assm_total.values[~is_contig_assm] = 0.
-        # NB: different output file
-        pct_assm_total.to_csv(output.pctassm_ctg_by_sample, sep='\t', header=True, index=True)
+        pct_assm_ctgly = df.loc[df['is_contiguous'] == 1, :].pivot_table(
+            index='sample',
+            columns='seqclass',
+            values='assm_length_pct',
+            aggfunc=max
+        )
+        pct_assm_ctgly.fillna(0., inplace=True)
+        pct_assm_ctgly = pct_assm_ctgly[seqclass_order]
+        pct_assm_ctgly.sort_index(axis=0, inplace=True)
+        with open(output.pctassm_ctgly_by_sample, 'w') as table:
+            _ = table.write('## DESCRIPTION\n')
+            _ = table.write('## Indicate percent of contiguously assembled sequence relative to T2T-Y length per sequence class\n')
+            _ = table.write('## This aggregated information is mainly used for visualization\n')
+        pct_assm_ctgly.to_csv(output.pctassm_ctgly_by_sample, mode='a', sep='\t', header=True, index=True)
+
+        # dumped as flat tables
+        # total assembled sequence
+        lenassm_total_by_contig_columns = [
+            'sample', 'contig', 'start', 'end', 'seqclass',
+            'is_contiguous', 'length', 'assm_length_bp', 'assm_length_pct'
+        ]
+        subset = df.drop_duplicates(['sample', 'contig', 'seqclass'], inplace=False)[lenassm_total_by_contig_columns]
+        with open(output.lenassm_total_by_contig, 'w') as table:
+            _ = table.write('## DESCRIPTION\n')
+            _ = table.write('## Flat table summarizing total assembled length and percent assembled relative to T2T-Y per sample/contig/sequence class\n')
+            _ = table.write('## This table should be uploaded as supplementary table\n')
+        subset.to_csv(
+            output.lenassm_total_by_contig, mode='a', sep='\t', header=True, index=False
+        )
+
+        lenassm_ctgly_by_contig_columns = [
+            'sample', 'contig', 'start', 'end', 'seqclass',
+            'is_contiguous', 'length', 'assm_length_bp', 'assm_length_pct'
+        ]
+        subset = df.drop_duplicates(['sample', 'contig', 'seqclass'], inplace=False)
+        subset = subset.loc[subset['is_contiguous'] == 1, lenassm_ctgly_by_contig_columns]
+        with open(output.lenassm_ctgly_by_contig, 'w') as table:
+            _ = table.write('## DESCRIPTION\n')
+            _ = table.write('## Flat table summarizing contiguously assembled length and percent assembled relative to T2T-Y per sample/contig/sequence class\n')
+            _ = table.write('## This table should be uploaded as supplementary table\n')
+        subset.to_csv(
+            output.lenassm_ctgly_by_contig, mode='a', sep='\t', header=True, index=False
+        )
     # END OF RUN BLOCK

@@ -477,7 +477,7 @@ rule dump_suppl_tables_contiguity:
             'contig_assm_length_bp', 'contig_assm_length_pct',
             'total_assm_length_bp', 'total_assm_length_pct'
         ]
-        subset = df.drop_duplicates(['sample', 'seqclass'], inplace=False)[lenassm_by_contig_columns]
+        subset = df.drop_duplicates(['sample', 'contig', 'seqclass'], inplace=False)[lenassm_by_contig_columns]
         with open(output.lenassm_by_contig, 'w') as table:
             _ = table.write('## DESCRIPTION\n')
             _ = table.write('## Flat table summarizing assembled length and percent assembled relative to T2T-Y per sample/contig/sequence class\n')

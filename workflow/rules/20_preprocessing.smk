@@ -580,7 +580,7 @@ rule read_coverage_per_sequence_class:
         seqclasses = 'references_derived/seqclasses/{sample}.{hifi_type}.{ont_type}.na.chrY.seqclasses.tsv',
         cache_file = 'output/subset_wg/40_extract_rdaln/{sample}.READS_aln-to_{hifi_type}.{ont_type}.na.{chrom}.cache.h5'
     output:
-        rd_cov = 'output/stats/coverage/{sample}.{hifi_type}.{ont_type}.read-cov-seqclass.tsv',
+        rd_cov = 'output/stats/coverage/{sample}.{hifi_type}.{ont_type}.na.{chrom}.read-cov-seqclass.tsv',
     run:
         import pandas as pd
         genome_ref_cov_size = 'cov_geq_0bp_T2TXYM_diploid'
@@ -632,11 +632,11 @@ localrules: merge_all_readcov_seqclass
 rule merge_all_readcov_seqclass:
     input:
         tables = expand(
-            'output/stats/coverage/{sample}.{{hifi_type}}.{{ont_type}}.read-cov-seqclass.tsv',
+            'output/stats/coverage/{sample}.{{hifi_type}}.{{ont_type}}.na.{{chrom}}.read-cov-seqclass.tsv',
             sample=COMPLETE_SAMPLES
         )
     output:
-        table = 'output/stats/coverage/SAMPLES.{hifi_type}.{ont_type}.read-cov-seqclass.tsv'
+        table = 'output/stats/coverage/SAMPLES.{hifi_type}.{ont_type}.na.{chrom}.read-cov-seqclass.tsv'
     run:
         import pandas as pd
 

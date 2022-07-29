@@ -571,3 +571,90 @@ rule merge_all_read_stats:
 
         merged.to_csv(output.table, sep='\t', header=True, index=False)
     # END OF RUN BLOCK
+
+localrules: read_coverage_per_sequence_class
+rule read_coverage_per_sequence_class:
+    input:
+        hifi_stats = 'output/stats/reads/{sample}.{hifi_type}.read-stats.tsv',
+        ont_stats = 'output/stats/reads/{sample}.{ont_type}.read-stats.tsv',
+        seqclasses = 'references_derived/seqclasses/{sample}.{hifi_type}.{ont_type}.na.chrY.seqclasses.tsv',
+        cache_file = 'output/subset_wg/40_extract_rdaln/{sample}.READS_aln-to_{hifi_type}.{ont_type}.na.{chrom}.cache.h5'
+    output:
+        rd_cov = 'output/stats/coverage/{sample}.{hifi_type}.{ont_type}.read-cov-seqclass.tsv',
+    run:
+        import pandas as pd
+        genome_ref_cov_size = 'cov_geq_0bp_T2TXYM_diploid'
+
+        rename_stats = {
+            'count': 'length',
+            'mean': 'mean',
+            'std': 'stddev',
+            'min': 'mininum',
+            '25%': 'quartile_1st',
+            '50%': 'median',
+            '75%': 'quartile_3rd',
+            'max': 'maximum'
+        }
+
+        hifi_stats = pd.read_csv(input.hifi_stats, sep='\t', header=0)
+        ont_stats = pd.read_csv(input.ont_stats, sep='\t', header=0)
+        hifi_cov = hifi_stats.at[hifi_stats.index[0], genome_ref_cov_size]
+        ont_cov = ont_stats.at[ont_stats.index[0], genome_ref_cov_size]
+
+        contiguity = pd.read_csv(input.seqclasses, sep='\t', header=0, comment='#')
+        contiguity = contiguity.loc[contiguity['is_contiguous'] == 1, :].copy()
+
+        cov_stats = []
+        with pd.HDFStore(input.cache_file, 'r') as hdf:
+            contigs = hdf['contigs']
+            for contig, records in contiguity.groupby('contig'):
+                order_key = contigs.loc[contigs['contig_name'] == contig, 'order_key'].values[0]
+                for read_type, input_cov in zip(['HIFI', 'ONT'], [hifi_cov, ont_cov]):
+                    read_cov = hdf[f'{select_sample}/{order_key}/{read_type}']
+                    for row in records.itertuples():
+                        read_stats = read_cov[row.start:row.end].describe()
+                        read_stats.rename(index=rename_stats, inplace=True)
+                        read_stats = read_stats.to_dict()
+                        read_stats['sample'] = select_sample
+                        read_stats['reads'] = read_type
+                        read_stats['rel_mean_cov'] = round(read_stats['mean'] / input_cov, 2)
+                        read_stats['rel_median_cov'] = round(read_stats['median'] / input_cov, 2)
+                        read_stats['seqclass'] = row.name
+                        read_stats['input_cov'] = input_cov
+                        cov_stats.append(read_stats)
+
+        cov_stats = pd.DataFrame.from_records(cov_stats)
+        cov_stats.to_csv(output.rd_cov, sep='\t', header=True, index=False)
+    # END OF RUN BLOCK
+
+
+localrules: merge_all_readcov_seqclass
+rule merge_all_readcov_seqclass:
+    input:
+        tables = expand(
+            'output/stats/coverage/{sample}.{{hifi_type}}.{{ont_type}}.read-cov-seqclass.tsv',
+            sample=COMPLETE_SAMPLES
+        )
+    output:
+        table = 'output/stats/coverage/SAMPLES.{hifi_type}.{ont_type}.read-cov-seqclass.tsv'
+    run:
+        import pandas as pd
+
+        dtypes = {
+            'sample': str, 'reads': str, 'seqclass': str,
+            'input_cov': int, 'rel_mean_cov': float, 'rel_median_cov': float,
+            'length': int, 'mean': float, 'stddev': float,
+            'minimum': int, 'quartile_1st': int, 'median': int,
+            'quartile_3rd': int, 'maximum': int
+        }
+
+        merged = []
+        for table in input.tables:
+            df = pd.read_csv(table, sep='\t', header=0, dtype=dtypes)
+            merged.append(df)
+        
+        merged = pd.concat(merged, axis=0, ignore_index=False)
+        merged.sort_values(['sample', 'reads', 'seqclass'], ascending=True, inplace=True)
+
+        merged.to_csv(output.table, sep='\t', header=True, index=False)
+    # END OF RUN BLOCK

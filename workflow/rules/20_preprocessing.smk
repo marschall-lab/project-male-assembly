@@ -610,12 +610,12 @@ rule read_coverage_per_sequence_class:
             for contig, records in contiguity.groupby('contig'):
                 order_key = contigs.loc[contigs['contig_name'] == contig, 'order_key'].values[0]
                 for read_type, input_cov in zip(['HIFI', 'ONT'], [hifi_cov, ont_cov]):
-                    read_cov = hdf[f'{select_sample}/{order_key}/{read_type}']
+                    read_cov = hdf[f'{wildcards.sample}/{order_key}/{read_type}']
                     for row in records.itertuples():
                         read_stats = read_cov[row.start:row.end].describe()
                         read_stats.rename(index=rename_stats, inplace=True)
                         read_stats = read_stats.to_dict()
-                        read_stats['sample'] = select_sample
+                        read_stats['sample'] = wildcards.sample
                         read_stats['reads'] = read_type
                         read_stats['rel_mean_cov'] = round(read_stats['mean'] / input_cov, 2)
                         read_stats['rel_median_cov'] = round(read_stats['median'] / input_cov, 2)
@@ -633,7 +633,7 @@ rule merge_all_readcov_seqclass:
     input:
         tables = expand(
             'output/stats/coverage/{sample}.{{hifi_type}}.{{ont_type}}.na.{{chrom}}.read-cov-seqclass.tsv',
-            sample=COMPLETE_SAMPLES
+            sample=[s for s in COMPLETE_SAMPLES if s != 'NA24385']
         )
     output:
         table = 'output/stats/coverage/SAMPLES.{hifi_type}.{ont_type}.na.{chrom}.read-cov-seqclass.tsv'

@@ -608,18 +608,24 @@ rule read_coverage_per_sequence_class:
         with pd.HDFStore(input.cache_file, 'r') as hdf:
             contigs = hdf['contigs']
             for contig, records in contiguity.groupby('contig'):
+                # fix 2022-07-30: for "split" annotations of sequence classes,
+                # need to iterate below also over groupby "seqclass"
                 order_key = contigs.loc[contigs['contig_name'] == contig, 'order_key'].values[0]
                 for read_type, input_cov in zip(['HIFI', 'ONT'], [hifi_cov, ont_cov]):
                     read_cov = hdf[f'{wildcards.sample}/{order_key}/{read_type}']
-                    for row in records.itertuples():
-                        read_stats = read_cov[row.start:row.end].describe()
+                    for seqclass, split_regions in records.groupby('seqclass'):
+                        split_data = []
+                        for row in split_regions.itertuples():
+                            split_data.append(read_cov[row.start:row.end])
+                        split_data = pd.concat(split_data, axis=0, ignore_index=True)
+                        read_stats = split_data.describe()
                         read_stats.rename(index=rename_stats, inplace=True)
                         read_stats = read_stats.to_dict()
                         read_stats['sample'] = wildcards.sample
                         read_stats['reads'] = read_type
                         read_stats['rel_mean_cov'] = round(read_stats['mean'] / input_cov, 2)
                         read_stats['rel_median_cov'] = round(read_stats['median'] / input_cov, 2)
-                        read_stats['seqclass'] = row.name
+                        read_stats['seqclass'] = seqclass
                         read_stats['input_cov'] = input_cov
                         cov_stats.append(read_stats)
 

@@ -22,7 +22,7 @@ SAMPLE_DATA = collect_sample_data(SAMPLES, SHORT_READ_SAMPLE_NAMES)
 SAMPLE_NAMES = sorted(SAMPLES['sample'].values)
 SAMPLE_NAME_CONSTRAINT = '(' + '|'.join(SAMPLE_NAMES) + ')'
 
-CURRENT_ERROR_SAMPLES = []
+CURRENT_ERROR_SAMPLES = ['HG03456']  # sample dropped b/c of its XYY karyotype
 COMPLETE_SAMPLES = [s for s in SAMPLE_NAMES if s not in CURRENT_ERROR_SAMPLES]
 COMPLETE_SR_SAMPLES = [s for s in SHORT_READ_SAMPLE_NAMES if s not in CURRENT_ERROR_SAMPLES]
 
@@ -499,3 +499,17 @@ rule norm_vm_output:
             minor=config['verkko_minor'].strip('"'),
 
         )
+
+
+rule build_plotting_summaries:
+    input:
+        'output/quality_factors/model_stats.HIFIRW.ONTUL.all-targets.tsv',
+        'output/eval/error_clusters/SAMPLES.HIFIRW.ONTUL.na.chrY.mrg-seqclass-errors.tsv',
+        'output/stats/contigs/SAMPLES.HIFIRW.ONTUL.na.chrY.seqclasses.tsv',
+        'output/stats/contigs/lenassm-total-seqcls.by-contig.HIFIRW.ONTUL.na.chrY.flat.tsv',
+        'output/stats/kmers/SAMPLES.HIFIRW.ONTUL.na.chrY.k31.diffs.tsv',
+        'output/eval/assembly_qv/SAMPLES.HIFIRW.ONTUL.na.wg.yak-qv.tsv',
+        'output/stats/coverage/SAMPLES.HIFIRW.ONTUL.na.chrY.read-cov-seqclass.tsv',
+        'output/eval/assm_stats/SAMPLES.HIFIRW.ONTUL.na.chrY.quast-report.tsv',
+        'output/eval/assm_stats/SAMPLES.HIFIRW.ONTUL.na.chrX.quast-report.tsv',
+        'output/eval/assm_stats/SAMPLES.HIFIRW.ONTUL.na.wg.quast-report.tsv',

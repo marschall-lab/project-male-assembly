@@ -553,7 +553,7 @@ rule merge_all_read_stats:
     input:
         tables = expand(
             'output/stats/reads/{sample}.{reads}.read-stats.tsv',
-            sample=SAMPLE_NAMES,
+            sample=COMPLETE_SAMPLES,
             reads=['HIFIRW', 'ONTUL']
         )
     output:
@@ -661,6 +661,9 @@ rule merge_all_readcov_seqclass:
         
         merged = pd.concat(merged, axis=0, ignore_index=False)
         merged.sort_values(['sample', 'reads', 'seqclass'], ascending=True, inplace=True)
+        merged['qc_only_assembly'] = 0
+        qc_only = merged['sample'].isin(QC_SAMPLES)
+        merged.loc[qc_only, 'qc_only_assembly'] = 1
 
         merged.to_csv(output.table, sep='\t', header=True, index=False)
     # END OF RUN BLOCK

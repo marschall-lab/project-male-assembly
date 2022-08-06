@@ -55,7 +55,7 @@ rule aggregate_quast_reports:
     input:
         reports = expand(
             'output/eval/assm_stats/quast/{sample}.{{hifi_type}}.{{ont_type}}.na.{{chrom}}/report.tsv',
-            sample=SAMPLE_NAMES
+            sample=COMPLETE_SAMPLES
         )
     output:
         table = 'output/eval/assm_stats/SAMPLES.{hifi_type}.{ont_type}.na.{chrom}.quast-report.tsv'
@@ -109,12 +109,12 @@ rule aggregate_quast_reports:
 
         df = pd.DataFrame.from_records(rows)
         df['assembly_type'] = wildcards.chrom
-        df['is_E2E_ref'] = 0
-        select_e2e_ref = df['reference_length_bp'] * 0.99 <= df['contig_NG50']
-        df.loc[select_e2e_ref, 'is_E2E_ref'] = 1
-        df['is_E2E_assm'] = 0
-        select_e2e_assm = df['assembly_length_bp'] * 0.99 <= df['contig_N50']
-        df.loc[select_e2e_assm, 'is_E2E_assm']  = 1
+        df['is_T2T_ref'] = 0
+        select_t2t_ref = df['reference_length_bp'] * 0.99 <= df['contig_NG50']
+        df.loc[select_t2t_ref, 'is_T2T_ref'] = 1
+        df['is_T2T_assm'] = 0
+        select_t2t_assm = df['assembly_length_bp'] * 0.99 <= df['contig_N50']
+        df.loc[select_t2t_assm, 'is_T2T_assm']  = 1
         df.sort_values('sample', ascending=True, inplace=True)
 
         df.to_csv(output.table, sep='\t', header=True, index=False)
@@ -263,7 +263,7 @@ rule collect_all_kmer_stats:
     input:
         sample_stats = expand(
             'output/kmer_dump/{sample}.{{hifi_type}}.{{ont_type}}.{{mapq}}.{{chrom}}.k{{kmer}}.meryl-stats.txt',
-            sample=SAMPLE_NAMES
+            sample=COMPLETE_SAMPLES
         ),
         ref_stats = expand(
             'output/kmer_dump/{reference}.{{chrom}}.k{{kmer}}.meryl-stats.txt',
@@ -298,6 +298,9 @@ rule collect_all_kmer_stats:
                         break
             records.append(sample_record)
         df = pd.DataFrame.from_records(records)
+        df['qc_only_assembly'] = 0
+        qc_only = df['sample'].isin(QC_SAMPLES)
+        df.loc[qc_only, 'qc_only_assembly'] = 1
         df.sort_values('sample', ascending=True, inplace=True)
         df.to_csv(output.table, sep='\t', header=True, index=False)
     # END OF RUN BLOCK
@@ -310,8 +313,8 @@ rule collect_all_kmer_differences:
         samples = expand(
             'output/eval/kmer_stats/{sample1}_not-in_{sample2}.{{hifi_type}}.{{ont_type}}.{{mapq}}.{{chrom}}.k{{kmer}}.count.txt',
             match_kmer_samples,
-            sample1=SAMPLE_NAMES + ['T2T', 'GRCh38'],
-            sample2=SAMPLE_NAMES + ['T2T', 'GRCh38'],
+            sample1=COMPLETE_SAMPLES + ['T2T', 'GRCh38'],
+            sample2=COMPLETE_SAMPLES + ['T2T', 'GRCh38'],
         ),
         counts = 'output/stats/kmers/SAMPLES.{hifi_type}.{ont_type}.{mapq}.{chrom}.k{kmer}.counts.tsv'
     output:
@@ -359,6 +362,9 @@ rule merge_all_sequence_class_annotations:
             df = pd.read_csv(table, sep='\t', header=0)
             merged.append(df)
         merged = pd.concat(merged, axis=0, ignore_index=False)
+        merged['qc_only_assembly'] = 0
+        qc_only = merged['sample'].isin(QC_SAMPLES)
+        merged.loc[qc_only, 'qc_only_assembly'] = 1
         merged.sort_values(['sample', 'contig', 'start', 'end'], ascending=True, inplace=True)
         merged.to_csv(output.table, sep='\t', header=True, index=False)
     # END OF RUN BLOCK
@@ -380,7 +386,7 @@ rule dump_suppl_tables_contiguity:
     run:
         import pandas as pd
 
-        drop_samples = ['HG02666', 'HG01457', 'NA18989', 'NA19384', 'NA24385']
+        drop_samples = QC_SAMPLES + CURRENT_ERROR_SAMPLES
         df = pd.read_csv(input.table, sep='\t', header=0)
         df = df.loc[~df['sample'].isin(drop_samples), :].copy()
         df.sort_values(['sample', 'contig', 'start', 'end'], axis=0, inplace=True)

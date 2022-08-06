@@ -276,7 +276,7 @@ rule merge_all_error_stats:
     input:
         stats = expand(
             'output/eval/merged_errors/{sample}.{{hifi_type}}.{{ont_type}}.na.{{chrom}}.error-stats.tsv',
-            sample=SAMPLE_NAMES
+            sample=COMPLETE_SAMPLES
         )
     output:
         tsv = 'output/eval/merged_errors/SAMPLES.{hifi_type}.{ont_type}.na.{chrom}.error-stats.tsv',

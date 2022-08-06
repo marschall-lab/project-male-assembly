@@ -63,15 +63,16 @@ rule aggregate_yak_assembly_qv:
         assembly_qv = []
         for file_path in input.tables:
             sample_name = pl.Path(file_path).stem.split('.')[0]
+            is_qc_only = 1 if sample_name in QC_SAMPLES else 0
             with open(file_path, 'r') as table:
                 for line in table:
                     if not line.startswith('QV'):
                         continue
                     _, raw, adjusted = line.strip().split()
-                    assembly_qv.append((sample_name, 'wg', 'yak', adjusted))
+                    assembly_qv.append((sample_name, 'wg', 'yak', adjusted, str(is_qc_only)))
 
         with open(output.table, 'w') as table:
-            _ = table.write('sample\tassembly\test_method\tqv\n')
+            _ = table.write('sample\tassembly\test_method\tqv\tqc_only_assembly\n')
             for record in sorted(assembly_qv):
                 _ = table.write('\t'.join(record) + '\n')
 

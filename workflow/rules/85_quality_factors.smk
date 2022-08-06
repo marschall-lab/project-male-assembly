@@ -43,6 +43,10 @@ rule create_complete_feature_table:
         table = 'output/quality_factors/feature_table.{hifi_type}.{ont_type}.tsv',
     run:
         import pandas as pd
+        # NB: having the QC low/high-coverage pairs
+        # in here is desirable to feed more examples
+        # for lower coverage to the model
+        drop_samples = CURRENT_ERROR_SAMPLES
 
         feat_projects = pd.read_csv(input.projects, sep='\t', header=0)
 
@@ -50,7 +54,7 @@ rule create_complete_feature_table:
             input.quast, sep='\t', header=0,
             usecols=['sample', 'assembly_length_bp', 'contig_NG50', 'contigs_num', 'largest_contig_bp']
         )
-        feat_quasts = feat_quasts.loc[~feat_quasts['sample'].isin(['NA24385']), :].copy()
+        feat_quasts = feat_quasts.loc[~feat_quasts['sample'].isin(drop_samples), :].copy()
 
         feat_table = pd.merge(feat_projects, feat_quasts, on='sample', how='outer')
 
@@ -58,7 +62,7 @@ rule create_complete_feature_table:
             input.qvest, sep='\t', header=0,
             usecols=['sample', 'qv']
         )
-        feat_qvest = feat_qvest.loc[~feat_qvest['sample'].isin(['NA24385']), :].copy()
+        feat_qvest = feat_qvest.loc[~feat_qvest['sample'].isin(drop_samples), :].copy()
 
         feat_table = pd.merge(feat_table, feat_qvest, on='sample', how='outer')
 

@@ -289,9 +289,17 @@ rule merge_all_error_stats:
             all_stats.append(df)
 
         all_stats = pd.concat(all_stats, axis=0, ignore_index=False)
-        all_stats.sort_values('sample', ascending=True, inplace=True)
+        all_stats['qc_only_assembly'] = 0
+        qc_only = all_stats['sample'].isin(QC_SAMPLES)
+        all_stats.loc[qc_only, 'qc_only_assembly'] = 1
 
-        all_stats.to_csv(output.tsv, sep='\t', header=True, index=False)
+        all_stats.sort_values(['qc_only_assembly', 'sample'], ascending=True, inplace=True)
+
+        with open(output.tsv, 'w') as table:
+            _ = table.write('## 80_est_assm_errors::merge_all_error_stats\n')
+            _ = table.write('## Suppl. table listing error summary statistics per assembly\n')
+
+        all_stats.to_csv(output.tsv, sep='\t', mode='a', header=True, index=False)
     # END OF RUN BLOCK
 
 
@@ -385,6 +393,9 @@ rule merge_agg_seqclass_errors:
             df = pd.read_csv(table, sep='\t', header=0)
             merged.append(df)
         merged = pd.concat(merged, axis=0, ignore_index=False)
-        merged.sort_values(['sample', 'region_type'], ascending=True, inplace=True)
+        merged['qc_only_assembly'] = 0
+        qc_only = merged['sample'].isin(QC_SAMPLES)
+        merged.loc[qc_only, 'qc_only_assembly'] = 1
+        merged.sort_values(['qc_only_assembly', 'sample', 'region_type'], ascending=True, inplace=True)
         merged.to_csv(output.table, sep='\t', header=True, index=False)
     # END OF RUN BLOCK

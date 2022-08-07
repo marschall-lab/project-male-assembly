@@ -11,7 +11,7 @@ rule one_hot_encoding_projects_haplogroups:
 
         records = []
         for row in df.itertuples():
-            if row.sample == 'NA24385':
+            if row.sample in CURRENT_ERROR_SAMPLES:
                 continue
             if row.project == 'REF':
                 continue

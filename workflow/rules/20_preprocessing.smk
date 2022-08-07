@@ -117,6 +117,62 @@ rule extract_grch38_chrom_y:
         'rm tmp.name'
 
 
+localrules: compute_grch38_seq_stats
+rule compute_grch38_seq_stats:
+    input:
+        chrom = 'references_derived/GRCh38_chrY.fasta'
+    output:
+        stats = 'references_derived/GRCh38_chrY.acgt-stats.tsv'
+    run:
+        raw_length = 0
+        seq_name = None
+        seq = None
+        seqs = dict()
+        with open(input.chrom, 'r') as fasta:
+            for line in fasta:
+                if line.startswith('>'):
+                    if seq_name is not None:
+                        raw_length += len(seq)
+                        seqs[seq_name] = seq
+                    seq_name = line.strip()[1:]
+                    seq = ''
+                else:
+                    seq += line.strip()
+        raw_length += len(seq)
+        seqs[seq_name] = seq
+
+        assm_length = 0
+        split_lengths = []
+        for k, v in seqs.items():
+            part_num = 0
+            for split in v.split('N'):
+                if not split:
+                    continue
+                part_num += 1
+                split_name = k + f'.{part_num}'
+                split_lengths.append((split_name, len(split)))
+                assm_length += len(split)
+
+        split_lengths = sorted(split_lengths, key=lambda x: x[1], reverse=True)
+        counted_length = 0
+        n50_length = 0
+        for name, split_length in split_lengths:
+            counted_length += split_length
+            if counted_length >= (assm_length // 2):
+                n50_length = split_length
+                break
+        assert n50_length > 0
+
+        with open(output.stats, 'w') as dump:
+            _ = dump.write(f'total_length\t{raw_length}\n')
+            _ = dump.write(f'acgt_length\t{assm_length}\n')
+            _ = dump.write(f'acgt_contig_n50\t{n50_length}\n')
+            _ = dump.write(f'acgt_contig_num\t{len(split_lengths)}\n')
+            for name, split_length in split_lengths:
+                _ = dump.write(f'{name}\t{split_length}\n')
+    # END OF RUN BLOCK
+
+
 rule create_reference_bed_file:
     """
     This rule adds the chrY sequence classes (PAR, XDR etc.) to the main

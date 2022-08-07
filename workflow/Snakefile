@@ -506,6 +506,7 @@ rule norm_vm_output:
 localrules: build_plotting_summaries
 rule build_plotting_summaries:
     input:
+        'references_derived/GRCh38_chrY.acgt-stats.tsv',
         'output/quality_factors/model_stats.HIFIRW.ONTUL.all-targets.tsv',
         'output/eval/error_clusters/SAMPLES.HIFIRW.ONTUL.na.chrY.mrg-seqclass-errors.tsv',
         'output/stats/contigs/SAMPLES.HIFIRW.ONTUL.na.chrY.seqclasses.tsv',

@@ -1,3 +1,11 @@
+
+# required to have text output as "text fields"
+# and not individual objects
+plt.rcParams['pdf.fonttype'] = 42
+plt.rcParams['ps.fonttype'] = 42
+
+save_plots = False
+
 desc="""
 This notebook uses the output of the rule
 --- 75_assm_stats.smk::aggregate_quast_reports

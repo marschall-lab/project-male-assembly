@@ -115,7 +115,10 @@ rule aggregate_quast_reports:
         df['is_T2T_assm'] = 0
         select_t2t_assm = df['assembly_length_bp'] * 0.99 <= df['contig_N50']
         df.loc[select_t2t_assm, 'is_T2T_assm']  = 1
-        df.sort_values('sample', ascending=True, inplace=True)
+        df['qc_only_assembly'] = 0
+        qc_only = df['sample'].isin(QC_SAMPLES)
+        df.loc[qc_only, 'qc_only_assembly'] = 1
+        df.sort_values(['qc_only_assembly', 'sample'], ascending=True, inplace=True)
 
         df.to_csv(output.table, sep='\t', header=True, index=False)
     # END OF RUN BLOCK

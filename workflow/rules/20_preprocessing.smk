@@ -623,7 +623,11 @@ rule merge_all_read_stats:
             merged.append(df)
 
         merged = pd.concat(merged, axis=0, ignore_index=False)
-        merged.sort_values(['sample', 'read_type'], ascending=True, inplace=True)
+        
+        merged['qc_only_assembly'] = 0
+        qc_only = merged['sample'].isin(QC_SAMPLES)
+        merged.loc[qc_only, 'qc_only_assembly'] = 1
+        merged.sort_values(['qc_only_assembly', 'sample', 'read_type'], ascending=True, inplace=True)
 
         merged.to_csv(output.table, sep='\t', header=True, index=False)
     # END OF RUN BLOCK
@@ -695,7 +699,7 @@ rule merge_all_readcov_seqclass:
     input:
         tables = expand(
             'output/stats/coverage/{sample}.{{hifi_type}}.{{ont_type}}.na.{{chrom}}.read-cov-seqclass.tsv',
-            sample=[s for s in COMPLETE_SAMPLES if s != 'NA24385']
+            sample=COMPLETE_SAMPLES
         )
     output:
         table = 'output/stats/coverage/SAMPLES.{hifi_type}.{ont_type}.na.{chrom}.read-cov-seqclass.tsv'

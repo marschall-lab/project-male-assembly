@@ -395,7 +395,21 @@ rule normalize_expert_seqclasses_file:
             sqcls_idx = annotations['seqclass_idx'].values[0]
             is_contiguous = None
             for contig, infos in annotations.groupby('contig'):
-                this_assm_length = infos.at[infos.index[0], 'length']
+                # 2022-09-01
+                # this was intended to report the size of the assembled
+                # sequence class for this contig (in case the sequence
+                # class is scattered of several contigs). It fails for
+                # "split" classes (= in one contig), because the length
+                # only takes the first (usually of two) splits into account;
+                # example: AMPL1_1 and AMPL1_2 in NA19331
+                # fix: check split state
+                if (infos["is_split"] > 0).all():
+                    this_assm_length = infos.drop_duplicates(
+                        "name", inplace=False)["length"].sum()
+                elif (infos["is_split"] < 1).all():
+                    this_assm_length = infos.at[infos.index[0], 'length']
+                else:
+                    raise ValueError(f"Mixed split state: {wildcards.sample} / {contig} / {infos}")
                 this_assm_length_pct = round(this_assm_length / ref_length * 100, 2)
                 left_idx = infos.at[infos.index[0], 'start_idx']
                 right_idx = infos.at[infos.index[0], 'end_idx']
@@ -423,7 +437,7 @@ rule normalize_expert_seqclasses_file:
                         total_assm_length,
                         total_assm_length_pct,
                         this_assm_length,
-                        this_assm_length_pct                        
+                        this_assm_length_pct
                     )
                 )
             

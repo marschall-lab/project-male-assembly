@@ -467,8 +467,8 @@ rule dump_suppl_tables_contiguity:
         pct_assm_ctgly = df.loc[df['is_contiguous'] == 1, :].pivot_table(
             index='sample',
             columns='seqclass',
-            values='contig_assm_length_pct',
-            aggfunc=sum
+            values='total_assm_length_pct',
+            aggfunc=max
         )
         pct_assm_ctgly.fillna(0., inplace=True)
         pct_assm_ctgly = pct_assm_ctgly[seqclass_order]

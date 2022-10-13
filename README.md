@@ -5,8 +5,9 @@ assemblies, and extract contigs that most likely represent the Y chromosome.
 The workflow requires HiFi and ONT reads to be executed, plus Illumina short reads for
 certain assembly evaluation tasks.
 
-The input sample sheet is a simple tab-separated table listing sample ID and (file system)
-location of read sets. The sample sheet needs to be loaded as follows:
+The input sample sheet is a simple tab-separated table listing sample name (`sample`)
+and (file system) location of read sets (`hifi`, `ont` and `short` if available).
+The sample sheet needs to be loaded as follows:
 
 ```bash
 $ snakemake --config samples=PATH_TO_SAMPLE_SHEET [...]

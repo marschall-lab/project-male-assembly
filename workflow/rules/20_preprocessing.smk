@@ -774,7 +774,7 @@ rule bwa_index_augmented_assembly:
         prefix = lambda wildcards, output: output.idx[0].rsplit(".", 1)[0]
     resources:
         mem_mb = lambda wildcards, attempt: 16384 * attempt,
-        walltime = lambda wildcards, attempt: f'{attempt*8:02}:59:59',
+        walltime = lambda wildcards, attempt: f'{attempt*attempt:02}:59:59',
         bonus = 0
     shell:
         "bwa index -6 -p {params.prefix} {input.assm} &> {log}"

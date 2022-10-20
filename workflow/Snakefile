@@ -212,7 +212,6 @@ rule run_all:
         )
 
 
-
 rule populate_share:
     input:
         refs = 'output/share/references.ok',
@@ -519,3 +518,14 @@ rule build_plotting_summaries:
         'output/eval/assm_stats/SAMPLES.HIFIRW.ONTUL.na.wg.quast-report.tsv',
         'output/stats/reads/SAMPLES.READS.read-stats.tsv',
         'output/eval/merged_errors/SAMPLES.HIFIRW.ONTUL.na.chrY.error-stats.tsv',
+
+
+rule run_aug_short_align:
+    input:
+        bams = expand(
+            "output/output/eval/chry_qv/aln_assm_sr/{sample}.{hifi_type}.{ont_type}.{mapq}.wg.T2TY.short.bam",
+            sample=["HC02666"],
+            hifi_type=["HIFIRW"],
+            ont_type=["ONTUL"],
+            mapq=["na"]
+        )

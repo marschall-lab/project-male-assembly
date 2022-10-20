@@ -741,3 +741,40 @@ rule merge_all_readcov_seqclass:
 
         merged.to_csv(output.table, sep='\t', header=True, index=False)
     # END OF RUN BLOCK
+
+
+# following rules: attempt to compute a short-read based QV estimate just for de novo Y
+# use an adapted assembly (extended by T2T-Y) as alignment target
+
+rule merge_assembly_and_t2ty:
+    input:
+        wg = "output/hybrid/renamed/{sample}.{hifi_type}.{ont_type}.{mapq}.wg.fasta",
+        t2ty = "references_derived/T2T_chrY.fasta"
+    output:
+        aug_assm = "output/output/eval/chry_qv/aug_assm/{sample}.{hifi_type}.{ont_type}.{mapq}.wg.T2TY.fasta",
+    shell:
+        "cat {input.wg} {t2ty} > {output.aug_assm}"
+
+
+rule bwa_index_augmented_assembly:
+    input:
+        assm = "output/output/eval/chry_qv/aug_assm/{sample}.{hifi_type}.{ont_type}.{mapq}.wg.T2TY.fasta",
+    output:
+        idx = multiext(
+            "output/output/eval/chry_qv/aug_assm/{sample}.{hifi_type}.{ont_type}.{mapq}.wg.T2TY.idx/{sample}",
+            ".64.amb", ".64.ann", ".64.bwt", ".64.pac", ".64.sa"
+        )
+    log:
+        "log/output/eval/chry_qv/aug_assm/{sample}.{hifi_type}.{ont_type}.{mapq}.wg.T2TY.bwa-idx.log"
+    benchmark:
+        "rsrc/output/eval/chry_qv/aug_assm/{sample}.{hifi_type}.{ont_type}.{mapq}.wg.T2TY.bwa-idx.rsrc"
+    conda:
+        "../envs/biotools.yaml"
+    params:
+        prefix = lambda wildcards, output: output.idx[0].rsplit(".", 2)[0]
+    resources:
+        mem_mb = lambda wildcards, attempt: 48576 * attempt,
+        walltime = lambda wildcards, attempt: f'{attempt*8:02}:59:59',
+        bonus = 0
+    shell:
+        "bwa index -6 -p {params.prefix} {input.assm} &> {log}"

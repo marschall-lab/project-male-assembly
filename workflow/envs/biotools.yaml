@@ -4,6 +4,7 @@ dependencies:
   - pip
   - minimap2=2.24
   - winnowmap=2.03
+  - bwa=0.7.17
   - samtools=1.15
   - bcftools=1.15
   - pigz=2.6

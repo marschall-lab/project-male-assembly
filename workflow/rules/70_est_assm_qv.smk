@@ -83,21 +83,21 @@ rule aggregate_yak_assembly_qv:
 rule map_short_reads_augmented_assembly:
     input:
         reads = lambda wildcards: SAMPLE_DATA[wildcards.sample]["SHORT"],
-        assm_idx = multiext(
-            "output/output/eval/chry_qv/aug_assm/{sample}.{hifi_type}.{ont_type}.{mapq}.wg.T2TY.idx/{sample}",
+        idx = multiext(
+            "output/eval/chry_qv/aug_assm/{sample}.{hifi_type}.{ont_type}.{mapq}.wg.T2TY.idx/{sample}",
             ".64.amb", ".64.ann", ".64.bwt", ".64.pac", ".64.sa"
         )
     output:
-        bam = "output/output/eval/chry_qv/aln_assm_sr/{sample}.{hifi_type}.{ont_type}.{mapq}.wg.T2TY.short.bam",
-        bai = "output/output/eval/chry_qv/aln_assm_sr/{sample}.{hifi_type}.{ont_type}.{mapq}.wg.T2TY.short.bam.bai",
+        bam = "output/eval/chry_qv/aln_assm_sr/{sample}.{hifi_type}.{ont_type}.{mapq}.wg.T2TY.short.bam",
+        bai = "output/eval/chry_qv/aln_assm_sr/{sample}.{hifi_type}.{ont_type}.{mapq}.wg.T2TY.short.bam.bai",
     log:
-        "log/output/output/eval/chry_qv/aln_assm_sr/{sample}.{hifi_type}.{ont_type}.{mapq}.wg.T2TY.short.bwa.log"
+        "log/output/eval/chry_qv/aln_assm_sr/{sample}.{hifi_type}.{ont_type}.{mapq}.wg.T2TY.short.bwa.log"
     benchmark:
-        "rsrc/output/output/eval/chry_qv/aln_assm_sr/{sample}.{hifi_type}.{ont_type}.{mapq}.wg.T2TY.short.bwa.rsrc"
+        "rsrc/output/eval/chry_qv/aln_assm_sr/{sample}.{hifi_type}.{ont_type}.{mapq}.wg.T2TY.short.bwa.rsrc"
     conda:
         "../envs/biotools.yaml"
     params:
-        prefix = lambda wildcards, output: output.idx[0].rsplit(".", 2)[0]
+        prefix = lambda wildcards, input: input.idx[0].rsplit(".", 1)[0]
     threads: config["num_cpu_medium"]
     resources:
         mem_mb = lambda wildcards, attempt: 32768 + 32768 * attempt,
@@ -106,5 +106,5 @@ rule map_short_reads_augmented_assembly:
     shell:
         "bwa mem -t {threads} -R \"@RG\\tID:{wildcards.sample}_shortreads\\tSM:{wildcards.sample}\" "
             " {params.prefix} {input.reads} "
-            "| samtools view -u -F 1792 "
+            "| samtools view -u -F 1796 "
             "| samtools sort -l 9 -m 2048M --threads {threads} -o {output.bam} --write-index /dev/stdin "

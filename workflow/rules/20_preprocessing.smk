@@ -751,17 +751,17 @@ rule merge_assembly_and_t2ty:
         wg = "output/hybrid/renamed/{sample}.{hifi_type}.{ont_type}.{mapq}.wg.fasta",
         t2ty = "references_derived/T2T_chrY.fasta"
     output:
-        aug_assm = "output/output/eval/chry_qv/aug_assm/{sample}.{hifi_type}.{ont_type}.{mapq}.wg.T2TY.fasta",
+        aug_assm = "output/eval/chry_qv/aug_assm/{sample}.{hifi_type}.{ont_type}.{mapq}.wg.T2TY.fasta",
     shell:
-        "cat {input.wg} {t2ty} > {output.aug_assm}"
+        "cat {input.wg} {input.t2ty} > {output.aug_assm}"
 
 
 rule bwa_index_augmented_assembly:
     input:
-        assm = "output/output/eval/chry_qv/aug_assm/{sample}.{hifi_type}.{ont_type}.{mapq}.wg.T2TY.fasta",
+        assm = "output/eval/chry_qv/aug_assm/{sample}.{hifi_type}.{ont_type}.{mapq}.wg.T2TY.fasta",
     output:
         idx = multiext(
-            "output/output/eval/chry_qv/aug_assm/{sample}.{hifi_type}.{ont_type}.{mapq}.wg.T2TY.idx/{sample}",
+            "output/eval/chry_qv/aug_assm/{sample}.{hifi_type}.{ont_type}.{mapq}.wg.T2TY.idx/{sample}",
             ".64.amb", ".64.ann", ".64.bwt", ".64.pac", ".64.sa"
         )
     log:
@@ -771,9 +771,9 @@ rule bwa_index_augmented_assembly:
     conda:
         "../envs/biotools.yaml"
     params:
-        prefix = lambda wildcards, output: output.idx[0].rsplit(".", 2)[0]
+        prefix = lambda wildcards, output: output.idx[0].rsplit(".", 1)[0]
     resources:
-        mem_mb = lambda wildcards, attempt: 48576 * attempt,
+        mem_mb = lambda wildcards, attempt: 16384 * attempt,
         walltime = lambda wildcards, attempt: f'{attempt*8:02}:59:59',
         bonus = 0
     shell:

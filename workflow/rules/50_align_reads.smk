@@ -226,3 +226,36 @@ rule align_subset_reads_to_assembly_bam:
         preset = lambda wildcards: MINIMAP_PRESETS[wildcards.other_reads]
     shell:
         MINIMAP_READ_ASSM_BAM
+
+
+rule map_short_reads_augmented_assembly:
+    """
+    Alignment rule for chrY-only QV estimation
+    """
+    input:
+        reads = lambda wildcards: SAMPLE_DATA[wildcards.sample]["SHORT"],
+        idx = multiext(
+            "output/eval/chry_qv/aug_assm/{sample}.{hifi_type}.{ont_type}.{mapq}.wg.T2TY.idx/{sample}",
+            ".64.amb", ".64.ann", ".64.bwt", ".64.pac", ".64.sa"
+        )
+    output:
+        bam = "output/eval/chry_qv/aln_assm_sr/{sample}.{hifi_type}.{ont_type}.{mapq}.wg.T2TY.short.bam",
+        bai = "output/eval/chry_qv/aln_assm_sr/{sample}.{hifi_type}.{ont_type}.{mapq}.wg.T2TY.short.bam.bai",
+    log:
+        "log/output/eval/chry_qv/aln_assm_sr/{sample}.{hifi_type}.{ont_type}.{mapq}.wg.T2TY.short.bwa.log"
+    benchmark:
+        "rsrc/output/eval/chry_qv/aln_assm_sr/{sample}.{hifi_type}.{ont_type}.{mapq}.wg.T2TY.short.bwa.rsrc"
+    conda:
+        "../envs/biotools.yaml"
+    params:
+        prefix = lambda wildcards, input: input.idx[0].rsplit(".", 1)[0]
+    threads: config["num_cpu_high"]
+    resources:
+        mem_mb = lambda wildcards, attempt: 48576 + 32768 * attempt,
+        walltime = lambda wildcards, attempt: f'{attempt*11:02}:59:59',
+        bonus = 100
+    shell:
+        "bwa mem -t {threads} -R \"@RG\\tID:{wildcards.sample}_shortreads\\tSM:{wildcards.sample}\" "
+            " {params.prefix} {input.reads} "
+            "| samtools view -u -F 1796 "
+            "| samtools sort -l 9 -m 2048M --threads {threads} -o {output.bam} --write-index /dev/stdin "

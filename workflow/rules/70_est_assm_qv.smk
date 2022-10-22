@@ -96,17 +96,18 @@ rule extend_chry_bed_file:
             dump.write(buffer.getvalue())
 
 
+ruleorder: extract_chry_short_read_alignments > index_bam_alignment
 rule extract_chry_short_read_alignments:
     input:
         bed = "output/eval/chry_qv/aug_regions/{sample}.{hifi_type}.{ont_type}.{mapq}.aug-chrY.bed",
         bam = "output/eval/chry_qv/aln_assm_sr/{sample}.{hifi_type}.{ont_type}.{mapq}.wg.T2TY.short.bam",
         bai = "output/eval/chry_qv/aln_assm_sr/{sample}.{hifi_type}.{ont_type}.{mapq}.wg.T2TY.short.bam.bai",
     output:
-        bam = "output/eval/chry_qv/aln_assm_sr/{sample}.{hifi_type}.{ont_type}.{mapq}.chrY.short.bam",
-        bai = "output/eval/chry_qv/aln_assm_sr/{sample}.{hifi_type}.{ont_type}.{mapq}.chrY.short.bam.bai",
+        bam = "output/eval/chry_qv/aln_chry_sr/{sample}.{hifi_type}.{ont_type}.{mapq}.chrY.short.bam",
+        bai = "output/eval/chry_qv/aln_chry_sr/{sample}.{hifi_type}.{ont_type}.{mapq}.chrY.short.bam.bai",
         fasta = "output/eval/chry_qv/short_reads/{sample}.{hifi_type}.{ont_type}.{mapq}.chrY.short.fasta.gz",
     benchmark:
-        "rsrc/output/eval/chry_qv/aln_assm_sr/{sample}.{hifi_type}.{ont_type}.{mapq}.chrY.subset.rsrc",
+        "rsrc/output/eval/chry_qv/aln_chry_sr/{sample}.{hifi_type}.{ont_type}.{mapq}.chrY.subset.rsrc",
     conda:
         "../envs/biotools.yaml"
     threads:

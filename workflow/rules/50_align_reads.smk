@@ -228,6 +228,7 @@ rule align_subset_reads_to_assembly_bam:
         MINIMAP_READ_ASSM_BAM
 
 
+ruleorder: map_short_reads_augmented_assembly > index_bam_alignment
 rule map_short_reads_augmented_assembly:
     """
     Alignment rule for chrY-only QV estimation

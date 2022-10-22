@@ -122,5 +122,5 @@ rule extract_chry_short_read_alignments:
             " && "
             "samtools index -b -@ {threads} {output.bam}"
             " && "
-            "samtools --threads {threads} fasta {output.bam} | pigz -p {threads} > {output.fasta}"
+            "samtools fasta --threads {threads} {output.bam} | pigz -p {threads} > {output.fasta}"
 

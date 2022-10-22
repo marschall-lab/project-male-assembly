@@ -76,3 +76,50 @@ rule aggregate_yak_assembly_qv:
                 _ = table.write('\t'.join(record) + '\n')
 
     # END OF RUN BLOCK
+
+
+# attempt to derive a chrY-only QV
+localrules: extend_chry_bed_file
+rule extend_chry_bed_file:
+    input:
+        bed = 'output/subset_wg/20_extract_contigs/{sample}.{hifi_type}.{ont_type}.na.chrY.bed',
+    output:
+        bed = 'output/eval/chry_qv/aug_regions/{sample}.{hifi_type}.{ont_type}.{mapq}.aug-chrY.bed',
+    run:
+        import io
+        buffer = io.StringIO()
+        with open(input.bed, "r") as bed_file:
+            buffer.write(bed_file.read())
+        buffer.write("chrY\t0\t62460029\n")
+        
+        with open(output.bed, "w") as dump:
+            dump.write(buffer.getvalue())
+
+
+rule extract_chry_short_read_alignments:
+    input:
+        bed = "output/eval/chry_qv/aug_regions/{sample}.{hifi_type}.{ont_type}.{mapq}.aug-chrY.bed",
+        bam = "output/eval/chry_qv/aln_assm_sr/{sample}.{hifi_type}.{ont_type}.{mapq}.wg.T2TY.short.bam",
+        bai = "output/eval/chry_qv/aln_assm_sr/{sample}.{hifi_type}.{ont_type}.{mapq}.wg.T2TY.short.bam.bai",
+    output:
+        bam = "output/eval/chry_qv/aln_assm_sr/{sample}.{hifi_type}.{ont_type}.{mapq}.chrY.short.bam",
+        bai = "output/eval/chry_qv/aln_assm_sr/{sample}.{hifi_type}.{ont_type}.{mapq}.chrY.short.bam.bai",
+        fasta = "output/eval/chry_qv/short_reads/{sample}.{hifi_type}.{ont_type}.{mapq}.chrY.short.fasta.gz",
+    benchmark:
+        "rsrc/output/eval/chry_qv/aln_assm_sr/{sample}.{hifi_type}.{ont_type}.{mapq}.chrY.subset.rsrc",
+    conda:
+        "../envs/biotools.yaml"
+    threads:
+        config["num_cpu_medium"]
+    resources:
+        mem_mb = lambda wildcards, attempt: 16384 * attempt,
+        walltime = lambda wildcards, attempt: f'{attempt*attempt:02}:59:59',
+        bonus = 200
+    shell:
+        "samtools view -u -h --threads {threads} -L {input.bed} {input.bam} |"
+            " samtools sort -l 9 -m 1024M --threads {threads} -o {output.bam} /dev/stdin "
+            " && "
+            "samtools index -b -@ {threads} {output.bam}"
+            " && "
+            "samtools --threads {threads} fasta {output.bam} | pigz -p {threads} > {output.fasta}"
+

@@ -251,11 +251,13 @@ rule map_short_reads_augmented_assembly:
         prefix = lambda wildcards, input: input.idx[0].rsplit(".", 1)[0]
     threads: config["num_cpu_high"]
     resources:
-        mem_mb = lambda wildcards, attempt: 48576 + 32768 * attempt,
-        walltime = lambda wildcards, attempt: f'{attempt*11:02}:59:59',
-        bonus = 100
+        mem_mb = lambda wildcards, attempt: 90112 + 24576 * attempt,
+        walltime = lambda wildcards, attempt: f'{attempt*6:02}:59:59',
+        bonus = 200
     shell:
         "bwa mem -t {threads} -R \"@RG\\tID:{wildcards.sample}_shortreads\\tSM:{wildcards.sample}\" "
             " {params.prefix} {input.reads} "
             "| samtools view -u -F 1796 "
-            "| samtools sort -l 9 -m 2048M --threads {threads} -o {output.bam} --write-index /dev/stdin "
+            "| samtools sort -l 9 -m 2048M --threads {threads} -o {output.bam} /dev/stdin "
+            " && "
+            "samtools index -b -@ {threads} {output.bam}"

@@ -142,7 +142,7 @@ rule dump_chry_short_read_kmers:
         '../envs/biotools.yaml'
     threads: config['num_cpu_low']
     resources:
-        mem_mb = lambda wildcards, attempt: 8192 * attempt,
+        mem_mb = lambda wildcards, attempt: 24576 * attempt,
         walltime = lambda wildcards, attempt: f'{attempt*attempt:02}:59:00',
         bonus = 100
     params:
@@ -167,8 +167,38 @@ rule estimate_chry_assembly_qv:
         '../envs/biotools.yaml'
     threads: config['num_cpu_low']
     resources:
-        mem_mb = lambda wildcards, input, attempt: 2048 * attempt,
+        mem_mb = lambda wildcards, input, attempt: 1536 * attempt,
         walltime = lambda wildcards, attempt: f'{attempt*attempt:02}:59:00',
         bonus = 0
     shell:
         'yak qv -p -t{threads} {input.kmer_dump} {input.fasta} > {output.qv} 2> {log}'
+
+
+rule aggregate_chry_assembly_qv:
+    input:
+        tables = expand(
+            'output/eval/chry_qv/yak/{sample}.{{hifi_type}}.{{ont_type}}.{{mapq}}.chrY.yak-qv.txt',
+            sample=COMPLETE_SR_SAMPLES
+        )
+    output:
+        table = 'output/eval/chry_qv/SAMPLES.{hifi_type}.{ont_type}.{mapq}.chrY.yak-qv.tsv',
+    run:
+        import pathlib as pl
+
+        assembly_qv = []
+        for file_path in input.tables:
+            sample_name = pl.Path(file_path).stem.split('.')[0]
+            is_qc_only = 1 if sample_name in QC_SAMPLES else 0
+            with open(file_path, 'r') as table:
+                for line in table:
+                    if not line.startswith('QV'):
+                        continue
+                    _, raw, adjusted = line.strip().split()
+                    assembly_qv.append((sample_name, 'chrY', 'yak', adjusted, str(is_qc_only)))
+
+        with open(output.table, 'w') as table:
+            _ = table.write('sample\tassembly\test_method\tqv\tqc_only_assembly\n')
+            for record in sorted(assembly_qv):
+                _ = table.write('\t'.join(record) + '\n')
+
+    # END OF RUN BLOCK

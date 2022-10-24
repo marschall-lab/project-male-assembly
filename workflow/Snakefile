@@ -523,8 +523,7 @@ rule build_plotting_summaries:
 rule run_estimte_chry_qv:
     input:
         bams = expand(
-            "output/eval/chry_qv/yak/{sample}.{hifi_type}.{ont_type}.{mapq}.chrY.yak-qv.txt",
-            sample=["HC02666"],
+            "output/eval/chry_qv/SAMPLES.{hifi_type}.{ont_type}.{mapq}.chrY.yak-qv.tsv",
             hifi_type=["HIFIRW"],
             ont_type=["ONTUL"],
             mapq=["na"]

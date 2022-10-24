@@ -96,6 +96,25 @@ rule extend_chry_bed_file:
             dump.write(buffer.getvalue())
 
 
+rule get_chry_short_read_coverage:
+    input:
+        a_file_bed = "output/eval/chry_qv/aug_regions/{sample}.{hifi_type}.{ont_type}.{mapq}.aug-chrY.bed",
+        b_file_bam = "output/eval/chry_qv/aln_chry_sr/{sample}.{hifi_type}.{ont_type}.{mapq}.chrY.short.bam",
+        b_file_bai = "output/eval/chry_qv/aln_chry_sr/{sample}.{hifi_type}.{ont_type}.{mapq}.chrY.short.bam.bai",
+    output:
+        hist_cov = "output/eval/chry_qv/hist_cov/{sample}.{hifi_type}.{ont_type}.{mapq}.chrY.hist-cov.tsv",
+    benchmark:
+        "rsrc/output/eval/chry_qv/hist_cov/{sample}.{hifi_type}.{ont_type}.{mapq}.chrY.hist-cov.rsrc",
+    conda:
+        "../envs/biotools.yaml"
+    resources:
+        mem_mb = lambda wildcards, attempt: 4096 * attempt,
+        walltime = lambda wildcards, attempt: f'{attempt*attempt:02}:59:59',
+        bonus = 0
+    shell:
+        "bedtools coverage -a {input.a_file_bed} -b {b_file_bam} -hist > {output}"
+
+
 ruleorder: extract_chry_short_read_alignments > index_bam_alignment
 rule extract_chry_short_read_alignments:
     input:

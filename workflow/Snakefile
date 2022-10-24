@@ -527,4 +527,12 @@ rule run_estimte_chry_qv:
             hifi_type=["HIFIRW"],
             ont_type=["ONTUL"],
             mapq=["na"]
+        ),
+        covs = expand(
+            "output/eval/chry_qv/hist_cov/{sample}.{hifi_type}.{ont_type}.{mapq}.chrY.hist-cov.tsv",
+            sample=COMPLETE_SR_SAMPLES,
+            hifi_type=["HIFIRW"],
+            ont_type=["ONTUL"],
+            mapq=["na"]
+
         )

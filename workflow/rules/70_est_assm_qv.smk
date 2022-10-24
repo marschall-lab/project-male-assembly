@@ -124,3 +124,51 @@ rule extract_chry_short_read_alignments:
             " && "
             "samtools fasta --threads {threads} {output.bam} | pigz -p {threads} > {output.fasta}"
 
+
+rule dump_chry_short_read_kmers:
+    """
+    For now, this rule only supports
+    a single input file
+    """
+    input:
+        'output/eval/chry_qv/short_reads/{sample}.{hifi_type}.{ont_type}.{mapq}.chrY.short.fasta.gz',
+    output:
+        'output/eval/chry_qv/kmer_dumps/{sample}.{hifi_type}.{ont_type}.{mapq}.chrY.short.yak'
+    log:
+        'log/output/eval/chry_qv/kmer_dumps/{sample}.{hifi_type}.{ont_type}.{mapq}.chrY.short.yak.log'
+    benchmark:
+        'rsrc/output/eval/chry_qv/kmer_dumps/{sample}.{hifi_type}.{ont_type}.{mapq}.chrY.short.yak.rsrc'
+    conda:
+        '../envs/biotools.yaml'
+    threads: config['num_cpu_low']
+    resources:
+        mem_mb = lambda wildcards, attempt: 8192 * attempt,
+        walltime = lambda wildcards, attempt: f'{attempt*attempt:02}:59:00',
+        bonus = 100
+    params:
+        kmer_size = 31,
+        bloom_size = 37,  # docs: this discards singletons
+    shell:
+        'yak count -k{params.kmer_size} -b{params.bloom_size} -t{threads} '
+            '-o {output} {input} &> {log}'
+
+
+rule estimate_chry_assembly_qv:
+    input:
+        kmer_dump = 'output/eval/chry_qv/kmer_dumps/{sample}.{hifi_type}.{ont_type}.{mapq}.chrY.short.yak',
+        fasta = 'output/subset_wg/20_extract_contigs/{sample}.{hifi_type}.{ont_type}.{mapq}.chrY.fasta',
+    output:
+        qv = 'output/eval/chry_qv/yak/{sample}.{hifi_type}.{ont_type}.{mapq}.chrY.yak-qv.txt'
+    log:
+        'log/output/eval/chry_qv/yak/{sample}.{hifi_type}.{ont_type}.{mapq}.chrY.yak-qv.log'
+    benchmark:
+        'rsrc/output/eval/chry_qv/yak/{sample}.{hifi_type}.{ont_type}.{mapq}.chrY.yak-qv.rsrc'
+    conda:
+        '../envs/biotools.yaml'
+    threads: config['num_cpu_low']
+    resources:
+        mem_mb = lambda wildcards, input, attempt: 2048 * attempt,
+        walltime = lambda wildcards, attempt: f'{attempt*attempt:02}:59:00',
+        bonus = 0
+    shell:
+        'yak qv -p -t{threads} {input.kmer_dump} {input.fasta} > {output.qv} 2> {log}'

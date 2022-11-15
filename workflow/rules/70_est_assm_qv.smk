@@ -112,7 +112,7 @@ rule get_chry_short_read_coverage:
         walltime = lambda wildcards, attempt: f'{attempt*attempt:02}:59:59',
         bonus = 0
     shell:
-        "bedtools coverage -a {input.a_file_bed} -b {b_file_bam} -hist > {output}"
+        "bedtools coverage -a {input.a_file_bed} -b {input.b_file_bam} -hist > {output}"
 
 
 ruleorder: extract_chry_short_read_alignments > index_bam_alignment

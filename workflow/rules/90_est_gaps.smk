@@ -59,7 +59,7 @@ rule add_rukki_paths:
     conda:
         "../envs/pyscript.yaml"
     params:
-        script = find_script_path("add_ruki_paths.py")
+        script = find_script_path("add_rukki_paths.py")
     shell:
         "{params.script} -u {input.unitigs} -p {input.paths} "
         "--rukki-default-gap 1000 --summary-subset chrY "

@@ -41,6 +41,7 @@ include: 'rules/70_est_assm_qv.smk'
 include: 'rules/75_assm_stats.smk'
 include: 'rules/80_est_assm_errors.smk'
 include: 'rules/85_quality_factors.smk'
+include: 'rules/90_est_gaps.smk'
 include: 'rules/99_pop_share.smk'
 
 localrules: run_all

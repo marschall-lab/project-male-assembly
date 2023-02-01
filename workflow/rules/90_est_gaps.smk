@@ -58,6 +58,8 @@ rule add_rukki_paths:
         subset = "output/eval/assm_gaps/proc/{sample}.{hifi_type}.{ont_type}.{mapq}.paths-chrY.tsv",
     conda:
         "../envs/pyscript.yaml"
+    params:
+        script = find_script_path("add_ruki_paths.py")
     shell:
         "{params.script} -u {input.unitigs} -p {input.paths} "
         "--rukki-default-gap 1000 --summary-subset chrY "

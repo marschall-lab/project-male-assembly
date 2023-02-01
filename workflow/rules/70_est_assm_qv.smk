@@ -112,7 +112,7 @@ rule get_chry_short_read_coverage:
         walltime = lambda wildcards, attempt: f'{attempt*attempt:02}:59:59',
         bonus = 0
     shell:
-        "bedtools coverage -a {input.a_file_bed} -b {input.b_file_bam} -hist > {output}"
+        "bedtools coverage -a {input.a_file_bed} -b {input.b_file_bam} -hist > {output.hist_cov}"
 
 
 ruleorder: extract_chry_short_read_alignments > index_bam_alignment
@@ -193,6 +193,7 @@ rule estimate_chry_assembly_qv:
         'yak qv -p -t{threads} {input.kmer_dump} {input.fasta} > {output.qv} 2> {log}'
 
 
+ruleorder: extract_chry_short_read_alignments > index_bam_alignment
 rule aggregate_chry_assembly_qv:
     input:
         tables = expand(

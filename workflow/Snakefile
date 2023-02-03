@@ -28,6 +28,14 @@ COMPLETE_SAMPLES = [s for s in SAMPLE_NAMES if s not in CURRENT_ERROR_SAMPLES]
 COMPLETE_SR_SAMPLES = [s for s in SHORT_READ_SAMPLE_NAMES if s not in CURRENT_ERROR_SAMPLES]
 QC_SAMPLES = ['HG02666', 'HG01457', 'NA18989', 'NA19384']
 
+# for revision: evaluate variation in PAR region/at boundary more specifically
+# for samples (here: all samples with mostly complete PAR1 assembly)
+PAR1_SAMPLES = [
+    "HG01890", "HC02666", "HC19384", "NA19331",
+    "HG02011", "HG03371", "NA19317", "HC18989",
+    "HG03009", "HG00358"
+]
+
 include: 'rules/10_utils.smk'
 include: 'rules/20_preprocessing.smk'
 include: 'rules/30_hybrid_assembly.smk'

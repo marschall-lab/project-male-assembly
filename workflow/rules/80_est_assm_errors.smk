@@ -426,7 +426,7 @@ rule filter_chromosome_alignments:
         sam_flag = 2308
     shell:
         "samtools view -F {params.sam_flag} --threads {threads} "
-        "--bam -o {output.bam}"
+        "--bam -o {output.bam} {input.bam}"
 
 
 rule run_nucfreq:

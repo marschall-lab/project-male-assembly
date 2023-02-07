@@ -429,30 +429,96 @@ rule filter_chromosome_alignments:
         "--bam -o {output.bam} {input.bam}"
 
 
+localrules: filter_contigs_for_nucfreq
+rule filter_contigs_for_nucfreq:
+    input:
+        bed = 'output/subset_wg/20_extract_contigs/{sample}.{hifi_type}.{ont_type}.na.chrY.bed',
+    output:
+        bed = 'output/eval/assm_errors/nucfreq/{sample}.{hifi_type}.{ont_type}.na.{chrom}.{other_reads}.ctg-500kbp.bed',
+    run:
+        import pandas as pd
+        names = ["contig", "start", "end"]
+        contigs = pd.read_csv(input.bed, sep="\t", header=None, names=names)
+        contigs = contigs.loc[contigs["end"] >= 500000, :].copy()
+        contigs.sort_values("contig", ascending=True, inplace=True)
+        contigs.to_csv(output.bed, sep="\t", header=False, index=False)
+    # END OF RUN BLOCK
+
+
 rule run_nucfreq:
     input:
         bam = 'output/subset_wg/40_extract_rdaln/nucfreq/{sample}.{other_reads}_aln-to_{hifi_type}.{ont_type}.na.chrY.filtered.bam',
         bai = 'output/subset_wg/40_extract_rdaln/nucfreq/{sample}.{other_reads}_aln-to_{hifi_type}.{ont_type}.na.chrY.filtered.bam.bai',
+        bed = 'output/eval/assm_errors/nucfreq/{sample}.{hifi_type}.{ont_type}.na.{chrom}.{other_reads}.ctg-500kbp.bed',
     output:
         bed = 'output/eval/assm_errors/nucfreq/{sample}.{hifi_type}.{ont_type}.na.{chrom}.{other_reads}.nucfreq.bed',
-        png = 'output/eval/assm_errors/nucfreq/{sample}.{hifi_type}.{ont_type}.na.{chrom}.{other_reads}.nucfreq.png'
+        pdf = 'output/eval/assm_errors/nucfreq/{sample}.{hifi_type}.{ont_type}.na.{chrom}.{other_reads}.nucfreq.pdf'
     log:
         'log/output/eval/assm_errors/nucfreq/{sample}.{hifi_type}.{ont_type}.na.{chrom}.{other_reads}.nucfreq.log'
     singularity:
         f"{config['container_store']}/{config['container']['nucfreq']}"
     threads: config["num_cpu_medium"]
     resources:
-        mem_mb = lambda wildcards, attempt: 8192 * attempt,
+        mem_mb = lambda wildcards, attempt: 32768 * attempt,
         walltime = lambda wildcards, attempt: f'{attempt}:59:00',
     shell:
-        "NucPlot.py --obed {output.bed} --threads {threads} "
+        "NucPlot.py --obed {output.bed} --threads {threads} --bed {input.bed} "
         "{input.bam} {output.png} &> {log}"
+
+
+localrules: detect_nucfreq_het_positions
+rule detect_nucfreq_het_positions:
+    """Following descriptions in NucFreq README:
+
+        > identify regions where the second most
+        > common base was present in at least 10%
+        > of reads in at least 5 positions within
+        > a 500 bp region.
+    """
+    input:
+        bed = 'output/eval/assm_errors/nucfreq/{sample}.{hifi_type}.{ont_type}.na.{chrom}.{other_reads}.nucfreq.bed',
+    output:
+        het = 'output/eval/assm_errors/nucfreq/{sample}.{hifi_type}.{ont_type}.na.{chrom}.{other_reads}.het-regions.tsv',
+    run:
+        import pandas as pd
+        names = ["contig", "start", "end", "first", "second"]
+        df = pd.read_csv(table_file, sep="\t", header=None, comment="#", names=names)
+
+        # het_ratio will be aggregated with median later,
+        # hence naming here like this to avoid renaming
+        df["median_het_ratio"] = (df["second"]/(df["first"]+df["second"]) * 100).round(1)
+        # (1) present in at least 10%
+        df = df.loc[df["median_het_ratio"] >= 10, :].copy()
+        # (2) within a 500 bp region
+        df["end"] = df["start"] + 500
+        df["num_hets"] = (df["start"]>df["end"].shift().cummax()).cumsum()
+
+        hets_per_seq = []
+        for contig, hets in df.groupby("contig"):
+            flag_regions = df.groupby("num_hets").agg(
+                {
+                    "start":"min", "end": "max",
+                    "num_hets": "count",
+                    "median_het_ratio": "median"  # here: hence the name median_het_ratio
+                }
+            )
+            # (3) at least 5 het positions
+            flag_regions = flag_regions.loc[flag_regions["num_hets"] > 4, :].copy()
+            flag_regions["contig"] = contig
+            hets_per_seq.append(flag_regions)
+            
+        hets = pd.concat(hets_per_seq, axis=0, ignore_index=False)
+        hets.sort_values(["contig", "start"], ascending=True, inplace=True)
+        hets = hets[["contig", "start", "end", "median_het_ratio", "num_hets"]]
+        hets.reset_index(drop=True, inplace=True)
+        hets.to_csv(output.het, sep="\t", header=True, index=False)
+    # END OF RUN BLOCK
 
 
 rule run_all_assm_errors:
     input:
         nucfreq = expand(
-            'output/eval/assm_errors/nucfreq/{sample}.{hifi_type}.{ont_type}.na.{chrom}.{other_reads}.nucfreq.bed',
+            'output/eval/assm_errors/nucfreq/{sample}.{hifi_type}.{ont_type}.na.{chrom}.{other_reads}.het-regions.tsv',
             sample=COMPLETE_SAMPLES,
             hifi_type=["HIFIRW"],
             ont_type=["ONTUL"],

@@ -5,3 +5,4 @@ container:
   veritymap: veritymap_v2.1.1-alpha.sif
   veritymap_env: veritymap_env.sif
   quast: quast_v5.2.0_py38pl5321h3b68952_1.sif
+  nucfreq: nucfreq_v0.1.sif

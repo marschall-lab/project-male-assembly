@@ -399,3 +399,67 @@ rule merge_agg_seqclass_errors:
         merged.sort_values(['qc_only_assembly', 'sample', 'region_type'], ascending=True, inplace=True)
         merged.to_csv(output.table, sep='\t', header=True, index=False)
     # END OF RUN BLOCK
+
+
+## Below: new rules introduced for revised version
+
+rule filter_chromosome_alignments:
+    """This rule filters the read-to-assembly
+    alignments (only filter: discard unmapped)
+    to remove secondary and supplementary
+    alignments following the README of
+    NucFreq: https://github.com/mrvollger/NucFreq
+        > we filtered the alignments to remove secondary
+        > and partial alignment using SAMtools flag 2308
+    """
+    input:
+        bam = 'output/subset_wg/40_extract_rdaln/{sample}.{other_reads}_aln-to_{hifi_type}.{ont_type}.na.chrY.bam',
+        bai = 'output/subset_wg/40_extract_rdaln/{sample}.{other_reads}_aln-to_{hifi_type}.{ont_type}.na.chrY.bam.bai',
+    output:
+        bam = 'output/subset_wg/40_extract_rdaln/nucfreq/{sample}.{other_reads}_aln-to_{hifi_type}.{ont_type}.na.chrY.filtered.bam',
+    conda:
+        "../envs/biotools.yaml"
+    threads: config["num_cpu_min"]
+    resources:
+        mem_mb = lambda wildcards, attempt: 4096 * attempt
+    params:
+        sam_flag = 2308
+    shell:
+        "samtools view -F {params.sam_flag} --threads {threads} "
+        "--bam -o {output.bam}"
+
+
+rule run_nucfreq:
+    input:
+        bam = 'output/subset_wg/40_extract_rdaln/nucfreq/{sample}.{other_reads}_aln-to_{hifi_type}.{ont_type}.na.chrY.filtered.bam',
+        bai = 'output/subset_wg/40_extract_rdaln/nucfreq/{sample}.{other_reads}_aln-to_{hifi_type}.{ont_type}.na.chrY.filtered.bam.bai',
+    output:
+        bed = 'output/eval/assm_errors/nucfreq/{sample}.{hifi_type}.{ont_type}.na.{chrom}.{other_reads}.nucfreq.bed',
+        png = 'output/eval/assm_errors/nucfreq/{sample}.{hifi_type}.{ont_type}.na.{chrom}.{other_reads}.nucfreq.png'
+    log:
+        'log/output/eval/assm_errors/nucfreq/{sample}.{hifi_type}.{ont_type}.na.{chrom}.{other_reads}.nucfreq.log'
+    singularity:
+        f"{config['container_store']}/{config['container']['nucfreq']}"
+    threads: config["num_cpu_medium"]
+    resources:
+        mem_mb = lambda wildcards, attempt: 8192 * attempt,
+        walltime = lambda wildcards, attempt: f'{attempt}:59:00',
+    shell:
+        "NucPlot.py --obed {output.bed} --threads {threads} "
+        "{input.bam} {output.png} &> {log}"
+
+
+rule run_all_assm_errors:
+    input:
+        nucfreq = expand(
+            'output/eval/assm_errors/nucfreq/{sample}.{hifi_type}.{ont_type}.na.{chrom}.{other_reads}.nucfreq.bed',
+            sample=COMPLETE_SAMPLES,
+            hifi_type=["HIFIRW"],
+            ont_type=["ONTUL"],
+            chrom=["chrY"],
+            other_reads=["HIFIRW"]
+        )
+
+
+
+

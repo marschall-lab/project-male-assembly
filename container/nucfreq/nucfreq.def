@@ -1,0 +1,18 @@
+Bootstrap: localimage
+From: nufreq_env.sif
+
+%post
+    mkdir /repos
+    cd /repos
+    git clone https://github.com/mrvollger/NucFreq.git
+    cd NucFreq
+    git checkout v0.1
+
+
+%environment
+    export LC_ALL=C
+    export PATH=$PATH:/repos/NucFreq
+
+%labels
+    AUTHOR Peter Ebert
+    NUCFREQ v0.1

@@ -1,0 +1,19 @@
+Bootstrap: library
+From: ubuntu:22.04
+
+%post
+    apt-get update
+    # this so skip an stupid interactive prompt
+    # for the correct tz - WTF?!
+    export DEBIAN_FRONTEND=noninteractive
+    apt-get install --assume-yes \
+        git python3 \
+        python3-pysam python3-matplotlib \
+        python3-pandas python3-numpy \
+        python3-seaborn
+    apt-get autoremove --assume-yes
+    apt-get clean --assume-yes
+    ln -s /usr/bin/python3 /usr/bin/python
+
+%environment
+    export LC_ALL=C

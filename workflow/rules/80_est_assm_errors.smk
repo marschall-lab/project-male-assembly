@@ -419,7 +419,7 @@ rule filter_chromosome_alignments:
         bam = 'output/subset_wg/40_extract_rdaln/nucfreq/{sample}.{other_reads}_aln-to_{hifi_type}.{ont_type}.na.chrY.filtered.bam',
     conda:
         "../envs/biotools.yaml"
-    threads: config["num_cpu_min"]
+    threads: config["num_cpu_low"]
     resources:
         mem_mb = lambda wildcards, attempt: 4096 * attempt
     params:

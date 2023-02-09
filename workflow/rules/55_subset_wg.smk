@@ -292,9 +292,11 @@ rule rename_verkko_coverage_tables:
 rule extract_contig_alignments_paf:
     input:
         paf = 'output/alignments/contigs-to-ref/10_renamed/{sample}.{hifi_type}.{ont_type}.{mapq}.wg_aln-to_{reference}.paf.gz',
-        names = 'output/subset_wg/25_name_mappings/{sample}.{hifi_type}.{ont_type}.{mapq}.chrY.names.txt'
+        names = 'output/subset_wg/25_name_mappings/{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.names.txt'
     output:
-        paf = 'output/subset_wg/30_extract_ctgaln/{sample}.{hifi_type}.{ont_type}.{mapq}.chrY_aln-to_{reference}.paf.gz'
+        paf = 'output/subset_wg/30_extract_ctgaln/{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}_aln-to_{reference}.paf.gz'
+    wildcard_constraints:
+        chrom = '(chrX|chrY)'
     conda:
         '../envs/biotools.yaml'
     resources:

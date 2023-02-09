@@ -463,7 +463,7 @@ rule run_nucfreq:
         walltime = lambda wildcards, attempt: f'{attempt}:59:00',
     shell:
         "NucPlot.py --obed {output.bed} --threads {threads} --bed {input.bed} "
-        "{input.bam} {output.png} &> {log}"
+        "{input.bam} {output.pdf} &> {log}"
 
 
 localrules: detect_nucfreq_het_positions
@@ -482,7 +482,7 @@ rule detect_nucfreq_het_positions:
     run:
         import pandas as pd
         names = ["contig", "start", "end", "first", "second"]
-        df = pd.read_csv(table_file, sep="\t", header=None, comment="#", names=names)
+        df = pd.read_csv(input.bed, sep="\t", header=None, comment="#", names=names)
 
         # het_ratio will be aggregated with median later,
         # hence naming here like this to avoid renaming

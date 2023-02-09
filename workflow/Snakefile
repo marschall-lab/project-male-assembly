@@ -545,3 +545,24 @@ rule run_estimte_chry_qv:
             mapq=["na"]
 
         )
+
+
+### BELOW: some dedicated rules for additional tasks needed
+# for the revision
+
+rule copy_subset_x_contig_alignments:
+    """ Needed by Pete A. to check
+    variation in PAR regions
+    """
+    input:
+        aln_ctg_ref = expand(
+            'output/share/alignments/contigs-to-ref/verkko_{major}_{minor}/{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}_aln-to_{reference}.copied.ok',
+            sample=COMPLETE_SAMPLES,
+            hifi_type=['HIFIRW'],
+            ont_type=['ONTUL'],
+            mapq=['na'],
+            chrom=['chrX'],
+            reference=['T2TXY', 'GRCh38'],
+            major=config['verkko_major'].strip('"'),
+            minor=config['verkko_minor'].strip('"'),
+        ),

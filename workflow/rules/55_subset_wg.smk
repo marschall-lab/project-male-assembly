@@ -353,9 +353,11 @@ rule extract_contig_alignments_bam:
     input:
         bam = 'output/alignments/contigs-to-ref/10_renamed/{sample}.{hifi_type}.{ont_type}.na.wg_aln-to_{reference}.bam',
         bai = 'output/alignments/contigs-to-ref/10_renamed/{sample}.{hifi_type}.{ont_type}.na.wg_aln-to_{reference}.bam.bai',
-        names = 'output/subset_wg/25_name_mappings/{sample}.{hifi_type}.{ont_type}.na.chrY.names.txt'
+        names = 'output/subset_wg/25_name_mappings/{sample}.{hifi_type}.{ont_type}.na.{chrom}.names.txt'
     output:
-        bam = 'output/subset_wg/30_extract_ctgaln/{sample}.{hifi_type}.{ont_type}.na.chrY_aln-to_{reference}.bam'
+        bam = 'output/subset_wg/30_extract_ctgaln/{sample}.{hifi_type}.{ont_type}.na.{chrom}_aln-to_{reference}.bam'
+    wildcard_constraints:
+        chrom = '(chrX|chrY)'
     conda:
         '../envs/biotools.yaml'
     threads: 2

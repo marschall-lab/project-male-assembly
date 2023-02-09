@@ -181,7 +181,7 @@ rule copy_subset_contig_to_ref_alignments:
         ok = 'output/share/alignments/contigs-to-ref/verkko_{major}_{minor}/{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}_aln-to_{reference}.copied.ok'
     wildcard_constraints:
         mapq = 'na',
-        chrom = 'chrY'
+        chrom = '(chrY|chrX)'
     resources:
         mem_mb = lambda wildcards, attempt: 2048 * attempt
     run:

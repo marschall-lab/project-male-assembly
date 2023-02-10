@@ -114,6 +114,38 @@ rule extract_chrom_contigs:
             '--out-sub {output.sub_y_assm} {output.sub_x_assm}'
 
 
+rule create_contig_beds_wg:
+    """ Rule added for revision; show
+    read coverage in assemblies incl.
+    autosomes
+    """
+    input:
+        faidx = 'output/hybrid/renamed/{sample}.{hifi_type}.{ont_type}.{mapq}.wg.fasta.fai',
+    output:
+        all_contigs = 'output/hybrid/renamed/{sample}.{hifi_type}.{ont_type}.{mapq}.wg.bed',
+        large_contigs = 'output/hybrid/renamed/{sample}.{hifi_type}.{ont_type}.{mapq}.wg.ctg-500kbp.bed',
+    run:
+        import io
+        all_buffer = io.StringIO()
+        large_buffer = io.StringIO()
+
+        with open(input.faidx, "r") as listing:
+            for line in listing:
+                contig, ctg_length = line.split()[:2]
+                ctg_length = int(ctg_length)
+                bed_line = f"{contig}\t0\t{ctg_length}\n"
+                if ctg_length >= 500000:  # 500 kbp
+                    large_buffer.write(bed_line)
+                all_buffer.write(bed_line)
+        
+        with open(output.all_contigs, "w") as dump:
+            dump.write(all_buffer.getvalue())
+        
+        with open(output.large_contigs, "w") as dump:
+            dump.write(large_buffer.getvalue())
+    # END OF RUN BLOCK
+
+
 rule dump_contig_name_mapping_files:
     input:
         fasta = 'output/subset_wg/20_extract_contigs/{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.fasta'
@@ -392,9 +424,11 @@ rule cache_read_to_assembly_aln:
     input:
         hifi = 'output/subset_wg/40_extract_rdaln/{sample}.HIFIRW_aln-to_{hifi_type}.{ont_type}.na.{chrom}.paf.gz',
         ont = 'output/subset_wg/40_extract_rdaln/{sample}.ONTUL_aln-to_{hifi_type}.{ont_type}.na.{chrom}.paf.gz',
-        fai = 'output/subset_wg/20_extract_contigs/{sample}.{hifi_type}.{ont_type}.na.chrY.fasta.fai',
+        fai = 'output/subset_wg/20_extract_contigs/{sample}.{hifi_type}.{ont_type}.na.{chrom}.fasta.fai',
     output:
         hdf = 'output/subset_wg/40_extract_rdaln/{sample}.READS_aln-to_{hifi_type}.{ont_type}.na.{chrom}.cache.h5',
+    wildcard_constraints:
+        chrom = '(chrX|chrY)'
     resources:
         mem_mb = lambda wildcards, attempt: 2048 * attempt
     run:

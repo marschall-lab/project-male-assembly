@@ -36,6 +36,8 @@ PAR1_SAMPLES = [
     "HG03009", "HG00358"
 ]
 
+E2E_SAMPLES = ["HC02666", "HG00358"]  # HG01890 omitted for minigraph construction
+
 include: 'rules/10_utils.smk'
 include: 'rules/20_preprocessing.smk'
 include: 'rules/30_hybrid_assembly.smk'
@@ -44,6 +46,7 @@ include: 'rules/40_align_contigs.smk'
 include: 'rules/50_align_reads.smk'
 include: 'rules/55_subset_wg.smk'
 include: 'rules/60_eval_contig_align.smk'
+include: 'rules/63_eval_read_align.smk'
 include: 'rules/65_call_variants.smk'
 include: 'rules/70_est_assm_qv.smk'
 include: 'rules/75_assm_stats.smk'

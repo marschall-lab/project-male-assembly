@@ -101,9 +101,35 @@ rule generate_chry_graph:
         " > {output} 2> {log}"
 
 
+rule generate_chry_graph_e2e_only:
+    input:
+        ref = "references_derived/T2T_chrY.fasta",
+        assm = expand(
+            "output/subset_wg/20_extract_contigs/{sample}.{hifi_type}.{ont_type}.{{mapq}}.chrY.fasta",
+            sample=E2E_SAMPLES,
+            hifi_type=["HIFIRW"],
+            ont_type=["ONTUL"]
+        )
+    output:
+        ref_graph = "output/eval/par1_var/graphs/T2TY.2samples.{mapq}.chrY.gfa"
+    log:
+        "log/output/eval/par1_var/graphs/T2TY.2samples.{mapq}.chrY.gfa"
+    conda:
+        "../envs/graphtools.yaml"
+    threads: config['num_cpu_medium']
+    resources:
+        mem_mb = lambda wildcards, attempt: 16384 + 16384 * attempt,
+        walltime = lambda wildcards, attempt: f'{11 ** attempt}:59:00'
+    shell:
+        "minigraph -t{threads} -cxggs {input.ref} {input.assm} "
+        " > {output} 2> {log}"
+
+
+
 rule run_all_graph_builds:
     input:
         gfa = expand(
-            "output/eval/par1_var/graphs/T2TY.10samples.{mapq}.chrY.gfa",
-            mapq=["na"]
-        )
+            "output/eval/par1_var/graphs/T2TY.{sample_num}samples.{mapq}.chrY.gfa",
+            mapq=["na"],
+            sample_num=[10, 2]
+        ),

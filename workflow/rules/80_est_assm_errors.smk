@@ -432,9 +432,11 @@ rule filter_chromosome_alignments:
 localrules: filter_contigs_for_nucfreq
 rule filter_contigs_for_nucfreq:
     input:
-        bed = 'output/subset_wg/20_extract_contigs/{sample}.{hifi_type}.{ont_type}.na.chrY.bed',
+        bed = 'output/subset_wg/20_extract_contigs/{sample}.{hifi_type}.{ont_type}.na.{chrom}.bed',
     output:
         bed = 'output/eval/assm_errors/nucfreq/{sample}.{hifi_type}.{ont_type}.na.{chrom}.{other_reads}.ctg-500kbp.bed',
+    wildcard_constraints:
+        chrom = '(chrY|chrX)'
     run:
         import pandas as pd
         names = ["contig", "start", "end"]

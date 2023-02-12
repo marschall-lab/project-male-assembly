@@ -454,7 +454,7 @@ rule run_nucfreq:
         bed = 'output/eval/assm_errors/nucfreq/{sample}.{hifi_type}.{ont_type}.na.{chrom}.{other_reads}.ctg-500kbp.bed',
     output:
         bed = 'output/eval/assm_errors/nucfreq/{sample}.{hifi_type}.{ont_type}.na.{chrom}.{other_reads}.nucfreq.bed',
-        pdf = 'output/eval/assm_errors/nucfreq/{sample}.{hifi_type}.{ont_type}.na.{chrom}.{other_reads}.nucfreq.pdf'
+        png = 'output/eval/assm_errors/nucfreq/{sample}.{hifi_type}.{ont_type}.na.{chrom}.{other_reads}.nucfreq.png'
     log:
         'log/output/eval/assm_errors/nucfreq/{sample}.{hifi_type}.{ont_type}.na.{chrom}.{other_reads}.nucfreq.log'
     singularity:
@@ -465,7 +465,7 @@ rule run_nucfreq:
         walltime = lambda wildcards, attempt: f'{attempt}:59:00',
     shell:
         "NucPlot.py --obed {output.bed} --threads {threads} --bed {input.bed} "
-        "{input.bam} {output.pdf} &> {log}"
+        "{input.bam} {output.png} &> {log}"
 
 
 localrules: detect_nucfreq_het_positions

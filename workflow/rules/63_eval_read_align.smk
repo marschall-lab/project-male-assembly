@@ -68,6 +68,11 @@ rule agg_read_to_assm_coverage:
                 np.average(contig_cov.index.tolist(), weights=contig_cov["count"].values),
                 0
             )
+            if pd.isnull(mean_cov) or pd.isnull(median_cov):
+                print("=====ERROR=====")
+                print(contig_cov)
+                print("=====ERROR=====")
+                raise ValueError(f"Mean or median undefined: {mean_cov} / {median_cov}")
             return int(mean_cov), int(median_cov)
 
         contigs = pd.read_csv(

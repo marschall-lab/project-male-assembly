@@ -502,7 +502,7 @@ rule detect_nucfreq_het_positions:
 
         hets_per_seq = []
         for contig, hets in df.groupby("contig"):
-            hets["iv_idx"] = (df["start"]>df["iv_end"].shift().cummax()).cumsum()
+            hets["iv_idx"] = (hets["start"]>hets["iv_end"].shift().cummax()).cumsum()
             flag_regions = hets.groupby("iv_idx").agg(
                 {
                     "start":"min", "end": "max",

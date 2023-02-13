@@ -524,10 +524,16 @@ rule detect_nucfreq_het_positions:
 
 
 rule run_all_assm_errors:
+    """
+    Outlier: HG00512 is too fragmented
+    and generates a plot output that is
+    too large and cannot be created
+    - remove for now
+    """
     input:
         nucfreq = expand(
             'output/eval/assm_errors/nucfreq/{sample}.{hifi_type}.{ont_type}.na.{chrom}.{other_reads}.het-regions.tsv',
-            sample=COMPLETE_SAMPLES,
+            sample=[s for s in COMPLETE_SAMPLES if s != "HG00512"],
             hifi_type=["HIFIRW"],
             ont_type=["ONTUL"],
             chrom=["chrY"],
@@ -535,7 +541,7 @@ rule run_all_assm_errors:
         ),
         nucfreq_plots = expand(
             'output/eval/assm_errors/nucfreq/{sample}.{hifi_type}.{ont_type}.na.{chrom}.{other_reads}.nucfreq.png',
-            sample=COMPLETE_SAMPLES,
+            sample=[s for s in COMPLETE_SAMPLES if s != "HG00512"],
             hifi_type=["HIFIRW"],
             ont_type=["ONTUL"],
             chrom=["chrY"],

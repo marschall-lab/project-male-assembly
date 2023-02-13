@@ -526,6 +526,14 @@ rule run_all_assm_errors:
             ont_type=["ONTUL"],
             chrom=["chrY"],
             other_reads=["HIFIRW"]
+        ),
+        nucfreq_plots = expand(
+            'output/eval/assm_errors/nucfreq/{sample}.{hifi_type}.{ont_type}.na.{chrom}.{other_reads}.nucfreq.png',
+            sample=COMPLETE_SAMPLES,
+            hifi_type=["HIFIRW"],
+            ont_type=["ONTUL"],
+            chrom=["chrY"],
+            other_reads=["HIFIRW"]
         )
 
 

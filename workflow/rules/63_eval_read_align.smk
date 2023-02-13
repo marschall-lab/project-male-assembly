@@ -63,7 +63,7 @@ rule agg_read_to_assm_coverage:
             )
             contig_cov.sort_index(inplace=True)
             cum_length = contig_cov.cumsum()
-            median_cov = cum_length[cum_length > contig_length // 2].idxmin()
+            median_cov = cum_length[cum_length > contig_length // 2].idxmin().values[0]
             mean_cov = round(
                 np.average(contig_cov.index.tolist(), weights=contig_cov["count"].values),
                 0

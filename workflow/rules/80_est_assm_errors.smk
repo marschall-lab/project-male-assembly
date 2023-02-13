@@ -492,15 +492,21 @@ rule detect_nucfreq_het_positions:
         # (1) present in at least 10%
         df = df.loc[df["median_het_ratio"] >= 10, :].copy()
         # (2) within a 500 bp region
-        df["end"] = df["start"] + 500
-        df["num_hets"] = (df["start"]>df["end"].shift().cummax()).cumsum()
+        # NB: use interval end here to
+        # use max HET position in aggregate
+        # downstream (that is typically smaller)
+        df["iv_end"] = df["start"] + 500
+        # need the following indicator to track
+        # how many rows were merged per interval
+        df["num_hets"] = 1
 
         hets_per_seq = []
         for contig, hets in df.groupby("contig"):
-            flag_regions = df.groupby("num_hets").agg(
+            hets["iv_idx"] = (df["start"]>df["iv_end"].shift().cummax()).cumsum()
+            flag_regions = hets.groupby("iv_idx").agg(
                 {
                     "start":"min", "end": "max",
-                    "num_hets": "count",
+                    "num_hets": "sum",
                     "median_het_ratio": "median"  # here: hence the name median_het_ratio
                 }
             )

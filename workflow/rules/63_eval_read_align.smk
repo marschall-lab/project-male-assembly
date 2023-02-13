@@ -57,7 +57,7 @@ rule agg_read_to_assm_coverage:
         def compute_stats(contig_cov, contig_length):
             nzero_cov_bp = sum(contig_cov.values())
             assert nzero_cov_bp >= 0
-            assert nzero_cov_bp <= contig_length
+            assert nzero_cov_bp <= contig_length, f"NZ-cov {nzero_cov_bp} / CL {contig_length}"
             zero_cov_bp = contig_length - nzero_cov_bp
             assert zero_cov_bp >= 0
             contig_cov[0] += zero_cov_bp

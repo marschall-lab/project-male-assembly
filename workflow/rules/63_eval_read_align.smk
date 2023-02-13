@@ -118,6 +118,9 @@ rule agg_read_to_assm_coverage:
                     mean_cov, median_cov = compute_stats(contig_cov, contig_length)
                     cov_stats.append((chrom_loc, "mean_cov", current_contig, mean_cov))
                     cov_stats.append((chrom_loc, "median_cov", current_contig, median_cov))
+                    # reset structs
+                    contig_cov = col.Counter()
+                    contig_length = 0
                 current_contig = ctg
                 contig_cov[int(cov)] += 1
 

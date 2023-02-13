@@ -97,7 +97,7 @@ rule agg_read_to_assm_coverage:
 
         contig_cov = col.Counter()
         current_contig = None
-        with gz.open(depth_table_file, "rt") as table:
+        with gz.open(input.depth, "rt") as table:
             for line in table:
                 ctg, pos, cov = line.split()
                 if ctg != current_contig and current_contig is not None:

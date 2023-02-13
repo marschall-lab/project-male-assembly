@@ -130,6 +130,37 @@ rule agg_read_to_assm_coverage:
     # END OF RUN BLOCK
 
 
+rule combine_read_depth_stats:
+    input:
+        tables = expand(
+            'output/eval/read_cov/stats/{sample}.{other_reads}_aln-to_{{hifi_type}}.{{ont_type}}.na.wg.minmq{minmapq}.stats.tsv',
+            sample=COMPLETE_SAMPLES,
+            other_reads=["HIFIRW", "ONTUL"],
+            minmapq=[0, 1, 10]
+        )
+    output:
+        table = 'output/eval/read_cov/stats/ALL-SAMPLES.READS_aln-to_{hifi_type}.{ont_type}.na.wg.cov-stats.tsv'
+    resources:
+        mem_mb = lambda wildcards, attempt: 2048 * attempt
+    run:
+        import pandas as pd
+        import pathlib as pl
+
+        merged = []
+        for table_file in input.tables:
+            prefix, suffix = pl.Path(table).name.split("_aln-to_")
+            sample, readset = prefix.split(".")
+            mapq = int(suffix.split(".")[-3].strip("minmq"))
+            table = pd.read_csv(table_file, sep="\t", header=True)
+            table["sample"] = sample
+            table["reads"] = readset
+            table["min_mapq"] = mapq
+            merged.append(table)
+        merged = pd.concat(merged, axis=0, ignore_index=False)
+        merged.sort_values(["sample", "context", "reads", "min_mapq"])
+        merged.to_csv(output.table, sep="\t", header=True, index=False)
+    # END OF RUN BLOCK
+
 
 rule run_all_read_depth:
     input:
@@ -140,4 +171,9 @@ rule run_all_read_depth:
             hifi_type=["HIFIRW"],
             ont_type=["ONTUL"],
             minmapq=[0, 1, 10]
+        ),
+        merged = expand(
+            'output/eval/read_cov/stats/ALL-SAMPLES.READS_aln-to_{hifi_type}.{ont_type}.na.wg.cov-stats.tsv',
+            hifi_type=["HIFIRW"],
+            ont_type=["ONTUL"],
         )

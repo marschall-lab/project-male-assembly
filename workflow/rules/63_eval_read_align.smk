@@ -56,8 +56,12 @@ rule agg_read_to_assm_coverage:
         
         def compute_stats(contig_cov, contig_length):
             nzero_cov_bp = sum(contig_cov.values())
+            assert nzero_cov_bp >= 0
+            assert nzero_cov_bp <= contig_length
             zero_cov_bp = contig_length - nzero_cov_bp
-            contig_cov[0] = zero_cov_bp
+            assert zero_cov_bp >= 0
+            contig_cov[0] += zero_cov_bp
+            assert sum(contig_cov.values()) == contig_length
             contig_cov = pd.DataFrame.from_dict(
                 contig_cov, orient="index", columns=["count"]
             )
@@ -72,7 +76,9 @@ rule agg_read_to_assm_coverage:
                 print("=====ERROR=====")
                 print(contig_cov)
                 print("=====ERROR=====")
-                raise ValueError(f"Mean or median undefined: {mean_cov} / {median_cov}")
+                raise ValueError(
+                    f"Mean or median undefined: CL {contig_length} / AVG {mean_cov} / MED {median_cov}"
+                )
             return int(mean_cov), int(median_cov)
 
         contigs = pd.read_csv(

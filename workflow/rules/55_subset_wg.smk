@@ -125,7 +125,7 @@ rule create_contig_beds_wg:
     output:
         all_contigs = 'output/hybrid/renamed/{sample}.{hifi_type}.{ont_type}.{mapq}.wg.bed',
         large_contigs = 'output/hybrid/renamed/{sample}.{hifi_type}.{ont_type}.{mapq}.wg.ctg-500kbp.bed',
-        exclude_het = 'output/hybrid/renamed/{sample}.{hifi_type}.{ont_type}.{mapq}.wg.ctg-500kbp-noYHET.bed',
+        exclude_het = 'output/hybrid/renamed/{sample}.{hifi_type}.{ont_type}.{mapq}.noYHET.ctg-500kbp.bed',
     run:
         import io
         import pandas as pd

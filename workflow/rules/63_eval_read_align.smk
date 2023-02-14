@@ -17,20 +17,20 @@ rule dump_read_to_assm_coverage:
     """
     input:
         bed = 'output/hybrid/renamed/{sample}.{hifi_type}.{ont_type}.na.wg.ctg-500kbp.bed',
-        no_hets = 'output/hybrid/renamed/{sample}.{hifi_type}.{ont_type}.{mapq}.wg.ctg-500kbp-noYHET.bed',
+        no_hets = 'output/hybrid/renamed/{sample}.{hifi_type}.{ont_type}.{mapq}.noYHET.ctg-500kbp.bed',
         bam = 'output/alignments/reads-to-assm/{sample}.{other_reads}_aln-to_{hifi_type}.{ont_type}.na.wg.bam',
         bai = 'output/alignments/reads-to-assm/{sample}.{other_reads}_aln-to_{hifi_type}.{ont_type}.na.wg.bam.bai'
     output:
-        depth = 'output/eval/read_cov/wg/{sample}.{other_reads}_aln-to_{hifi_type}.{ont_type}.na.wg{no_het}.minmq{minmapq}.depth.tsv.gz'
+        depth = 'output/eval/read_cov/wg/{sample}.{other_reads}_aln-to_{hifi_type}.{ont_type}.na.{genome}.minmq{minmapq}.depth.tsv.gz'
     wildcard_constraints:
-        no_het = "(\-noYHET|^$)"
+        genome = "(noYHET|wg)"
     conda:
         '../envs/biotools.yaml'
     resources:
         mem_mb = lambda wildcards, attempt: 2048 * attempt,
         walltime = lambda wildcards, attempt: f'{attempt}:59:00'
     params:
-        bed_file = lambda wildcards, input: input.no_hets if wildcards.no_het == "-noYHET" else input.bed
+        bed_file = lambda wildcards, input: input.no_hets if wildcards.genome == "noYHET" else input.bed
     shell:
         'samtools depth --min-MQ {wildcards.minmapq} -l 5000 '
         '-b {params.bed_file} {input.bam} | pigz -p 2 > {output.depth}'
@@ -39,12 +39,12 @@ rule dump_read_to_assm_coverage:
 rule agg_read_to_assm_coverage:
     input:
         contigs = 'output/hybrid/renamed/{sample}.{hifi_type}.{ont_type}.na.wg.bed',
-        no_hets = 'output/hybrid/renamed/{sample}.{hifi_type}.{ont_type}.{mapq}.wg.ctg-500kbp-noYHET.bed',
-        depth = 'output/eval/read_cov/wg/{sample}.{other_reads}_aln-to_{hifi_type}.{ont_type}.na.wg{no_het}.minmq{minmapq}.depth.tsv.gz',
+        no_hets = 'output/hybrid/renamed/{sample}.{hifi_type}.{ont_type}.na.noYHET.ctg-500kbp.bed',
+        depth = 'output/eval/read_cov/wg/{sample}.{other_reads}_aln-to_{hifi_type}.{ont_type}.na.{genome}.minmq{minmapq}.depth.tsv.gz',
     output:
-        table = 'output/eval/read_cov/stats/{sample}.{other_reads}_aln-to_{hifi_type}.{ont_type}.na.wg{no_het}.minmq{minmapq}.stats.tsv',
+        table = 'output/eval/read_cov/stats/{sample}.{other_reads}_aln-to_{hifi_type}.{ont_type}.na.{genome}.minmq{minmapq}.stats.tsv',
     wildcard_constraints:
-        no_het = "(\-noYHET|^$)"
+        genome = "(noYHET|wg)"
     resources:
         mem_mb = lambda wildcards, attempt: 2048 * attempt,
         walltime = lambda wildcards, attempt: f'{attempt * 3}:59:00'
@@ -54,7 +54,7 @@ rule agg_read_to_assm_coverage:
         import pandas as pd
         import numpy as np
 
-        NO_HET = wildcards.no_het == "-noYHET"
+        NO_HET = wildcards.genome == "noYHET"
 
         def karyo_loc(contig_name):   
             if "chrY" in contig_name:
@@ -176,10 +176,10 @@ rule agg_read_to_assm_coverage:
 rule combine_read_depth_stats:
     input:
         tables = expand(
-            'output/eval/read_cov/stats/{sample}.{other_reads}_aln-to_{{hifi_type}}.{{ont_type}}.na.wg{no_het}.minmq{minmapq}.stats.tsv',
+            'output/eval/read_cov/stats/{sample}.{other_reads}_aln-to_{{hifi_type}}.{{ont_type}}.na.{genome}.minmq{minmapq}.stats.tsv',
             sample=COMPLETE_SAMPLES,
             other_reads=["HIFIRW", "ONTUL"],
-            no_het=["-noYHET", ""],
+            no_het=["noYHET", "wg"],
             minmapq=[0, 10]
         )
     output:

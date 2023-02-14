@@ -121,13 +121,26 @@ rule create_contig_beds_wg:
     """
     input:
         faidx = 'output/hybrid/renamed/{sample}.{hifi_type}.{ont_type}.{mapq}.wg.fasta.fai',
+        seqclasses = 'references_derived/seqclasses/{sample}.{hifi_type}.{ont_type}.{mapq}.chrY.generic-seqcls.bed',
     output:
         all_contigs = 'output/hybrid/renamed/{sample}.{hifi_type}.{ont_type}.{mapq}.wg.bed',
         large_contigs = 'output/hybrid/renamed/{sample}.{hifi_type}.{ont_type}.{mapq}.wg.ctg-500kbp.bed',
+        exclude_het = 'output/hybrid/renamed/{sample}.{hifi_type}.{ont_type}.{mapq}.wg.ctg-500kbp-noYHET.bed',
     run:
         import io
+        import pandas as pd
+
+        seqcls = pd.read_csv(
+            input.seqclasses,
+            sep="\t",
+            header=None,
+            names=["contig", "start", "end", "seqclass"]
+        )
+        no_hets = seqcls.loc[~seqcls["seqclass"].str.contains("HET"), :].copy()
+
         all_buffer = io.StringIO()
         large_buffer = io.StringIO()
+        no_het_buffer = io.StringIO()
 
         with open(input.faidx, "r") as listing:
             for line in listing:
@@ -136,6 +149,10 @@ rule create_contig_beds_wg:
                 bed_line = f"{contig}\t0\t{ctg_length}\n"
                 if ctg_length >= 500000:  # 500 kbp
                     large_buffer.write(bed_line)
+                    if "chrY" in contig:
+                        subset = no_hets.loc[no_hets["contig"] == contig, ["start", "end"]]
+                        for (s, e) in subset.itertuples(index=False):
+                            no_het_buffer.write(f"{contig}\t{s}\t{e}\n")
                 all_buffer.write(bed_line)
         
         with open(output.all_contigs, "w") as dump:
@@ -143,6 +160,9 @@ rule create_contig_beds_wg:
         
         with open(output.large_contigs, "w") as dump:
             dump.write(large_buffer.getvalue())
+
+        with open(output.exclude_het, "w") as dump:
+            dump.write(no_het_buffer.getvalue())
     # END OF RUN BLOCK
 
 

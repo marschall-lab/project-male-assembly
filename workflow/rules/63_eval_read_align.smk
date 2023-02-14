@@ -17,26 +17,34 @@ rule dump_read_to_assm_coverage:
     """
     input:
         bed = 'output/hybrid/renamed/{sample}.{hifi_type}.{ont_type}.na.wg.ctg-500kbp.bed',
+        no_hets = 'output/hybrid/renamed/{sample}.{hifi_type}.{ont_type}.{mapq}.wg.ctg-500kbp-noYHET.bed',
         bam = 'output/alignments/reads-to-assm/{sample}.{other_reads}_aln-to_{hifi_type}.{ont_type}.na.wg.bam',
         bai = 'output/alignments/reads-to-assm/{sample}.{other_reads}_aln-to_{hifi_type}.{ont_type}.na.wg.bam.bai'
     output:
-        depth = 'output/eval/read_cov/wg/{sample}.{other_reads}_aln-to_{hifi_type}.{ont_type}.na.wg.minmq{minmapq}.depth.tsv.gz'
+        depth = 'output/eval/read_cov/wg/{sample}.{other_reads}_aln-to_{hifi_type}.{ont_type}.na.wg{no_het}.minmq{minmapq}.depth.tsv.gz'
+    wildcard_constraints:
+        no_het = "(\-noYHET|^$)"
     conda:
         '../envs/biotools.yaml'
     resources:
         mem_mb = lambda wildcards, attempt: 2048 * attempt,
         walltime = lambda wildcards, attempt: f'{attempt}:59:00'
+    params:
+        bed_file = lambda wildcards, input: input.no_hets if wildcards.no_het == "-noYHET" else input.bed
     shell:
         'samtools depth --min-MQ {wildcards.minmapq} -l 5000 '
-        '-b {input.bed} {input.bam} | pigz -p 2 > {output.depth}'
+        '-b {params.bed_file} {input.bam} | pigz -p 2 > {output.depth}'
 
 
 rule agg_read_to_assm_coverage:
     input:
         contigs = 'output/hybrid/renamed/{sample}.{hifi_type}.{ont_type}.na.wg.bed',
-        depth = 'output/eval/read_cov/wg/{sample}.{other_reads}_aln-to_{hifi_type}.{ont_type}.na.wg.minmq{minmapq}.depth.tsv.gz',
+        no_hets = 'output/hybrid/renamed/{sample}.{hifi_type}.{ont_type}.{mapq}.wg.ctg-500kbp-noYHET.bed',
+        depth = 'output/eval/read_cov/wg/{sample}.{other_reads}_aln-to_{hifi_type}.{ont_type}.na.wg{no_het}.minmq{minmapq}.depth.tsv.gz',
     output:
-        table = 'output/eval/read_cov/stats/{sample}.{other_reads}_aln-to_{hifi_type}.{ont_type}.na.wg.minmq{minmapq}.stats.tsv',
+        table = 'output/eval/read_cov/stats/{sample}.{other_reads}_aln-to_{hifi_type}.{ont_type}.na.wg{no_het}.minmq{minmapq}.stats.tsv',
+    wildcard_constraints:
+        no_het = "(\-noYHET|^$)"
     resources:
         mem_mb = lambda wildcards, attempt: 2048 * attempt,
         walltime = lambda wildcards, attempt: f'{attempt * 3}:59:00'
@@ -45,6 +53,8 @@ rule agg_read_to_assm_coverage:
         import collections as col
         import pandas as pd
         import numpy as np
+
+        NO_HET = wildcards.no_het == "-noYHET"
 
         def karyo_loc(contig_name):   
             if "chrY" in contig_name:
@@ -81,30 +91,54 @@ rule agg_read_to_assm_coverage:
                 )
             return int(mean_cov), int(median_cov)
 
-        contigs = pd.read_csv(
-            input.contigs, sep="\t",
-            names=["contig", "start", "length"],
-            usecols=["contig", "length"]
-        )
+        if NO_HET:
+            contigs = pd.read_csv(
+                input.no_hets, sep="\t",
+                names=["contig", "start", "end"],
+            )
+            contigs["length"] = contigs["end"] - contigs["start"]
+            contigs = contigs.groupby("contig")["length"].sum()
+            contigs = contigs.reset_index(inplace=False, drop=False)
+        else:
+            contigs = pd.read_csv(
+                input.contigs, sep="\t",
+                names=["contig", "start", "length"],
+                usecols=["contig", "length"]
+            )
         contigs["location"] = contigs["contig"].apply(karyo_loc)
         total_size = contigs["length"].sum()
-        proc_size = contigs.loc[contigs["length"] >= 500000, "length"].sum()
+        if NO_HET:
+            # NB: when removing all HET regions from chrY,
+            # the contig size filter > 500 kbp was already
+            # applied
+            proc_size = total_size
+        else:
+            proc_size = contigs.loc[contigs["length"] >= 500000, "length"].sum()
         karyo_size_total = contigs.groupby("location")["length"].sum()
-        karyo_size_proc = contigs.loc[contigs["length"] >= 500000, :].groupby("location")["length"].sum()
+        if NO_HET:
+            # same as above
+            karyo_size_proc = karyo_size_total
+        else:
+            karyo_size_proc = contigs.loc[contigs["length"] >= 500000, :].groupby("location")["length"].sum()
         proc_pct = round(proc_size / total_size * 100, 2)
 
-        cov_stats = [
-            ("wg", "size_bp", "global", total_size),
-            ("wg", "proc_bp", "global", proc_size),
-            ("wg", "proc_pct", "global", proc_pct),   
-        ]
+        if NO_HET:
+            cov_stats = []
+            stats_context = "no_het"
+        else:
+            cov_stats = [
+                ("wg", "size_bp", "global", total_size),
+                ("wg", "proc_bp", "global", proc_size),
+                ("wg", "proc_pct", "global", proc_pct),   
+            ]
+            stats_context = "global"
 
         for loc, size_bp in karyo_size_total.items():
-            cov_stats.append((loc, "size_bp", "global", size_bp))
+            cov_stats.append((loc, "size_bp", stats_context, size_bp))
             proc_size = karyo_size_proc.at[loc]
             proc_pct = round(proc_size / size_bp * 100, 2)
-            cov_stats.append((loc, "proc_bp", "global", proc_size))
-            cov_stats.append((loc, "proc_pct", "global", proc_pct))
+            cov_stats.append((loc, "proc_bp", stats_context, proc_size))
+            cov_stats.append((loc, "proc_pct", stats_context, proc_pct))
 
         contig_cov = col.Counter()
         current_contig = None
@@ -142,10 +176,11 @@ rule agg_read_to_assm_coverage:
 rule combine_read_depth_stats:
     input:
         tables = expand(
-            'output/eval/read_cov/stats/{sample}.{other_reads}_aln-to_{{hifi_type}}.{{ont_type}}.na.wg.minmq{minmapq}.stats.tsv',
+            'output/eval/read_cov/stats/{sample}.{other_reads}_aln-to_{{hifi_type}}.{{ont_type}}.na.wg{no_het}.minmq{minmapq}.stats.tsv',
             sample=COMPLETE_SAMPLES,
             other_reads=["HIFIRW", "ONTUL"],
-            minmapq=[0, 1, 10]
+            no_het=["-noYHET", ""],
+            minmapq=[0, 10]
         )
     output:
         table = 'output/eval/read_cov/stats/ALL-SAMPLES.READS_aln-to_{hifi_type}.{ont_type}.na.wg.cov-stats.tsv'
@@ -157,10 +192,10 @@ rule combine_read_depth_stats:
 
         merged = []
         for table_file in input.tables:
-            prefix, suffix = pl.Path(table).name.split("_aln-to_")
+            prefix, suffix = pl.Path(table_file).name.split("_aln-to_")
             sample, readset = prefix.split(".")
             mapq = int(suffix.split(".")[-3].strip("minmq"))
-            table = pd.read_csv(table_file, sep="\t", header=True)
+            table = pd.read_csv(table_file, sep="\t", header=0)
             table["sample"] = sample
             table["reads"] = readset
             table["min_mapq"] = mapq
@@ -173,14 +208,6 @@ rule combine_read_depth_stats:
 
 rule run_all_read_depth:
     input:
-        stats = expand(
-            'output/eval/read_cov/stats/{sample}.{other_reads}_aln-to_{hifi_type}.{ont_type}.na.wg.minmq{minmapq}.stats.tsv',
-            sample=COMPLETE_SAMPLES,
-            other_reads=["HIFIRW", "ONTUL"],
-            hifi_type=["HIFIRW"],
-            ont_type=["ONTUL"],
-            minmapq=[0, 1, 10]
-        ),
         merged = expand(
             'output/eval/read_cov/stats/ALL-SAMPLES.READS_aln-to_{hifi_type}.{ont_type}.na.wg.cov-stats.tsv',
             hifi_type=["HIFIRW"],

@@ -82,7 +82,7 @@ rule generate_chry_graph:
         ref = "references_derived/T2T_chrY.fasta",
         assm = lambda wildcards: expand(
             "output/subset_wg/20_extract_contigs/{sample}.{hifi_type}.{ont_type}.{mapq}.chrY.fasta",
-            sample=GRAPH_SAMPLES[wildcards.num],
+            sample=GRAPH_SAMPLES[int(wildcards.num)],
             hifi_type=["HIFIRW"],
             ont_type=["ONTUL"],
             mapq=["na"]
@@ -142,8 +142,8 @@ rule create_graph_coloring:
                 if sample_id == "T2T":
                     coord_offset = int(columns[5].split(":")[-1])
                     begin = coord_offset < seq_classes["end"]
-                    end = coord_offset > seq_classes["start"]
-                    subset = seqclasses.loc[begin & end, "name"].values.tolist()
+                    end = coord_offset >= seq_classes["start"]
+                    subset = seq_classes.loc[begin & end, "name"].values.tolist()
                     assert len(subset) > 0
                     seqclass = "->".join(subset)
                 else:
@@ -165,5 +165,5 @@ rule run_all_graph_builds:
     input:
         gfa = expand(
             "output/eval/par1_var/graphs/T2TY.{num_samples}samples.na.chrY.annotations.csv",
-            sample_num=[10, 6, 2, 1]
+            num_samples=[10, 6, 2, 1]
         ),

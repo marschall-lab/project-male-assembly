@@ -125,6 +125,54 @@ rule generate_chry_graph_e2e_only:
         " > {output} 2> {log}"
 
 
+localrules: create_graph_coloring
+rule create_graph_coloring:
+    input:
+        ref_graph = "output/eval/par1_var/graphs/T2TY.{num_samples}samples.{mapq}.chrY.gfa"
+    output:
+        table = "output/eval/par1_var/graphs/T2TY.{num_samples}samples.{mapq}.chrY.annotations.csv"
+    run:
+        import pandas as pd
+        # TODO: extract that from annotation sheet
+        sample_infos = {
+            "T2T": ("#808080", "J1a2a1a2c1a1", "ASK", "EUR"),
+            "HG00358": ("#036C77", "N1a1a1a1a2a1a1a1a1a", "FIN", "EUR"),
+            "HG02666": ("#D8A105", "A1a", "GWD", "AFR")
+        }
+        node_infos = []
+        with open(input.ref_graph, "r") as gfa:
+            for line in gfa:
+                if not line.startswith("S"):
+                    break
+                columns = line.strip().split()
+                node_id = columns[1]
+                sample_id = columns[4]
+                assert sample_id.startswith("SN")
+                sample_id = sample.split(":")[-1]
+                if sample_id == "chrY":
+                    sample_id = "T2T"
+                else:
+                    sample_id = sample_id.split(".")[-1]
+                    sample_id = sample_id.replace("HC", "HG")
+                node_length = len(columns[2])
+                if node_length == 1:
+                    var_class = "SNV"
+                elif node_length < 50:
+                    var_class = "INDEL"
+                else:
+                    var_class = "SV"
+                color, hapgroup, pop, spop = sample_infos[sample_id]
+                node_infos.append((node_id, color, sample_id, hapgroup, pop, spop, var_class))
+        df = pd.DataFrame.from_records(
+            node_infos, columns=[
+                "node", "color", "sample", "haplogroup", "population",
+                "super_pop", "variant_type"
+            ]
+        )
+        df.sort_values("node", inplace=True)
+        df.to_csv(output.table, header=True, index=False)
+    # END OF RUN BLOCK
+
 
 rule run_all_graph_builds:
     input:

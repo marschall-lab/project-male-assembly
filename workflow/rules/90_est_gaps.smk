@@ -80,40 +80,17 @@ rule run_all_gap_estimates:
 rule generate_chry_graph:
     input:
         ref = "references_derived/T2T_chrY.fasta",
-        assm = expand(
-            "output/subset_wg/20_extract_contigs/{sample}.{hifi_type}.{ont_type}.{{mapq}}.chrY.fasta",
-            sample=PAR1_SAMPLES,
+        assm = lambda wildcards: expand(
+            "output/subset_wg/20_extract_contigs/{sample}.{hifi_type}.{ont_type}.{mapq}.chrY.fasta",
+            sample=GRAPH_SAMPLES[wildcards.num],
             hifi_type=["HIFIRW"],
-            ont_type=["ONTUL"]
+            ont_type=["ONTUL"],
+            mapq=["na"]
         )
     output:
-        ref_graph = "output/eval/par1_var/graphs/T2TY.10samples.{mapq}.chrY.gfa"
+        ref_graph = "output/eval/par1_var/graphs/T2TY.{num}samples.na.chrY.gfa"
     log:
-        "log/output/eval/par1_var/graphs/T2TY.10samples.{mapq}.chrY.gfa"
-    conda:
-        "../envs/graphtools.yaml"
-    threads: config['num_cpu_medium']
-    resources:
-        mem_mb = lambda wildcards, attempt: 16384 + 16384 * attempt,
-        walltime = lambda wildcards, attempt: f'{11 ** attempt}:59:00'
-    shell:
-        "minigraph -t{threads} -cxggs {input.ref} {input.assm} "
-        " > {output} 2> {log}"
-
-
-rule generate_chry_graph_e2e_only:
-    input:
-        ref = "references_derived/T2T_chrY.fasta",
-        assm = expand(
-            "output/subset_wg/20_extract_contigs/{sample}.{hifi_type}.{ont_type}.{{mapq}}.chrY.fasta",
-            sample=E2E_SAMPLES,
-            hifi_type=["HIFIRW"],
-            ont_type=["ONTUL"]
-        )
-    output:
-        ref_graph = "output/eval/par1_var/graphs/T2TY.2samples.{mapq}.chrY.gfa"
-    log:
-        "log/output/eval/par1_var/graphs/T2TY.2samples.{mapq}.chrY.gfa"
+        "log/output/eval/par1_var/graphs/T2TY.{num}samples.na.chrY.gfa"
     conda:
         "../envs/graphtools.yaml"
     threads: config['num_cpu_medium']
@@ -128,14 +105,21 @@ rule generate_chry_graph_e2e_only:
 localrules: create_graph_coloring
 rule create_graph_coloring:
     input:
-        ref_graph = "output/eval/par1_var/graphs/T2TY.{num_samples}samples.{mapq}.chrY.gfa"
+        ref_graph = "output/eval/par1_var/graphs/T2TY.{num_samples}samples.{mapq}.chrY.gfa",
+        seq_classes = "references_derived/T2T.chrY-seq-classes.tsv",
     output:
         table = "output/eval/par1_var/graphs/T2TY.{num_samples}samples.{mapq}.chrY.annotations.csv"
     run:
         import pandas as pd
+
+        seq_classes = pd.read_csv(
+            input.seq_classes, sep="\t", header=0,
+            usecols=["chrom", "start", "end", "name"]
+        )
+
         # TODO: extract that from annotation sheet
         sample_infos = {
-            "T2T": ("#808080", "J1a2a1a2c1a1", "ASK", "EUR"),
+            "T2T": ("#D3D3D3", "J1a2a1a2c1a1", "ASK", "EUR"),
             "HG00358": ("#036C77", "N1a1a1a1a2a1a1a1a1a", "FIN", "EUR"),
             "HG02666": ("#D8A105", "A1a", "GWD", "AFR")
         }
@@ -148,25 +132,28 @@ rule create_graph_coloring:
                 node_id = columns[1]
                 sample_id = columns[4]
                 assert sample_id.startswith("SN")
-                sample_id = sample.split(":")[-1]
+                sample_id = sample_id.split(":")[-1]
                 if sample_id == "chrY":
                     sample_id = "T2T"
                 else:
                     sample_id = sample_id.split(".")[-1]
                     sample_id = sample_id.replace("HC", "HG")
                 node_length = len(columns[2])
-                if node_length == 1:
-                    var_class = "SNV"
-                elif node_length < 50:
-                    var_class = "INDEL"
+                if sample_id == "T2T":
+                    coord_offset = int(columns[5].split(":")[-1])
+                    begin = coord_offset < seq_classes["end"]
+                    end = coord_offset > seq_classes["start"]
+                    subset = seqclasses.loc[begin & end, "name"].values.tolist()
+                    assert len(subset) > 0
+                    seqclass = "->".join(subset)
                 else:
-                    var_class = "SV"
+                    seqclass = "non-ref"
                 color, hapgroup, pop, spop = sample_infos[sample_id]
-                node_infos.append((node_id, color, sample_id, hapgroup, pop, spop, var_class))
+                node_infos.append((node_id, color, sample_id, hapgroup, pop, spop, seqclass))
         df = pd.DataFrame.from_records(
             node_infos, columns=[
-                "node", "color", "sample", "haplogroup", "population",
-                "super_pop", "variant_type"
+                "node", "color", "sample", "haplogroup",
+                "population", "super_pop", "seqclass"
             ]
         )
         df.sort_values("node", inplace=True)
@@ -177,7 +164,6 @@ rule create_graph_coloring:
 rule run_all_graph_builds:
     input:
         gfa = expand(
-            "output/eval/par1_var/graphs/T2TY.{sample_num}samples.{mapq}.chrY.gfa",
-            mapq=["na"],
-            sample_num=[10, 2]
+            "output/eval/par1_var/graphs/T2TY.{num_samples}samples.na.chrY.annotations.csv",
+            sample_num=[10, 6, 2, 1]
         ),

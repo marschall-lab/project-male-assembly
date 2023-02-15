@@ -52,7 +52,6 @@ rule agg_read_to_assm_coverage:
         import numpy as np
 
         NO_HET = wildcards.genome == "noYHET"
-        input_set = wildcards.genome
 
         def karyo_loc(contig_name):   
             if "chrY" in contig_name:
@@ -126,18 +125,18 @@ rule agg_read_to_assm_coverage:
         else:
             stats_context = "global"
             cov_stats = [
-                ("wg", input_set, "size_bp", "global", total_size),
-                ("wg", input_set, "proc_bp", "global", proc_size),
-                ("wg", input_set, "proc_pct", "global", proc_pct),   
+                ("wg", "size_bp", "global", total_size),
+                ("wg", "proc_bp", "global", proc_size),
+                ("wg", "proc_pct", "global", proc_pct),   
             ]
             
 
         for loc, size_bp in karyo_size_total.items():
-            cov_stats.append((loc, input_set, "size_bp", stats_context, size_bp))
+            cov_stats.append((loc, "size_bp", stats_context, size_bp))
             proc_size = karyo_size_proc.at[loc]
             proc_pct = round(proc_size / size_bp * 100, 2)
-            cov_stats.append((loc, input_set, "proc_bp", stats_context, proc_size))
-            cov_stats.append((loc, input_set, "proc_pct", stats_context, proc_pct))
+            cov_stats.append((loc, "proc_bp", stats_context, proc_size))
+            cov_stats.append((loc, "proc_pct", stats_context, proc_pct))
 
         contig_cov = col.Counter()
         current_contig = None
@@ -149,8 +148,8 @@ rule agg_read_to_assm_coverage:
                         contigs["contig"] == current_contig, ["location", "length"]
                     ].values[0]
                     mean_cov, median_cov = compute_stats(contig_cov, contig_length)
-                    cov_stats.append((chrom_loc, input_set, "mean_cov", current_contig, mean_cov))
-                    cov_stats.append((chrom_loc, input_set, "median_cov", current_contig, median_cov))
+                    cov_stats.append((chrom_loc, "mean_cov", current_contig, mean_cov))
+                    cov_stats.append((chrom_loc, "median_cov", current_contig, median_cov))
                     # reset structs
                     contig_cov = col.Counter()
                     contig_length = 0
@@ -161,12 +160,12 @@ rule agg_read_to_assm_coverage:
             contigs["contig"] == current_contig, ["location", "length"]
             ].values[0]
         mean_cov, median_cov = compute_stats(contig_cov, contig_length)
-        cov_stats.append((chrom_loc, input_set, "mean_cov", current_contig, mean_cov))
-        cov_stats.append((chrom_loc, input_set, "median_cov", current_contig, median_cov))          
+        cov_stats.append((chrom_loc, "mean_cov", current_contig, mean_cov))
+        cov_stats.append((chrom_loc, "median_cov", current_contig, median_cov))          
             
         cov_stats = pd.DataFrame.from_records(
             cov_stats,
-            columns=["location", "input_set", "statistic", "context", "value"]
+            columns=["location", "statistic", "context", "value"]
         )
         cov_stats.to_csv(output.table, sep="\t", header=True, index=False)
     # END OF RUN BLOCK
@@ -194,13 +193,16 @@ rule combine_read_depth_stats:
             prefix, suffix = pl.Path(table_file).name.split("_aln-to_")
             sample, readset = prefix.split(".")
             mapq = int(suffix.split(".")[-3].strip("minmq"))
+            input_set = suffix.split(".")[-4]
+            assert input_set in ["wg", "noYHET"]
             table = pd.read_csv(table_file, sep="\t", header=0)
             table["sample"] = sample
             table["reads"] = readset
             table["min_mapq"] = mapq
+            table["input_set"] = input_set
             merged.append(table)
         merged = pd.concat(merged, axis=0, ignore_index=False)
-        merged.sort_values(["sample", "context", "reads", "min_mapq"])
+        merged.sort_values(["sample", "context", "input_set", "reads", "min_mapq"])
         merged.to_csv(output.table, sep="\t", header=True, index=False)
     # END OF RUN BLOCK
 

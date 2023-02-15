@@ -16,8 +16,7 @@ rule dump_read_to_assm_coverage:
 
     """
     input:
-        bed = 'output/hybrid/renamed/{sample}.{hifi_type}.{ont_type}.na.wg.ctg-500kbp.bed',
-        no_hets = 'output/hybrid/renamed/{sample}.{hifi_type}.{ont_type}.na.noYHET.ctg-500kbp.bed',
+        bed = 'output/hybrid/renamed/{sample}.{hifi_type}.{ont_type}.na.{genome}.ctg-500kbp.bed',
         bam = 'output/alignments/reads-to-assm/{sample}.{other_reads}_aln-to_{hifi_type}.{ont_type}.na.wg.bam',
         bai = 'output/alignments/reads-to-assm/{sample}.{other_reads}_aln-to_{hifi_type}.{ont_type}.na.wg.bam.bai'
     output:
@@ -29,11 +28,9 @@ rule dump_read_to_assm_coverage:
     resources:
         mem_mb = lambda wildcards, attempt: 2048 * attempt,
         walltime = lambda wildcards, attempt: f'{attempt}:59:00'
-    params:
-        bed_file = lambda wildcards, input: input.no_hets if wildcards.genome == "noYHET" else input.bed
     shell:
         'samtools depth --min-MQ {wildcards.minmapq} -l 5000 '
-        '-b {params.bed_file} {input.bam} | pigz -p 2 > {output.depth}'
+        '-b {input.bed} {input.bam} | pigz -p 2 > {output.depth}'
 
 
 rule agg_read_to_assm_coverage:

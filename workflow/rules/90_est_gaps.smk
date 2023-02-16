@@ -98,7 +98,7 @@ rule generate_chry_graph:
         mem_mb = lambda wildcards, attempt: 16384 + 16384 * attempt,
         walltime = lambda wildcards, attempt: f'{11 ** attempt}:59:00'
     shell:
-        "minigraph -t{threads} -cxggs {input.ref} {input.assm} "
+        "minigraph -t{threads} -L 10000 -cxggs {input.ref} {input.assm} "
         " > {output} 2> {log}"
 
 
@@ -140,9 +140,10 @@ rule create_graph_coloring:
                     sample_id = sample_id.replace("HC", "HG")
                 node_length = len(columns[2])
                 if sample_id == "T2T":
+                    # that's the start coordinate
                     coord_offset = int(columns[5].split(":")[-1])
-                    begin = coord_offset < seq_classes["end"]
-                    end = coord_offset >= seq_classes["start"]
+                    begin = seq_classes["start"] <= coord_offset
+                    end = coord_offset + node_length <= seq_classes["end"]
                     subset = seq_classes.loc[begin & end, "name"].values.tolist()
                     assert len(subset) > 0
                     seqclass = "->".join(subset)
@@ -165,5 +166,5 @@ rule run_all_graph_builds:
     input:
         gfa = expand(
             "output/eval/par1_var/graphs/T2TY.{num_samples}samples.na.chrY.annotations.csv",
-            num_samples=[10, 6, 2, 1]
+            num_samples=[2, 1]
         ),

@@ -144,7 +144,7 @@ rule create_graph_coloring:
                 if sample_id == "T2T":
                     # that's the start coordinate
                     coord_offset = int(columns[5].split(":")[-1])
-                    begin_idx = seq_classes.index[(seq_classes["start"] <= coord_offset)].min()
+                    begin_idx = seq_classes.index[(seq_classes["start"] <= coord_offset)].max()
                     end_idx = seq_classes.index[(coord_offset + node_length <= seq_classes["end"])].min()
                     begin = seq_classes.at[begin_idx, "name"]
                     end = seq_classes.at[end_idx, "name"]

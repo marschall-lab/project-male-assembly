@@ -171,7 +171,7 @@ rule prepare_graph_coloring:
                 "sample": display_sample
             }
             annotations[sample] = dict(infos)
-            infos["hapgroup"] = "female"
+            infos["haplogroup"] = "female"
             infos["sample"] = infos["sample"].replace(".Y", ".X")
             if infos["sample"] == "T2T.X":
                 infos["color"] = "#5A5A5A"  # dark grey
@@ -262,7 +262,7 @@ rule create_graph_coloring:
 rule run_all_graph_builds:
     input:
         gfa = expand(
-            "output/eval/par1_var/graphs/T2T.{num_samples}samples.{mapq}.{chrom}.L{min_var_size}kbp.annotations.csv",
+            "output/eval/par1_var/graphs/T2T.{num_samples}samples.na.{chrom}.L{min_var_size}kbp.annotations.csv",
             num_samples=[3, 2, 1],
             chrom=["chrY", "chrXY"],
             min_var_size=[1, 5, 10]

@@ -136,6 +136,8 @@ rule generate_chrxy_graph:
     resources:
         mem_mb = lambda wildcards, attempt: 32768 + 32768 * attempt,
         walltime = lambda wildcards, attempt: f'{11 ** attempt}:59:00'
+    params:
+        min_var_size = lambda wildcards: int(wildcards.min_var_size) * 1000
     shell:
         "minigraph -t{threads} -L {params.min_var_size} -cxggs "
         "{input.ref_y} {input.assm_y} {input.ref_x} {input.assm_x} "

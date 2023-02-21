@@ -155,6 +155,8 @@ rule prepare_graph_coloring:
         df = pd.read_csv(input.color_table, header=0, sep="\t")
         annotations = dict()
         for row in df.itertuples(index=False):
+            if row.sample in ["NA24149", "HG02145"]:
+                continue
             if row.sample == "NA24385/HG002":
                 sample = "T2T.Y"
                 display_sample = "T2T.Y"

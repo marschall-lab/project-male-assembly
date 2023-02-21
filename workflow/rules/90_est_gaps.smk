@@ -152,14 +152,25 @@ rule create_graph_coloring:
                         seqclass = begin
                     else:
                         seqclass = f"{begin}-->>{end}"
+                    start = coord_offset
+                    end = coord_offset + node_length
                 else:
                     seqclass = "non-ref"
+                    start = -1
+                    end = -1
                 color, hapgroup, pop, spop = sample_infos[sample_id]
-                node_infos.append((node_id, color, sample_id, hapgroup, pop, spop, seqclass))
+                node_infos.append(
+                    (
+                        node_id, color, sample_id, hapgroup,
+                        pop, spop, seqclass,
+                        start, end
+                    )
+                )
         df = pd.DataFrame.from_records(
             node_infos, columns=[
                 "node", "color", "sample", "haplogroup",
-                "population", "super_pop", "seqclass"
+                "population", "super_pop", "seqclass",
+                "ref_start", "ref_end"
             ]
         )
         df.sort_values("node", inplace=True)

@@ -46,6 +46,7 @@ E2E_SAMPLES = ["HC02666", "HG00358"]  # HG01890 omitted for minigraph constructi
 GRAPH_SAMPLES = {
     10: PAR1_SAMPLES,
     6: EUCHR_SAMPLES,
+    3: E2E_SAMPLES + ["HG01890"],
     2: E2E_SAMPLES,
     1: ["HG00358"]
 }

@@ -77,6 +77,25 @@ rule t2t_add_hg002_to_chm13:
     # END OF RUN BLOCK
 
 
+rule extract_chrX_from_chm13:
+    """ Needed as separate file
+    for minigraph construction
+    """
+    input:
+        wg = 'references_derived/T2T_122XYM.fasta'
+    output:
+        chrx = 'references_derived/T2T_chrX.fasta',
+        lst = 'references_derived/T2T_chrX.name',
+    conda:
+        '../envs/biotools.yaml'
+    resources:
+        mem_mb = lambda wildcards, attempt: 2048 * attempt
+    shell:
+        "echo chrX > {output.lst}"
+            " && "
+        "seqtk subseq {input.wg} {output.lst} > {output.chrx}"
+
+
 rule deselect_decoy_chroms_grch38:
     input:
         index = 'references/GCA_000001405.15_GRCh38_no_alt_plus_hs38d1_analysis_set.fasta.fai'

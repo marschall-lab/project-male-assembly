@@ -90,7 +90,9 @@ rule generate_chry_graph:
     output:
         ref_graph = "output/eval/par1_var/graphs/T2TY.{num}samples.na.chrY.gfa"
     log:
-        "log/output/eval/par1_var/graphs/T2TY.{num}samples.na.chrY.gfa"
+        "log/output/eval/par1_var/graphs/T2TY.{num}samples.na.chrY.minigraph.log"
+    benchmark:
+        "rsrc/output/eval/par1_var/graphs/T2TY.{num}samples.na.chrY.minigraph.rsrc"
     conda:
         "../envs/graphtools.yaml"
     threads: config['num_cpu_medium']
@@ -142,11 +144,14 @@ rule create_graph_coloring:
                 if sample_id == "T2T":
                     # that's the start coordinate
                     coord_offset = int(columns[5].split(":")[-1])
-                    begin = seq_classes["start"] <= coord_offset
-                    end = coord_offset + node_length <= seq_classes["end"]
-                    subset = seq_classes.loc[begin & end, "name"].values.tolist()
-                    assert len(subset) > 0
-                    seqclass = "->".join(subset)
+                    begin_idx = seq_classes.index[(seq_classes["start"] <= offset)].min()
+                    end_idx = seq_classes.index[(offset + node_length <= seq_classes["end"])].min()
+                    begin = seq_classes.at[begin_idx, "name"]
+                    end = seq_classes.at[end_idx, "name"]
+                    if begin == end:
+                        seqclass = begin
+                    else:
+                        seqclass = f"{begin}-->>{end}"
                 else:
                     seqclass = "non-ref"
                 color, hapgroup, pop, spop = sample_infos[sample_id]

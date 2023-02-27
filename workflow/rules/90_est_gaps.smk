@@ -66,6 +66,53 @@ rule add_rukki_paths:
         "--out-table {output.unitigs} --out-summary {output.subset}"
 
 
+localrules: merge_rukki_paths
+rule merge_rukki_paths:
+    """Rule to create a new supp. table
+    summarizing the Rukki results
+    """
+    input:
+        paths = expand(
+            "output/eval/assm_gaps/proc/{sample}.{hifi_type}.{ont_type}.{mapq}.paths-chrY.tsv",
+            sample=COMPLETE_SAMPLES,
+            hifi_type=["HIFIRW"],
+            ont_type=["ONTUL"],
+            mapq=["na"]
+        )
+    output:
+        table = "output/eval/assm_gaps/proc/SAMPLES.paths-chrY.table-SX.tsv",
+        stats = "output/eval/assm_gaps/proc/SAMPLES.paths-chrY.stats.tsv",
+    run:
+        import pandas as pd
+        drop_cols = ["default_gaps_num", "default_gap_length_hpc", "path_of_cc_length_pct",
+            "est_gaps_num", "est_gap_length_hpc", "assigned", "chrom"]
+
+        merged = []
+        for table in input_path.glob("*.paths-chrY.tsv"):
+            df = pd.read_csv(table, sep="\t", header=0)
+            df.drop(drop_cols, axis=1, inplace=True)
+            df["is_qc_sample"] = 0
+            if df["sample"].values[0] in QC_SAMPLES:
+                df["is_qc_sample"] = 1
+            merged.append(df)
+            
+        merged = pd.concat(merged, axis=0, ignore_index=False)
+        merged.sort_values(
+            ["is_qc_sample", "sample", "cc_length_hpc"],
+            ascending=[True, True, False], inplace=True
+        )
+        merged.to_csv(output.table, sep="\t", header=True, index=False)
+        select_samples = merged["is_qc_sample"] < 1
+        select_paths = merged["path_type"] == "connected"
+        path_types = merged.loc[select_samples, "path_type"].value_counts()
+        with open(output.stats, "w") as stats:
+            for name, value in path_types.items():
+                stats.write(f"# {name} paths: {value}\n")
+            path_stats = merged.loc[select_samples & select_paths, :].describe()
+            path_stats.to_csv(stats, sep="\t", header=True, index=False)
+    # END OF RUN BLOCK
+
+
 rule run_all_gap_estimates:
     input:
         subsets = expand(
@@ -74,7 +121,11 @@ rule run_all_gap_estimates:
             hifi_type=["HIFIRW"],
             ont_type=["ONTUL"],
             mapq=["na"]
-        )
+        ),
+        merged = [
+            "output/eval/assm_gaps/proc/SAMPLES.paths-chrY.table-SX.tsv",
+            "output/eval/assm_gaps/proc/SAMPLES.paths-chrY.stats.tsv",
+        ]
 
 
 rule generate_chry_graph:

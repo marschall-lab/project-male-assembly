@@ -109,7 +109,7 @@ rule merge_rukki_paths:
             for name, value in path_types.items():
                 stats.write(f"# {name} paths: {value}\n")
             path_stats = merged.loc[select_samples & select_paths, :].describe()
-            path_stats.to_csv(stats, sep="\t", header=True, index=False)
+            path_stats.to_csv(stats, sep="\t", header=True, index=True)
     # END OF RUN BLOCK
 
 

@@ -88,7 +88,7 @@ rule merge_rukki_paths:
             "est_gaps_num", "est_gap_length_hpc", "assigned", "chrom"]
 
         merged = []
-        for table in input_path.glob("*.paths-chrY.tsv"):
+        for table in input.paths:
             df = pd.read_csv(table, sep="\t", header=0)
             df.drop(drop_cols, axis=1, inplace=True)
             df["is_qc_sample"] = 0

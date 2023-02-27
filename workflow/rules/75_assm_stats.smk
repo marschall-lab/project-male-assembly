@@ -523,15 +523,19 @@ rule add_ctgassm_median_table:
         seqclass_order = [t[1] for t in seqclass_idx]
 
         # compute median per sequence class
+        # NB: important to select column
+        # 'total_assm_length_bp' here to
+        # get the correct value for seq. classes
+        # with breakpoints (e.g., AMPL6_1 and AMPL6_2)
         median_size_ctgassm = df.loc[df["is_contiguous"] == 1, :].groupby("seqclass").agg(
-            {"contig_assm_length_bp": "median",}
+            {"total_assm_length_bp": "median",}
         )
         median_size_ctgassm.columns = ["ctgassm_size_bp_median"]
 
         # reduce to contig. assembled before merging
         df = df.loc[df["is_contiguous"] == 1, :].copy()
         df = df.merge(median_size_ctgassm, on="seqclass")
-        df["ctgassm_length_pct_median"] = (df["contig_assm_length_bp"] / df["ctgassm_size_bp_median"] * 100).round(2)
+        df["ctgassm_length_pct_median"] = (df["total_assm_length_bp"] / df["ctgassm_size_bp_median"] * 100).round(2)
 
         # percent contiguously assembled (relative to median)
         pct_assm_ctgly = df.pivot_table(

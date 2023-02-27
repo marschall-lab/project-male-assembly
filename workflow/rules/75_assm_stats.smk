@@ -495,3 +495,58 @@ rule dump_suppl_tables_contiguity:
             output.lenassm_by_contig, mode='a', sep='\t', header=True, index=False
         )
     # END OF RUN BLOCK
+
+
+localrules: add_ctgassm_median_table
+rule add_ctgassm_median_table:
+    """Special case: table added
+    following reviewer request to
+    not scale the heatmap of assembled
+    sequence class sizes relative to
+    T2T-Y. So this dumps the same
+    info but with 100% set to the
+    overall median value of assembled
+    sequence per Y sequence class.
+    """
+    input:
+        table = 'output/stats/contigs/SAMPLES.HIFIRW.ONTUL.na.chrY.seqclasses.tsv'
+    output:
+        pctassm_ctgly_by_sample = 'output/stats/contigs/pctassm-ctgly-median-seqcls.by-sample.HIFIRW.ONTUL.na.chrY.pivot.tsv',
+    run:
+        import pandas as pd
+
+        drop_samples = QC_SAMPLES + CURRENT_ERROR_SAMPLES
+        df = pd.read_csv(input.table, sep='\t', header=0)
+        df = df.loc[~df['sample'].isin(drop_samples), :].copy()
+        df.sort_values(['sample', 'contig', 'start', 'end'], axis=0, inplace=True)
+        seqclass_idx = sorted(set((row.seqclass_idx, row.seqclass) for row in df.itertuples()))
+        seqclass_order = [t[1] for t in seqclass_idx]
+
+        # compute median per sequence class
+        median_size_ctgassm = df.loc[df["is_contiguous"] == 1, :].groupby("seqclass").agg(
+            {"contig_assm_length_bp": "median",}
+        )
+        median_size_ctgassm.columns = ["ctgassm_size_bp_median"]
+
+        # reduce to contig. assembled before merging
+        df = df.loc[df["is_contiguous"] == 1, :].copy()
+        df = df.merge(median_size_ctgassm, on="seqclass")
+        df["ctgassm_length_pct_median"] = (df["contig_assm_length_bp"] / df["ctgassm_size_bp_median"] * 100).round(2)
+
+        # percent contiguously assembled (relative to median)
+        pct_assm_ctgly = df.pivot_table(
+            index='sample',
+            columns='seqclass',
+            values='ctgassm_length_pct_median',
+            aggfunc=max
+        )
+        pct_assm_ctgly.fillna(0., inplace=True)
+        pct_assm_ctgly = pct_assm_ctgly[seqclass_order]
+        pct_assm_ctgly.sort_index(axis=0, inplace=True)
+        with open(output.pctassm_ctgly_by_sample, 'w') as table:
+            _ = table.write('## DESCRIPTION\n')
+            _ = table.write('## 75_assm_stats::add_ctgassm_median_table\n')
+            _ = table.write('## Indicate percent of contiguously assembled sequence relative to median value per sequence class\n')
+            _ = table.write('## This aggregated information is mainly used for visualization\n')
+        pct_assm_ctgly.to_csv(output.pctassm_ctgly_by_sample, mode='a', sep='\t', header=True, index=True)
+    # END OF RUN BLOCK

@@ -650,7 +650,10 @@ rule run_all_assm_errors:
             chrom=["chrY"],
             other_reads=["HIFIRW"]
         ),
-        zipped_plots = 'output/eval/assm_errors/nucfreq/ALL-SAMPLES.{chrom}.nucfreq-plots.zip',
+        zipped_plots = expand(
+            'output/eval/assm_errors/nucfreq/ALL-SAMPLES.{chrom}.nucfreq-plots.zip',
+            chrom=["chrY"]
+        ),
         stats_table = expand(
             'output/eval/assm_errors/nucfreq/ALL-SAMPLES.{chrom}.nucfreq-stats.tsv',
             chrom=["chrY"]

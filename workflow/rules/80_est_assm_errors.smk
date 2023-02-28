@@ -468,6 +468,25 @@ rule run_nucfreq:
         "{input.bam} {output.png} &> {log}"
 
 
+rule zip_nucfreq_plots:
+    """ NucFreq errors out
+    for HG00512
+    """
+    input:
+        png = expand(
+            'output/eval/assm_errors/nucfreq/{sample}.{hifi_type}.{ont_type}.na.{{chrom}}.{other_reads}.nucfreq.png',
+            sample=[s for s in COMPLETE_SAMPLES if s != "HG00512"],
+            hifi_type=["HIFIRW"],
+            ont_type=["ONTUL"],
+            other_reads=["HIFIRW"]
+        )
+    output:
+        zipped = 'output/eval/assm_errors/nucfreq/ALL-SAMPLES.{chrom}.nucfreq-plots.zip',
+    shell:
+        "zip -9 -D -j {output.zipped} {input.png}"
+
+
+
 localrules: detect_nucfreq_het_positions
 rule detect_nucfreq_het_positions:
     """Following descriptions in NucFreq README:
@@ -523,6 +542,90 @@ rule detect_nucfreq_het_positions:
     # END OF RUN BLOCK
 
 
+localrules: compute_nucfreq_sample_stats
+rule compute_nucfreq_sample_stats:
+    input:
+        chrom_bed = 'output/subset_wg/20_extract_contigs/{sample}.{hifi_type}.{ont_type}.na.{chrom}.bed',
+        ctg_bed = 'output/eval/assm_errors/nucfreq/{sample}.{hifi_type}.{ont_type}.na.{chrom}.{other_reads}.ctg-500kbp.bed',
+        het_regions = 'output/eval/assm_errors/nucfreq/{sample}.{hifi_type}.{ont_type}.na.{chrom}.{other_reads}.het-regions.tsv',
+    output:
+        stats = 'output/eval/assm_errors/nucfreq/{sample}.{hifi_type}.{ont_type}.na.{chrom}.{other_reads}.stats.tsv'
+    run:
+        import pandas as pd
+        def compute_genome_size(fp):
+            df = pd.read_csv(fp, sep="\t", header=None, names=["contig", "start", "end"])
+            df["length"] = df["end"] - df["start"]
+            genome_size = int(df["length"].sum())
+            num_contigs = int(df["contig"].nunique())
+            return num_contigs, genome_size
+
+        contigs_chrom, size_chrom = compute_genome_size(input.chrom_bed)
+        contigs_500, size_500 = compute_genome_size(input.ctg_bed)
+        size_pct = round(size_500 / size_chrom * 100, 2)
+
+        sample_stats = {
+            "sample": wildcards.sample,
+            f"contigs_num_{wildcards.chrom}": contigs_chrom,
+            f"size_bp_{wildcards.chrom}": size_chrom,
+            f"contigs_num_{wildcards.chrom}_geq500kbp": contigs_500,
+            f"size_bp_{wildcards.chrom}_geq500kbp": size_500,
+            f"processed_{wildcards.chrom}_geq500kbp": size_pct
+        }
+        df = pd.read_csv(input.het_regions, sep="\t", header=0)
+        df["het_region_length"] = df["end"] - df["start"]
+        agg = df.agg(
+            contigs_num=("contig", "nunique"),
+            total_flagged_length_bp=("het_region_length", sum),
+            total_hets_num=("num_hets", sum),
+            min_agg_het_ratio=("median_het_ratio", min),
+            max_agg_het_ratio=("median_het_ratio", max),
+            median_agg_het_ratio=("median_het_ratio", "median"),
+        )
+
+        for label in agg.index:
+            selector = pd.isnull(agg.loc[label, :].values)
+            value = agg.loc[label, ~selector]
+            if label.endswith("ratio"):
+                value = float(value)
+            else:
+                value = int(value)
+            sample_stats[label] = value
+        sample_stats = pd.DataFrame.from_records([sample_stats])
+        sample_stats.to_csv(output.stats, sep="\t", header=True, index=False)
+    # END OF RUN BLOCK
+
+
+localrules: merge_all_nucfreq_stats
+rule merge_all_nucfreq_stats:
+    input:
+        tables = expand(
+            'output/eval/assm_errors/nucfreq/{sample}.{hifi_type}.{ont_type}.na.{{chrom}}.{other_reads}.stats.tsv',
+            sample=[s for s in COMPLETE_SAMPLES if s != "HG00512"],
+            hifi_type=["HIFIRW"],
+            ont_type=["ONTUL"],
+            other_reads=["HIFIRW"]
+        )
+    output:
+        table = 'output/eval/assm_errors/nucfreq/ALL-SAMPLES.{chrom}.nucfreq-stats.tsv',
+    run:
+        import pandas as pd
+
+        merged = []
+        for table in input.tables:
+            df = pd.read_csv(table, sep="\t", header=0)
+            df["is_qc_sample"] = 0
+            if df["sample"].values[0] in QC_SAMPLES:
+                df["is_qc_sample"] = 1
+            merged.append(df)
+
+        merged = pd.concat(merged, axis=0, ignore_index=False)
+        size_column = f"size_bp_{wildcards.chrom}_geq500kbp"
+        merged["het_per_kbp"] = (merged["total_hets_num"] / (merged[size_column] / 1e3)).round(4)
+        merged.sort_values(["is_qc_sample", "sample"], inplace=True)
+        merged.to_csv(output.table, sep="\t", header=True, index=False)
+    # END OF RUN BLOCK
+
+
 rule run_all_assm_errors:
     """
     Outlier: HG00512 is too fragmented
@@ -546,6 +649,11 @@ rule run_all_assm_errors:
             ont_type=["ONTUL"],
             chrom=["chrY"],
             other_reads=["HIFIRW"]
+        ),
+        zipped_plots = 'output/eval/assm_errors/nucfreq/ALL-SAMPLES.{chrom}.nucfreq-plots.zip',
+        stats_table = expand(
+            'output/eval/assm_errors/nucfreq/ALL-SAMPLES.{chrom}.nucfreq-stats.tsv',
+            chrom=["chrY"]
         )
 
 

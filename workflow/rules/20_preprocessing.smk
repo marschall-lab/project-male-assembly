@@ -472,7 +472,7 @@ rule normalize_expert_seqclasses_file:
         )
 
         assm = assm.merge(contiguous_regions, left_on=['seqclass', 'contig'], right_on=['seqclass', 'contig'], how='outer')
-        assert pd.notnull(assm).all(axis=0).all()
+        assert pd.notnull(assm).all(axis=0).all(), assm
         assm.sort_values(['contig', 'start', 'end'], ascending=True, inplace=True)
 
         # count minimal number of contigs required to achieve maximal contiguity

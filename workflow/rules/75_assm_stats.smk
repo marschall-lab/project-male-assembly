@@ -353,7 +353,7 @@ rule merge_all_sequence_class_annotations:
     input:
         tables = expand(
             'references_derived/seqclasses/{sample}.{{hifi_type}}.{{ont_type}}.na.chrY.seqclasses.tsv',
-            sample=[s for s in COMPLETE_SAMPLES if s != 'NA24385']
+            sample=COMPLETE_SAMPLES
         )
     output:
         table = 'output/stats/contigs/SAMPLES.{hifi_type}.{ont_type}.na.chrY.seqclasses.tsv'

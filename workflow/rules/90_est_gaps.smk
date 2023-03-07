@@ -128,22 +128,24 @@ rule run_all_gap_estimates:
         ]
 
 
-rule generate_chry_graph:
+rule generate_sex_chrom_graph:
     input:
-        ref = "references_derived/T2T_chrY.fasta",
+        ref = "references_derived/T2T_{chrom}.fasta",
         assm = lambda wildcards: expand(
-            "output/subset_wg/20_extract_contigs/{sample}.{hifi_type}.{ont_type}.{mapq}.chrY.fasta",
+            "output/subset_wg/20_extract_contigs/{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.fasta",
             sample=GRAPH_SAMPLES[int(wildcards.num)],
             hifi_type=["HIFIRW"],
             ont_type=["ONTUL"],
             mapq=["na"]
         )
     output:
-        ref_graph = "output/eval/par1_var/graphs/T2T.{num}samples.na.chrY.L{min_var_size}kbp.gfa"
+        ref_graph = "output/eval/par1_var/graphs/T2T.{num}samples.na.{chrom}.L{min_var_size}kbp.gfa"
     log:
-        "log/output/eval/par1_var/graphs/T2T.{num}samples.na.chrY.L{min_var_size}kbp.minigraph.log"
+        "log/output/eval/par1_var/graphs/T2T.{num}samples.na.{chrom}.L{min_var_size}kbp.minigraph.log"
     benchmark:
-        "rsrc/output/eval/par1_var/graphs/T2T.{num}samples.na.chrY.L{min_var_size}kbp.minigraph.rsrc"
+        "rsrc/output/eval/par1_var/graphs/T2T.{num}samples.na.{chrom}.L{min_var_size}kbp.minigraph.rsrc"
+    wildcard_constraints:
+        chrom = "(chrX|chrY)"
     conda:
         "../envs/graphtools.yaml"
     threads: config['num_cpu_medium']
@@ -154,6 +156,44 @@ rule generate_chry_graph:
         min_var_size = lambda wildcards: int(wildcards.min_var_size) * 1000
     shell:
         "minigraph -t{threads} -L {params.min_var_size} -cxggs {input.ref} {input.assm} "
+        " > {output} 2> {log}"
+
+
+rule generate_chryx_graph:
+    input:
+        ref_y = "references_derived/T2T_chrY.fasta",
+        ref_x = "references_derived/T2T_chrX.fasta",
+        assm_y = lambda wildcards: expand(
+            "output/subset_wg/20_extract_contigs/{sample}.{hifi_type}.{ont_type}.{mapq}.chrY.fasta",
+            sample=GRAPH_SAMPLES[int(wildcards.num)],
+            hifi_type=["HIFIRW"],
+            ont_type=["ONTUL"],
+            mapq=["na"]
+        ),
+        assm_x = lambda wildcards: expand(
+            "output/subset_wg/20_extract_contigs/{sample}.{hifi_type}.{ont_type}.{mapq}.chrX.fasta",
+            sample=GRAPH_SAMPLES[int(wildcards.num)],
+            hifi_type=["HIFIRW"],
+            ont_type=["ONTUL"],
+            mapq=["na"]
+        )
+    output:
+        ref_graph = "output/eval/par1_var/graphs/T2T.{num}samples.na.chrYX.L{min_var_size}kbp.gfa"
+    log:
+        "log/output/eval/par1_var/graphs/T2T.{num}samples.na.chrYX.L{min_var_size}kbp.minigraph.log"
+    benchmark:
+        "rsrc/output/eval/par1_var/graphs/T2T.{num}samples.na.chrYX.L{min_var_size}kbp.minigraph.rsrc"
+    conda:
+        "../envs/graphtools.yaml"
+    threads: config['num_cpu_medium']
+    resources:
+        mem_mb = lambda wildcards, attempt: 32768 + 32768 * attempt,
+        walltime = lambda wildcards, attempt: f'{11 ** attempt}:59:00'
+    params:
+        min_var_size = lambda wildcards: int(wildcards.min_var_size) * 1000
+    shell:
+        "minigraph -t{threads} -L {params.min_var_size} -cxggs "
+        "{input.ref_y} {input.assm_y} {input.ref_x} {input.assm_x} "
         " > {output} 2> {log}"
 
 
@@ -191,7 +231,7 @@ rule generate_chrxy_graph:
         min_var_size = lambda wildcards: int(wildcards.min_var_size) * 1000
     shell:
         "minigraph -t{threads} -L {params.min_var_size} -cxggs "
-        "{input.ref_y} {input.assm_y} {input.ref_x} {input.assm_x} "
+        "{input.ref_x} {input.assm_x} {input.ref_y} {input.assm_y} "
         " > {output} 2> {log}"
 
 
@@ -318,7 +358,7 @@ rule run_all_graph_builds:
     input:
         gfa = expand(
             "output/eval/par1_var/graphs/T2T.{num_samples}samples.na.{chrom}.L{min_var_size}kbp.annotations.csv",
-            num_samples=[3, 2, 1],
-            chrom=["chrY", "chrXY"],
-            min_var_size=[1, 5, 10]
+            num_samples=[10, 6, 3, 2, 1],
+            chrom=["chrY", "chrXY", "chrX", "chrYX"],
+            min_var_size=[1, 3, 5]
         ),

@@ -132,7 +132,7 @@ rule generate_sex_chrom_graph:
     input:
         ref = "references_derived/T2T_{chrom}.fasta",
         assm = lambda wildcards: expand(
-            "output/subset_wg/20_extract_contigs/{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.fasta",
+            "output/subset_wg/20_extract_contigs/{sample}.{hifi_type}.{ont_type}.{mapq}.{{chrom}}.fasta",
             sample=GRAPH_SAMPLES[int(wildcards.num)],
             hifi_type=["HIFIRW"],
             ont_type=["ONTUL"],

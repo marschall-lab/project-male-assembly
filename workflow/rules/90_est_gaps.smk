@@ -341,12 +341,13 @@ rule create_graph_coloring:
                 this_sample["seqclass"] = seqclass
                 this_sample["ref_start"] = start
                 this_sample["ref_end"] = end
+                this_sample["node_length"] = node_length
                 node_infos.append(this_sample)
         df = pd.DataFrame.from_records(
             node_infos, columns=[
                 "node", "color", "sample", "haplogroup",
                 "population", "super_pop", "seqclass",
-                "ref_start", "ref_end"
+                "node_length", "ref_start", "ref_end"
             ]
         )
         df.sort_values("node", inplace=True)

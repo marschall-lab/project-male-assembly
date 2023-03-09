@@ -355,10 +355,39 @@ rule create_graph_coloring:
     # END OF RUN BLOCK
 
 
+rule extract_bubbles_from_graph:
+    input:
+        gfa = "output/eval/par1_var/graphs/T2T.{num_samples}samples.{mapq}.{chrom}.L{min_var_size}kbp.gfa",
+    output:
+        table = "output/eval/par1_var/graphs/T2T.{num_samples}samples.{mapq}.{chrom}.L{min_var_size}kbp.bubbles.tsv",
+    conda:
+        "../envs/graphtools.yaml"
+    resources:
+        mem_mb = lambda wildcards, attempt: 1024 * attempt
+    shell:
+        "gfatools bubble {input.gfa} > {output.table}"
+
+
+rule merge_bubbles_node_infos:
+    input:
+        bubbles = "output/eval/par1_var/graphs/T2T.{num_samples}samples.{mapq}.{chrom}.L{min_var_size}kbp.bubbles.tsv",
+        annotation = "output/eval/par1_var/graphs/T2T.{num_samples}samples.{mapq}.{chrom}.L{min_var_size}kbp.annotations.csv"
+    output:
+        table = "output/eval/par1_var/graphs/T2T.{num_samples}samples.{mapq}.{chrom}.L{min_var_size}kbp.flat-bubbles.tsv",
+        seqs = "output/eval/par1_var/graphs/T2T.{num_samples}samples.{mapq}.{chrom}.L{min_var_size}kbp.path-seqs.fasta"
+    conda:
+        "../envs/pyscript.yaml"
+    params:
+        script = find_script_path("parse_gfa_bubbles.py")
+    shell:
+        "{params.script} --bubbles {input.bubbles} --node-annotation {input.annotation} "
+            "--out-table {output.table} --out-path-seq {output.seqs}"
+
+
 rule run_all_graph_builds:
     input:
         gfa = expand(
-            "output/eval/par1_var/graphs/T2T.{num_samples}samples.na.{chrom}.L{min_var_size}kbp.annotations.csv",
+            "output/eval/par1_var/graphs/T2T.{num_samples}samples.na.{chrom}.L{min_var_size}kbp.flat-bubbles.tsv",
             num_samples=[10, 6, 3, 2, 1],
             chrom=["chrY", "chrXY", "chrX", "chrYX"],
             min_var_size=[1, 3, 5]

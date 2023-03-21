@@ -545,6 +545,7 @@ rule detect_nucfreq_het_positions:
 localrules: compute_nucfreq_sample_stats
 rule compute_nucfreq_sample_stats:
     input:
+        seqclasses = 'references_derived/seqclasses/{sample}.{hifi_type}.{ont_type}.na.{chrom}.generic-seqcls.bed',
         chrom_bed = 'output/subset_wg/20_extract_contigs/{sample}.{hifi_type}.{ont_type}.na.{chrom}.bed',
         ctg_bed = 'output/eval/assm_errors/nucfreq/{sample}.{hifi_type}.{ont_type}.na.{chrom}.{other_reads}.ctg-500kbp.bed',
         het_regions = 'output/eval/assm_errors/nucfreq/{sample}.{hifi_type}.{ont_type}.na.{chrom}.{other_reads}.het-regions.tsv',
@@ -552,12 +553,59 @@ rule compute_nucfreq_sample_stats:
         stats = 'output/eval/assm_errors/nucfreq/{sample}.{hifi_type}.{ont_type}.na.{chrom}.{other_reads}.stats.tsv'
     run:
         import pandas as pd
+
         def compute_genome_size(fp):
             df = pd.read_csv(fp, sep="\t", header=None, names=["contig", "start", "end"])
             df["length"] = df["end"] - df["start"]
             genome_size = int(df["length"].sum())
             num_contigs = int(df["contig"].nunique())
             return num_contigs, genome_size
+
+        def get_het_seqclasses(fp):
+            seqcls = pd.read_csv(
+                seqclass_file, sep="\t", header=None,
+                names=["contig", "start", "end", "seqclass"]
+            )
+            # HET3_Yq
+            seqcls["is_YqHET"] = seqcls["seqclass"].apply(lambda x: 1 if "HET3" in x else 0)
+            assert seqcls["is_YqHET"].sum() > 0
+            # HET1_centro
+            seqcls["is_CEN"] = seqcls["seqclass"].apply(lambda x: 1 if "HET1" in x else 0)
+            assert seqcls["is_CEN"].sum() > 0
+            get_yqhet = seqcls["is_YqHET"] == 1
+            get_cen = seqcls["is_CEN"] == 1
+            seqcls = seqcls.loc[get_yqhet | get_cen, :].copy()
+            return sqcls
+
+        def find_het_region_ovl_het(het_seqclasses, het_regions):
+            region_in_yqhet = 0
+            region_in_cen = 0
+            for ctg, regions in het_regions.groupby("contig"):
+                classes = het_seqclasses.loc[sqcls["contig"] == ctg, :]
+                for region in regions.itertuples(index=True):
+                    if region.end < classes["start"].min() or region.start > classes["end"].max():
+                        continue
+                    get_start = region.start < classes["end"]
+                    get_end = region.end > classes["start"]
+                    get_ovl = get_start & get_end
+                    overlapping = classes.loc[get_ovl, :]
+                    if overlapping.empty:
+                        continue
+                    if overlapping["is_YqHET"].sum() > 0:
+                        region_in_yqhet += 1
+                    if overlapping["is_CEN"].sum() > 0:
+                        region_in_yqhet += 1
+
+            num_regions = het_regions.shape[0]
+            region_stats = {
+                "num_ovl_YqHET": region_in_yqhet,
+                "num_ovl_CEN": region_in_cen,
+                "num_ovl_YqHET_or_CEN": region_in_yqhet + region_in_cen,
+                "pct_ovl_YqHET": round(region_in_yqhet / num_regions * 100, 1),
+                "pct_ovl_CEN": round(region_in_cen / num_regions * 100, 1),
+                "pct_ovl_YqHET_or_CEN": round((region_in_cen + region_in_yqhet) / num_regions * 100, 1),
+            }
+            return region_stats
 
         contigs_chrom, size_chrom = compute_genome_size(input.chrom_bed)
         contigs_500, size_500 = compute_genome_size(input.ctg_bed)
@@ -572,6 +620,12 @@ rule compute_nucfreq_sample_stats:
             f"processed_{wildcards.chrom}_geq500kbp": size_pct
         }
         df = pd.read_csv(input.het_regions, sep="\t", header=0)
+        region_stats = find_het_region_ovl_het(
+            get_het_seqclasses(input.seqclasses),
+            df
+        )
+        sample_stats.update(region_stats)
+
         df["het_region_length"] = df["end"] - df["start"]
         agg = df.agg(
             contigs_num=("contig", "nunique"),

@@ -598,6 +598,7 @@ rule compute_nucfreq_sample_stats:
 
             num_regions = het_regions.shape[0]
             region_stats = {
+                "num_HET_regions": num_regions,
                 "num_ovl_YqHET": region_in_yqhet,
                 "num_ovl_CEN": region_in_cen,
                 "num_ovl_YqHET_or_CEN": region_in_yqhet + region_in_cen,

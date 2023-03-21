@@ -575,13 +575,13 @@ rule compute_nucfreq_sample_stats:
             get_yqhet = seqcls["is_YqHET"] == 1
             get_cen = seqcls["is_CEN"] == 1
             seqcls = seqcls.loc[get_yqhet | get_cen, :].copy()
-            return sqcls
+            return seqcls
 
         def find_het_region_ovl_het(het_seqclasses, het_regions):
             region_in_yqhet = 0
             region_in_cen = 0
             for ctg, regions in het_regions.groupby("contig"):
-                classes = het_seqclasses.loc[sqcls["contig"] == ctg, :]
+                classes = het_seqclasses.loc[het_seqclasses["contig"] == ctg, :]
                 for region in regions.itertuples(index=True):
                     if region.end < classes["start"].min() or region.start > classes["end"].max():
                         continue

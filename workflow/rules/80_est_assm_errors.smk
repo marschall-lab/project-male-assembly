@@ -563,7 +563,7 @@ rule compute_nucfreq_sample_stats:
 
         def get_het_seqclasses(fp):
             seqcls = pd.read_csv(
-                seqclass_file, sep="\t", header=None,
+                fp, sep="\t", header=None,
                 names=["contig", "start", "end", "seqclass"]
             )
             # HET3_Yq

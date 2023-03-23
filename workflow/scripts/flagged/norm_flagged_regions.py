@@ -152,6 +152,10 @@ class GenomicRegion:
             for key, value in self._add_fields:
                 gr_dict[key] = value
         return gr_dict
+    
+    @classmethod
+    def get_header(cls):
+        return cls._key_order
 
 
 def parse_norm_row(sample, row):
@@ -250,6 +254,11 @@ def main():
     df = pd.DataFrame.from_records(
         [r.to_dict() for r in table_regions]
     )
+    if df.empty:
+        # this happens for high-quality samples,
+        # and commonly b/c does not call variants
+        header = GenomicRegion.get_header()
+        df = pd.DataFrame(columns=header)
     df.sort_values(["contig", "start", "end"], inplace=True)
     df.fillna(0, inplace=True)
     args.output.parent.mkdir(exist_ok=True, parents=True)

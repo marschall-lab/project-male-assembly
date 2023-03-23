@@ -766,6 +766,29 @@ rule cluster_flagged_regions:
         "bedtools merge -c 4 -o collapse -i {output.concat} > {output.merged}"
 
 
+rule identify_mixed_support_clusters:
+    input:
+        merged = "output/eval/flagged_regions/clustered/{sample}.{hifi_type}.{ont_type}.na.{chrom}.cluster.tsv",
+        depths = expand(
+            "output/eval/flagged_regions/read_depth/{{sample}}.{other_reads}_aln-to_{{hifi_type}}.{{ont_type}}.na.{{chrom}}.minmq{{minmapq}}.{tool}-genreg.depth.tsv.gz",
+            other_reads=["HIFIRW", "ONTUL"],
+            tool=["vm", "nf"]
+        ),
+        hifi_regions = expand(
+            "output/eval/flagged_regions/flanked/{{sample}}.{{hifi_type}}.{{ont_type}}.na.{{chrom}}.HIFIRW.{tool}-genreg.bed",
+            tool=["vm", "nf", "dv"]
+        ),
+        ont_regions = "output/eval/flagged_regions/flanked/{sample}.{hifi_type}.{ont_type}.na.{chrom}.ONTUL.pr-genreg.bed"
+    output:
+        tsv = "output/eval/flagged_regions/annotated/{sample}.{hifi_type}.{ont_type}.na.{chrom}.flagged-clustered.minmq{minmapq}.tsv"
+    conda:
+        '../envs/pyscript.yaml'
+    params:
+        script = find_script_path("define_support_clusters.py")
+    shell:
+        "{params.script} --regions {input.hifi_regions} {input.ont_regions} "
+            "--merged {input.merged} --depths {input.depths} --output {output.tsv}"
+
 
 rule run_all_assm_errors:
     """
@@ -800,23 +823,10 @@ rule run_all_assm_errors:
             chrom=["chrY"]
         ),
         flagged_clusters = expand(
-            'output/eval/flagged_regions/clustered/{sample}.{hifi_type}.{ont_type}.na.{chrom}.cluster.tsv',
+            "output/eval/flagged_regions/annotated/{sample}.{hifi_type}.{ont_type}.na.{chrom}.flagged-clustered.minmq{minmapq}.tsv"
             sample=[s for s in COMPLETE_SAMPLES if s != "HG00512"],
             hifi_type=["HIFIRW"],
             ont_type=["ONTUL"],
             chrom=["chrY"],
-        ),
-        flagged_depth = expand(
-            'output/eval/flagged_regions/read_depth/{sample}.{other_reads}_aln-to_{hifi_type}.{ont_type}.na.{chrom}.minmq{minmapq}.{tool}-genreg.depth.tsv.gz',
-            sample=[s for s in COMPLETE_SAMPLES if s != "HG00512"],
-            other_reads=["HIFIRW", "ONTUL"],
-            hifi_type=["HIFIRW"],
-            ont_type=["ONTUL"],
-            chrom=["chrY"],
-            minmapq=[10],
-            tool=["vm", "nf"]
+            minmapq=[10]
         )
-
-
-
-

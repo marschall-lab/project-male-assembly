@@ -823,7 +823,7 @@ rule run_all_assm_errors:
             chrom=["chrY"]
         ),
         flagged_clusters = expand(
-            "output/eval/flagged_regions/annotated/{sample}.{hifi_type}.{ont_type}.na.{chrom}.flagged-clustered.minmq{minmapq}.tsv"
+            "output/eval/flagged_regions/annotated/{sample}.{hifi_type}.{ont_type}.na.{chrom}.flagged-clustered.minmq{minmapq}.tsv",
             sample=[s for s in COMPLETE_SAMPLES if s != "HG00512"],
             hifi_type=["HIFIRW"],
             ont_type=["ONTUL"],

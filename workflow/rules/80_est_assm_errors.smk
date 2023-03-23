@@ -704,6 +704,8 @@ rule convert_to_flanked_genomic_region:
         bed_pr = 'output/eval/flagged_regions/flanked/{sample}.{hifi_type}.{ont_type}.na.{chrom}.ONTUL.pr-genreg.bed',
         bed_vm = 'output/eval/flagged_regions/flanked/{sample}.{hifi_type}.{ont_type}.na.{chrom}.HIFIRW.vm-genreg.bed',
         bed_nf = 'output/eval/flagged_regions/flanked/{sample}.{hifi_type}.{ont_type}.na.{chrom}.HIFIRW.nf-genreg.bed',
+    conda:
+        '../envs/pyscript.yaml'
     params:
         script = find_script_path("norm_flagged_regions.py")
     shell:

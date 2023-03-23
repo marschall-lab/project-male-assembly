@@ -401,7 +401,10 @@ rule merge_agg_seqclass_errors:
     # END OF RUN BLOCK
 
 
+###################################################
 ## Below: new rules introduced for revised version
+###################################################
+
 
 rule filter_chromosome_alignments:
     """This rule filters the read-to-assembly
@@ -681,6 +684,87 @@ rule merge_all_nucfreq_stats:
     # END OF RUN BLOCK
 
 
+############################################################
+# reprocess all flagged regions to check for mutual support
+# in a more consistent manner
+
+rule convert_to_flanked_genomic_region:
+    input:
+        snv_dv = 'output/eval/merged_errors/norm_tables/{sample}.{hifi_type}.{ont_type}.na.{chrom}.HIFIRW.dv-errors.tsv',
+        snv_pr = 'output/eval/merged_errors/norm_tables/{sample}.{hifi_type}.{ont_type}.na.{chrom}.ONTUL.pr-errors.tsv',
+        vm_reg = 'output/eval/merged_errors/norm_tables/{sample}.{hifi_type}.{ont_type}.na.{chrom}.HIFIRW.vm-errors.tsv',
+        nf_reg = 'output/eval/assm_errors/nucfreq/{sample}.{hifi_type}.{ont_type}.na.{chrom}.HIFIRW.het-regions.tsv',        
+        labels = 'references_derived/veritymap_expert-label.tsv',
+    output:
+        table_dv = 'output/eval/flagged_regions/flanked/{sample}.{hifi_type}.{ont_type}.na.{chrom}.HIFIRW.dv-genreg.tsv',
+        table_pr = 'output/eval/flagged_regions/flanked/{sample}.{hifi_type}.{ont_type}.na.{chrom}.ONTUL.pr-genreg.tsv',
+        table_vm = 'output/eval/flagged_regions/flanked/{sample}.{hifi_type}.{ont_type}.na.{chrom}.HIFIRW.vm-genreg.tsv',
+        table_nf = 'output/eval/flagged_regions/flanked/{sample}.{hifi_type}.{ont_type}.na.{chrom}.HIFIRW.nf-genreg.tsv',
+        bed_dv = 'output/eval/flagged_regions/flanked/{sample}.{hifi_type}.{ont_type}.na.{chrom}.HIFIRW.dv-genreg.bed',
+        bed_pr = 'output/eval/flagged_regions/flanked/{sample}.{hifi_type}.{ont_type}.na.{chrom}.ONTUL.pr-genreg.bed',
+        bed_vm = 'output/eval/flagged_regions/flanked/{sample}.{hifi_type}.{ont_type}.na.{chrom}.HIFIRW.vm-genreg.bed',
+        bed_nf = 'output/eval/flagged_regions/flanked/{sample}.{hifi_type}.{ont_type}.na.{chrom}.HIFIRW.nf-genreg.bed',
+    params:
+        script = find_script_path("norm_flagged_regions.py")
+    shell:
+        "{params.script} --table {input.snv_dv} --output {output.table_dv}"
+            " && "
+        "{params.script} --table {input.snv_pr} --output {output.table_pr}"
+            " && "
+        "{params.script} --table {input.vm_reg} --output {output.table_vm} --curated {input.labels}"
+            " && "
+        "{params.script} --table {input.nf_reg} --output {output.table_nf}"
+
+
+rule read_depth_in_flagged_regions:
+    """
+    NB: this is an adapted c&p of the rule:
+    63_eval_read_align::dump_read_to_assm_coverage
+
+    NB: samtools depth skips reads ...
+
+        > By default, reads that have any of the flags
+        > UNMAP, SECONDARY, QCFAIL, or DUP set are skipped.
+        (see man pages)
+
+    """
+    input:
+        bed = 'output/eval/flagged_regions/flanked/{sample}.{hifi_type}.{ont_type}.na.{chrom}.HIFIRW.{tool}-genreg.bed',
+        bam = 'output/alignments/reads-to-assm/{sample}.{other_reads}_aln-to_{hifi_type}.{ont_type}.na.wg.bam',
+        bai = 'output/alignments/reads-to-assm/{sample}.{other_reads}_aln-to_{hifi_type}.{ont_type}.na.wg.bam.bai'
+    output:
+        depth = 'output/eval/flagged_regions/read_depth/{sample}.{other_reads}_aln-to_{hifi_type}.{ont_type}.na.{chrom}.minmq{minmapq}.{tool}-genreg.depth.tsv.gz'
+    wildcard_constraints:
+        other_reads = "(HIFIRW|ONTUL)",
+        tool = "(vm|nf)"  # VerityMap or NucFreq
+    conda:
+        '../envs/biotools.yaml'
+    resources:
+        mem_mb = lambda wildcards, attempt: 2048 * attempt,
+        walltime = lambda wildcards, attempt: f'{attempt}:59:00'
+    shell:
+        'samtools depth -a --min-MQ {wildcards.minmapq} -l 5000 '
+        '-b {input.bed} {input.bam} | pigz -p 2 > {output.depth}'
+
+
+rule cluster_flagged_regions:
+    input:
+        bed_dv = 'output/eval/flagged_regions/flanked/{sample}.{hifi_type}.{ont_type}.na.{chrom}.HIFIRW.dv-genreg.bed',
+        bed_pr = 'output/eval/flagged_regions/flanked/{sample}.{hifi_type}.{ont_type}.na.{chrom}.ONTUL.pr-genreg.bed',
+        bed_vm = 'output/eval/flagged_regions/flanked/{sample}.{hifi_type}.{ont_type}.na.{chrom}.HIFIRW.vm-genreg.bed',
+        bed_nf = 'output/eval/flagged_regions/flanked/{sample}.{hifi_type}.{ont_type}.na.{chrom}.HIFIRW.nf-genreg.bed',
+    output:
+        concat = temp('output/eval/flagged_regions/clustered/{sample}.{hifi_type}.{ont_type}.na.{chrom}.concat.bed'),
+        merged = 'output/eval/flagged_regions/clustered/{sample}.{hifi_type}.{ont_type}.na.{chrom}.cluster.tsv',
+    conda:
+        '../envs/biotools.yaml'
+    shell:
+        "sort -V -k1,1 -k2n,3n {input} > {output.concat}"
+            " && "
+        "bedtools merge -c 4 -o collapse -i {output.concat} > {output.merged}"
+
+
+
 rule run_all_assm_errors:
     """
     Outlier: HG00512 is too fragmented
@@ -712,6 +796,22 @@ rule run_all_assm_errors:
         stats_table = expand(
             'output/eval/assm_errors/nucfreq/ALL-SAMPLES.{chrom}.nucfreq-stats.tsv',
             chrom=["chrY"]
+        ),
+        flagged_clusters = expand(
+            'output/eval/flagged_regions/clustered/{sample}.{hifi_type}.{ont_type}.na.{chrom}.cluster.tsv',
+            sample=[s for s in COMPLETE_SAMPLES if s != "HG00512"],
+            hifi_type=["HIFIRW"],
+            ont_type=["ONTUL"],
+            chrom=["chrY"],
+        ),
+        flagged_depth = expand(
+            'output/eval/flagged_regions/read_depth/{sample}.{other_reads}_aln-to_{hifi_type}.{ont_type}.na.{chrom}.minmq{minmapq}.{tool}-genreg.depth.tsv.gz',
+            sample=[s for s in COMPLETE_SAMPLES if s != "HG00512"],
+            hifi_type=["HIFIRW"],
+            ont_type=["ONTUL"],
+            chrom=["chrY"],
+            minmapq=[10],
+            tool=["vm", "nf"]
         )
 
 

@@ -807,6 +807,7 @@ rule run_all_assm_errors:
         flagged_depth = expand(
             'output/eval/flagged_regions/read_depth/{sample}.{other_reads}_aln-to_{hifi_type}.{ont_type}.na.{chrom}.minmq{minmapq}.{tool}-genreg.depth.tsv.gz',
             sample=[s for s in COMPLETE_SAMPLES if s != "HG00512"],
+            other_reads=["HIFIRW", "ONTUL"],
             hifi_type=["HIFIRW"],
             ont_type=["ONTUL"],
             chrom=["chrY"],

@@ -775,10 +775,10 @@ rule identify_mixed_support_clusters:
             tool=["vm", "nf"]
         ),
         hifi_regions = expand(
-            "output/eval/flagged_regions/flanked/{{sample}}.{{hifi_type}}.{{ont_type}}.na.{{chrom}}.HIFIRW.{tool}-genreg.bed",
+            "output/eval/flagged_regions/flanked/{{sample}}.{{hifi_type}}.{{ont_type}}.na.{{chrom}}.HIFIRW.{tool}-genreg.tsv",
             tool=["vm", "nf", "dv"]
         ),
-        ont_regions = "output/eval/flagged_regions/flanked/{sample}.{hifi_type}.{ont_type}.na.{chrom}.ONTUL.pr-genreg.bed"
+        ont_regions = "output/eval/flagged_regions/flanked/{sample}.{hifi_type}.{ont_type}.na.{chrom}.ONTUL.pr-genreg.tsv"
     output:
         tsv = "output/eval/flagged_regions/annotated/{sample}.{hifi_type}.{ont_type}.na.{chrom}.flagged-clustered.minmq{minmapq}.tsv"
     conda:

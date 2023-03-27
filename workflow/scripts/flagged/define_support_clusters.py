@@ -42,7 +42,7 @@ def parse_command_line():
     return args
 
 
-def add_coverage(flanked_regions, depth_table, read_label):
+def add_coverage(flanked_regions, depth_table, read_label, mapq):
     
     rd = pd.read_csv(depth_table, sep="\t", header=None, names=["contig", "pos", "depth"])
     # NB: pos is 1-based > make zero-based
@@ -67,7 +67,12 @@ def add_coverage(flanked_regions, depth_table, read_label):
                 )
             )
     depths = pd.DataFrame.from_records(
-        depths, columns=["name", f"{read_label}_mean_cov", f"{read_label}_median_cov"]
+        depths, 
+        columns=[
+            "name",
+            f"{read_label}_MQ{mapq}_mean_cov",
+            f"{read_label}_MQ{mapq}_median_cov"
+        ]
     )
     flanked_regions = flanked_regions.merge(depths, on="name")
     assert not pd.isnull(flanked_regions).any(axis=1).any()
@@ -85,10 +90,11 @@ def combine_all_regions(region_files, depth_files):
         matched_depths = [fp for fp in depth_files if region_source in fp.name]
         # note that the above is empty list for SNV regions
         for depth_file in matched_depths:
-            read_type = depth_file.name.split("_aln-to_")[0]
+            read_type, aln_type = depth_file.name.split("_aln-to_")
             read_type = read_type.split(".")[1]
             read_label = read_labels[read_type]
-            regions = add_coverage(regions, depth_file, read_label)
+            mapq = int(aln_type.split(".")[4].strip("minmq"))
+            regions = add_coverage(regions, depth_file, read_label, mapq)
         all_regions.append(regions)
     
     all_regions = pd.concat(all_regions, axis=0, ignore_index=False)

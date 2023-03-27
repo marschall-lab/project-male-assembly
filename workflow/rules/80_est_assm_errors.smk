@@ -770,9 +770,10 @@ rule identify_mixed_support_clusters:
     input:
         merged = "output/eval/flagged_regions/clustered/{sample}.{hifi_type}.{ont_type}.na.{chrom}.cluster.tsv",
         depths = expand(
-            "output/eval/flagged_regions/read_depth/{{sample}}.{other_reads}_aln-to_{{hifi_type}}.{{ont_type}}.na.{{chrom}}.minmq{{minmapq}}.{tool}-genreg.depth.tsv.gz",
+            "output/eval/flagged_regions/read_depth/{{sample}}.{other_reads}_aln-to_{{hifi_type}}.{{ont_type}}.na.{{chrom}}.minmq{minmapq}.{tool}-genreg.depth.tsv.gz",
             other_reads=["HIFIRW", "ONTUL"],
-            tool=["vm", "nf"]
+            tool=["vm", "nf"],
+            minmapq=[0, 10]
         ),
         hifi_regions = expand(
             "output/eval/flagged_regions/flanked/{{sample}}.{{hifi_type}}.{{ont_type}}.na.{{chrom}}.HIFIRW.{tool}-genreg.tsv",
@@ -780,7 +781,7 @@ rule identify_mixed_support_clusters:
         ),
         ont_regions = "output/eval/flagged_regions/flanked/{sample}.{hifi_type}.{ont_type}.na.{chrom}.ONTUL.pr-genreg.tsv"
     output:
-        tsv = "output/eval/flagged_regions/annotated/{sample}.{hifi_type}.{ont_type}.na.{chrom}.flagged-clustered.minmq{minmapq}.tsv"
+        tsv = "output/eval/flagged_regions/annotated/{sample}.{hifi_type}.{ont_type}.na.{chrom}.flagged-clustered.tsv"
     conda:
         '../envs/pyscript.yaml'
     params:
@@ -823,10 +824,9 @@ rule run_all_assm_errors:
             chrom=["chrY"]
         ),
         flagged_clusters = expand(
-            "output/eval/flagged_regions/annotated/{sample}.{hifi_type}.{ont_type}.na.{chrom}.flagged-clustered.minmq{minmapq}.tsv",
+            "output/eval/flagged_regions/annotated/{sample}.{hifi_type}.{ont_type}.na.{chrom}.flagged-clustered.tsv",
             sample=[s for s in COMPLETE_SAMPLES if s != "HG00512"],
             hifi_type=["HIFIRW"],
             ont_type=["ONTUL"],
             chrom=["chrY"],
-            minmapq=[10]
         )

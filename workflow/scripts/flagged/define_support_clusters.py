@@ -29,6 +29,7 @@ def parse_command_line():
     )
     parser.add_argument(
         "--contig-coverages",
+        "--coverages",
         "-c",
         nargs="+",
         type=lambda x: pl.Path(x).resolve(strict=True),

@@ -749,6 +749,38 @@ rule read_depth_in_flagged_regions:
         '-b {input.bed} {input.bam} | pigz -p 2 > {output.depth}'
 
 
+rule read_depth_in_chrom_y:
+    """
+    NB: this is an adapted c&p of the rule:
+    63_eval_read_align::dump_read_to_assm_coverage
+
+    NB: samtools depth skips reads ...
+
+        > By default, reads that have any of the flags
+        > UNMAP, SECONDARY, QCFAIL, or DUP set are skipped.
+        (see man pages)
+
+    """
+    input:
+        bed = 'output/subset_wg/20_extract_contigs/{sample}.{hifi_type}.{ont_type}.na.{chrom}.bed',
+        bam = 'output/subset_wg/40_extract_rdaln/{sample}.{other_reads}_aln-to_{hifi_type}.{ont_type}.na.{chrom}.bam',
+        bai = 'output/subset_wg/40_extract_rdaln/{sample}.{other_reads}_aln-to_{hifi_type}.{ont_type}.na.{chrom}.bam.bai',
+    output:
+        cov = 'output/eval/flagged_regions/chrom_cov/{sample}.{other_reads}_aln-to_{hifi_type}.{ont_type}.na.{chrom}.minmq{minmapq}.cov.tsv.gz'
+    wildcard_constraints:
+        other_reads = "(HIFIRW|ONTUL)",
+        chrom = "chrY"
+    conda:
+        '../envs/biotools.yaml'
+    resources:
+        mem_mb = lambda wildcards, attempt: 2048 * attempt,
+        walltime = lambda wildcards, attempt: f'{attempt}:59:00'
+    shell:
+        'samtools depth -a --min-MQ {wildcards.minmapq} -l 5000 '
+        '-b {input.bed} {input.bam} | cut -f 3 | pigz -p 2 > {output.cov}'
+
+
+
 rule cluster_flagged_regions:
     input:
         bed_dv = 'output/eval/flagged_regions/flanked/{sample}.{hifi_type}.{ont_type}.na.{chrom}.HIFIRW.dv-genreg.bed',
@@ -775,6 +807,11 @@ rule identify_mixed_support_clusters:
             tool=["vm", "nf"],
             minmapq=[0, 10]
         ),
+        coverages = expand(
+            "output/eval/flagged_regions/chrom_cov/{{sample}}.{other_reads}_aln-to_{{hifi_type}}.{{ont_type}}.na.{{chrom}}.minmq{minmapq}.cov.tsv.gz",
+            other_reads=["HIFIRW", "ONTUL"],
+            minmapq=[0, 10]
+        )
         hifi_regions = expand(
             "output/eval/flagged_regions/flanked/{{sample}}.{{hifi_type}}.{{ont_type}}.na.{{chrom}}.HIFIRW.{tool}-genreg.tsv",
             tool=["vm", "nf", "dv"]
@@ -788,7 +825,8 @@ rule identify_mixed_support_clusters:
         script = find_script_path("define_support_clusters.py")
     shell:
         "{params.script} --regions {input.hifi_regions} {input.ont_regions} "
-            "--merged {input.merged} --depths {input.depths} --output {output.tsv}"
+            "--coverages {input.coverages} --depths {input.depths} "
+            "--merged {input.merged} --output {output.tsv}"
 
 
 rule run_all_assm_errors:

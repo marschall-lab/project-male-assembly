@@ -5,7 +5,9 @@ import collections as col
 import hashlib as hl
 import pathlib as pl
 
+import numpy as np
 import pandas as pd
+import scipy.stats as scistats
 
 
 def parse_command_line():
@@ -26,6 +28,13 @@ def parse_command_line():
         dest="depths"
     )
     parser.add_argument(
+        "--contig-coverages",
+        "-c",
+        nargs="+",
+        type=lambda x: pl.Path(x).resolve(strict=True),
+        dest="coverages"
+    )
+    parser.add_argument(
         "--merged",
         "-m",
         type=lambda x: pl.Path(x).resolve(strict=True),
@@ -42,8 +51,11 @@ def parse_command_line():
     return args
 
 
-def add_coverage(flanked_regions, depth_table, read_label, mapq):
+def add_coverage(flanked_regions, depth_table, chrom_cov, read_label, mapq):
     
+    # load total chromosome-wide coverage values
+    # to transfrom statistics into percentiles
+    chrom_cov = np.loadtxt(chrom_cov, dtype=np.int16)
     rd = pd.read_csv(depth_table, sep="\t", header=None, names=["contig", "pos", "depth"])
     # NB: pos is 1-based > make zero-based
     rd["pos"] -= 1
@@ -59,11 +71,19 @@ def add_coverage(flanked_regions, depth_table, read_label, mapq):
                 # boundary effect... make sure it's flanking
                 assert region.region_type == 'flank_3p'
                 cov_values = sub_ctg.loc[select_start, "depth"]
+            mean_cov = round(cov_values.mean(), 0)
+            mean_cov_pct = round(scistats.percentileofscore(chrom_cov, mean_cov, kind="weak"), 1)
+            median_cov = round(cov_values.median(), 0)
+            median_cov_pct = round(scistats.percentileofscore(chrom_cov, median_cov, kind="weak"), 1)
+            stddev_cov = round(cov_values.std(), 0)
             depths.append(
                 (
                     region.name,
-                    round(cov_values.mean(), 1),
-                    round(cov_values.median(), 1)
+                    mean_cov,
+                    mean_cov_pct,
+                    median_cov,
+                    median_cov_pct,
+                    stddev_cov
                 )
             )
     depths = pd.DataFrame.from_records(
@@ -71,7 +91,10 @@ def add_coverage(flanked_regions, depth_table, read_label, mapq):
         columns=[
             "name",
             f"{read_label}_MQ{mapq}_mean_cov",
-            f"{read_label}_MQ{mapq}_median_cov"
+            f"{read_label}_MQ{mapq}_mean_cov_pct",
+            f"{read_label}_MQ{mapq}_median_cov",
+            f"{read_label}_MQ{mapq}_median_cov_pct",
+            f"{read_label}_MQ{mapq}_stddev_cov"
         ]
     )
     flanked_regions = flanked_regions.merge(depths, on="name")
@@ -79,7 +102,7 @@ def add_coverage(flanked_regions, depth_table, read_label, mapq):
     return flanked_regions
 
 
-def combine_all_regions(region_files, depth_files):
+def combine_all_regions(region_files, depth_files, coverage_files):
 
     read_labels = {"HIFIRW": "hifi", "ONTUL": "ont"}
 
@@ -94,7 +117,13 @@ def combine_all_regions(region_files, depth_files):
             read_type = read_type.split(".")[1]
             read_label = read_labels[read_type]
             mapq = int(aln_type.split(".")[4].strip("minmq"))
-            regions = add_coverage(regions, depth_file, read_label, mapq)
+            matched_coverage = [
+                fp for fp in coverage_files if f"{read_type}_aln-to" in fp.name and f"minmaq{mapq}" in fp.name
+            ]
+            assert len(matched_coverage) == 1
+            regions = add_coverage(
+                regions, depth_file, matched_coverage[0], read_label, mapq
+            )
         all_regions.append(regions)
     
     all_regions = pd.concat(all_regions, axis=0, ignore_index=False)
@@ -172,7 +201,7 @@ def main():
     args = parse_command_line()
 
     # contains everything, including flanking regions
-    regions = combine_all_regions(args.regions, args.depths)
+    regions = combine_all_regions(args.regions, args.depths, args.coverages)
     
     merged_regions = pd.read_csv(
         args.merged,

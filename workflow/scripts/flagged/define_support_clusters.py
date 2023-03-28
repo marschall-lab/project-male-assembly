@@ -119,7 +119,7 @@ def combine_all_regions(region_files, depth_files, coverage_files):
             read_label = read_labels[read_type]
             mapq = int(aln_type.split(".")[4].strip("minmq"))
             matched_coverage = [
-                fp for fp in coverage_files if f"{read_type}_aln-to" in fp.name and f"minmaq{mapq}" in fp.name
+                fp for fp in coverage_files if f"{read_type}_aln-to" in fp.name and f"minmq{mapq}" in fp.name
             ]
             assert len(matched_coverage) == 1
             regions = add_coverage(

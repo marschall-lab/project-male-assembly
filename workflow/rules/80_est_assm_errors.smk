@@ -811,7 +811,7 @@ rule identify_mixed_support_clusters:
             "output/eval/flagged_regions/chrom_cov/{{sample}}.{other_reads}_aln-to_{{hifi_type}}.{{ont_type}}.na.{{chrom}}.minmq{minmapq}.cov.tsv.gz",
             other_reads=["HIFIRW", "ONTUL"],
             minmapq=[0, 10]
-        )
+        ),
         hifi_regions = expand(
             "output/eval/flagged_regions/flanked/{{sample}}.{{hifi_type}}.{{ont_type}}.na.{{chrom}}.HIFIRW.{tool}-genreg.tsv",
             tool=["vm", "nf", "dv"]

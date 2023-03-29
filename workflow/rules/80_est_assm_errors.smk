@@ -958,11 +958,12 @@ rule create_supptable_sample_flagged_regions:
     output:
         tsv = "output/eval/flagged_regions/sample_stats/SAMPLES.{hifi_type}.{ont_type}.na.{chrom}.flagged-stats.tsv",
     run:
+        import pathlib as pl
         import pandas as pd
 
         merged = []
         for tsv_file in input.tsv:
-            sample = tsv_file.name.split(".")[0]
+            sample = pl.Path(tsv_file).name.split(".")[0]
             df = pd.read_csv(tsv_file, header=0, sep="\t")
             df["is_qc_sample"] = 0
             if sample in QC_SAMPLES:

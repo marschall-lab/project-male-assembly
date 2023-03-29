@@ -900,6 +900,8 @@ rule dump_sample_stats_flagged_regions:
 
         stats = col.OrderedDict([
             ("sample", wildcards.sample),
+            ("not_flagged_pct", 0),
+            ("not_clustered_pct", 0),
             ("mixed_region_clusters_num", clusters.shape[0]),
             ("mixed_region_clusters_bp", int(clusters["cluster_span"].sum())),
             ("mixed_region_clusters_pct", 0),
@@ -913,7 +915,10 @@ rule dump_sample_stats_flagged_regions:
             ("flagged_nucfreq_num", int(regions.loc[select_nucfreq, :].shape[0])),
             ("flagged_nucfreq_bp", int(regions.loc[select_nucfreq, "length"].sum())),
             ("flagged_veritymap_num", int(regions.loc[select_veritymap, :].shape[0])),
-            ("flagged_veritymap_bp", int(regions.loc[select_veritymap, "length"].sum()))
+            ("flagged_veritymap_bp", int(regions.loc[select_veritymap, "length"].sum())),
+            ("flagged_all_num", 0),
+            ("flagged_all_bp", 0),
+            ("flagged_all_pct", 0)
         ])
 
         if stats["flagged_regions_bp"] > 0:
@@ -932,6 +937,12 @@ rule dump_sample_stats_flagged_regions:
             stats["mixed_region_clusters_median_size"] = int(clusters["cluster_span"].median())
             stats["mixed_region_clusters_mean_size"] = int(clusters["cluster_span"].mean())
 
+        stats["flagged_all_num"] = stats["flagged_regions_num"] + stats["het_snv_num"]
+        stats["flagged_all_bp"] = stats["flagged_regions_bp"] + stats["het_snv_num"]
+        stats["flagged_all_pct"] = round(stats["flagged_all_bp"] / wg_size * 100, 2)
+
+        stats["not_flagged_pct"] = round(100 - stats["flagged_all_pct"], 2)
+        stats["not_clustered_pct"] = round(100 - stats["mixed_region_clusters_pct"], 2) 
 
         df = pd.DataFrame.from_records([stats])
         df.to_csv(output.sample_stats, header=True, index=False, sep="\t")

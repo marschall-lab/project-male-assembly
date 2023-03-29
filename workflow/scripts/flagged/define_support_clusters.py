@@ -182,7 +182,13 @@ def identify_support_clusters(regions, merged):
             # we know at this point that at least two different
             # tools must have flagged regions/positions in the
             # cluster
-            assert (has_nucfreq_support or has_veritymap_support) and total_snvs > 0
+            try:
+                assert (has_nucfreq_support or has_veritymap_support) and total_snvs > 0
+            except AssertionError:
+                print(tool_counts)
+                print(origins)
+                print(cluster)
+                raise
             cluster_type = "single_positions"
 
         start = origins["start"].min()

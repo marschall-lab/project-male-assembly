@@ -829,6 +829,109 @@ rule identify_mixed_support_clusters:
             "--merged {input.merged} --output {output.tsv}"
 
 
+rule dump_sample_beds_flagged_regions:
+    input:
+        tsv = "output/eval/flagged_regions/annotated/{sample}.{hifi_type}.{ont_type}.na.{chrom}.flagged-clustered.tsv",
+        chrom_bed = 'output/subset_wg/20_extract_contigs/{sample}.{hifi_type}.{ont_type}.na.{chrom}.bed',
+    output:
+        bed_regions = "output/eval/flagged_regions/sample_bed/{sample}.{hifi_type}.{ont_type}.na.{chrom}.flagged-all.bed",
+        bed_clusters = "output/eval/flagged_regions/sample_bed/{sample}.{hifi_type}.{ont_type}.na.{chrom}.mixed-clusters.bed",
+    run:
+        import pandas as pd
+
+        regions = pd.read_csv(input.tsv, header=0, sep="\t")
+        regions = regions.loc[regions["region_type"] == "origin", :].copy()
+        regions.sort_values(["contig", "start", "end"], inplace=True)
+        regions["is_cluster_member"] = regions["cluster_type"].apply(lambda x: 0 if x == "singleton" else 1)
+        bed_regions_columns = [
+            "contig", "start", "end",
+            "name", "software", "is_cluster_member",
+            "cluster_id", "cluster_type"
+        ]
+        with open(output.bed_regions, "w") as dump:
+            _ = dump.write("#")
+            regions[bed_regions_columns].to_csv(dump, header=True, index=False, sep="\t")
+
+        bed_cluster_columns = [
+            "contig", "cluster_start", "cluster_end", "cluster_id",
+            "num_nucfreq_regions", "num_veritymap_regions",
+            "num_het_snv_hifi", "num_het_snv_ont", "snv_density_kbp"
+        ]
+
+        with open(output.bed_clusters, "w") as dump:
+            _ = dump.write("#")
+            regions.loc[regions["cluster_type"] == "mixed_regions", bed_cluster_columns].to_csv(
+                dump, header=True, index=False, sep="\t"
+            )
+    # END OF RUN BLOCK
+
+
+rule dump_sample_stats_flagged_regions:
+    input:
+        tsv = "output/eval/flagged_regions/annotated/{sample}.{hifi_type}.{ont_type}.na.{chrom}.flagged-clustered.tsv",
+        chrom_bed = 'output/subset_wg/20_extract_contigs/{sample}.{hifi_type}.{ont_type}.na.{chrom}.bed',
+    output:
+        sample_stats = "output/eval/flagged_regions/sample_stats/{sample}.{hifi_type}.{ont_type}.na.{chrom}.flagged-stats.tsv"
+    run:
+        import pandas as pd
+        import collections as col
+
+        def compute_genome_size(fp):
+            df = pd.read_csv(fp, sep="\t", header=None, names=["contig", "start", "end"])
+            df["length"] = df["end"] - df["start"]
+            genome_size = int(df["length"].sum())
+            num_contigs = int(df["contig"].nunique())
+            return num_contigs, genome_size
+
+        contigs, wg_size = compute_genome_size(input.chrom_bed)
+
+        regions = pd.read_csv(input.tsv, header=0, sep="\t")
+        regions = regions.loc[regions["region_type"] == "origin", :].copy()
+        regions["length"] = regions["end"] - regions["start"]
+
+        select_nucfreq = regions["software"] == "NucFreq"
+        select_veritymap = regions["software"] == "VerityMap"
+        select_pos = regions["software"].isin(["DeepVariant", "PEPPER"])
+        select_reg = regions["software"].isin(["NucFreq", "VerityMap"])
+
+        clusters = regions.loc[regions["cluster_type"] == "mixed_regions", :].copy()
+        clusters.drop_duplicates("cluster_id", inplace=True)
+
+        stats = col.OrderedDict([
+            "sample": wildcards.sample,
+            "mixed_region_clusters_num": clusters.shape[0],
+            "mixed_region_clusters_bp": int(clusters["cluster_span"].sum()),
+            "mixed_region_clusters_pct": 0,
+            "mixed_region_clusters_median_size": int(clusters["cluster_span"].median()),
+            "mixed_region_clusters_mean_size": int(clusters["cluster_span"].mean()),
+            "flagged_regions_num": int(regions.loc[select_reg, :].shape[0]),
+            "flagged_regions_bp": int(regions.loc[select_reg, "length"].sum()),
+            "flagged_regions_pct": 0,
+            "het_snv_num": int(regions.loc[select_pos, "length"].sum()),
+            "het_snv_kbp_density": 0,
+            "flagged_nucfreq_num": int(regions.loc[select_nucfreq, :].shape[0]),
+            "flagged_nucfreq_bp": int(regions.loc[select_nucfreq, "length"].sum()),
+            "flagged_veritymap_num": int(regions.loc[select_veritymap, :].shape[0]),
+            "flagged_veritymap_bp": int(regions.loc[select_veritymap, "length"].sum())
+        ])
+
+        if stats["flagged_regions_bp"] > 0:
+            pct_flagged = round(stats["flagged_regions_bp"] / wg_size * 100, 2)
+            stats["flagged_regions_pct"] = pct_flagged
+
+        if stats["het_snv_num"] > 0:
+            snv_density = round(stats["het_snv_num"] / (wg_size / 1000), 2)
+            stats["het_snv_kbp_density"] = snv_density
+
+        if stats["mixed_region_clusters_bp"] > 0:
+            clustered_pct = round(stats["mixed_region_clusters_bp"] / wg_size * 100, 2)
+            stats["mixed_region_clusters_pct"] = clustered_pct      
+
+        df = pd.DataFrame.from_records([stats])
+        df.to_csv(output.sample_stats, header=True, index=False, sep="\t")
+    # END OF RUN BLOCK
+
+
 rule run_all_assm_errors:
     """
     Outlier: HG00512 is too fragmented
@@ -861,8 +964,15 @@ rule run_all_assm_errors:
             'output/eval/assm_errors/nucfreq/ALL-SAMPLES.{chrom}.nucfreq-stats.tsv',
             chrom=["chrY"]
         ),
-        flagged_clusters = expand(
-            "output/eval/flagged_regions/annotated/{sample}.{hifi_type}.{ont_type}.na.{chrom}.flagged-clustered.tsv",
+        flagged_stats = expand(
+            "output/eval/flagged_regions/sample_stats/{sample}.{hifi_type}.{ont_type}.na.{chrom}.flagged-stats.tsv",
+            sample=[s for s in COMPLETE_SAMPLES if s != "HG00512"],
+            hifi_type=["HIFIRW"],
+            ont_type=["ONTUL"],
+            chrom=["chrY"],
+        ),
+        flagged_bed = expand(
+            "output/eval/flagged_regions/sample_bed/{sample}.{hifi_type}.{ont_type}.na.{chrom}.flagged-all.bed",
             sample=[s for s in COMPLETE_SAMPLES if s != "HG00512"],
             hifi_type=["HIFIRW"],
             ont_type=["ONTUL"],

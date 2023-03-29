@@ -1007,7 +1007,12 @@ rule run_all_assm_errors:
             'output/eval/assm_errors/nucfreq/ALL-SAMPLES.{chrom}.nucfreq-stats.tsv',
             chrom=["chrY"]
         ),
-        flagged_stats = "output/eval/flagged_regions/sample_stats/SAMPLES.{hifi_type}.{ont_type}.na.{chrom}.flagged-stats.tsv",
+        flagged_stats = expand(
+            "output/eval/flagged_regions/sample_stats/SAMPLES.{hifi_type}.{ont_type}.na.{chrom}.flagged-stats.tsv",
+            hifi_type=["HIFIRW"],
+            ont_type=["ONTUL"],
+            chrom=["chrY"],
+        ),
         flagged_bed = expand(
             "output/eval/flagged_regions/sample_bed/{sample}.{hifi_type}.{ont_type}.na.{chrom}.flagged-all.bed",
             sample=[s for s in COMPLETE_SAMPLES if s != "HG00512"],

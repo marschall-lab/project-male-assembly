@@ -949,6 +949,32 @@ rule dump_sample_stats_flagged_regions:
     # END OF RUN BLOCK
 
 
+rule create_supptable_sample_flagged_regions:
+    input:
+        tsv = expand(
+            "output/eval/flagged_regions/sample_stats/{sample}.{{hifi_type}}.{{ont_type}}.na.{{chrom}}.flagged-stats.tsv",
+            sample=[s for s in COMPLETE_SAMPLES if s != "HG00512"],
+        )
+    output:
+        tsv = "output/eval/flagged_regions/sample_stats/SAMPLES.{hifi_type}.{ont_type}.na.{chrom}.flagged-stats.tsv",
+    run:
+        import pandas as pd
+
+        merged = []
+        for tsv_file in input.tsv:
+            sample = tsv_file.name.split(".")[0]
+            df = pd.read_csv(tsv_file, header=0, sep="\t")
+            df["is_qc_sample"] = 0
+            if sample in QC_SAMPLES:
+                df["is_qc_sample"] = 1
+            merged.append(df)
+
+        merged = pd.concat(merged, axis=0, ignore_index=False)
+        merged.sort_values(["is_qc_sample", "sample"], inplace=True)
+        merged.to_csv(output.tsv, header=True, index=False, sep="\t")
+
+
+
 rule run_all_assm_errors:
     """
     Outlier: HG00512 is too fragmented
@@ -981,13 +1007,7 @@ rule run_all_assm_errors:
             'output/eval/assm_errors/nucfreq/ALL-SAMPLES.{chrom}.nucfreq-stats.tsv',
             chrom=["chrY"]
         ),
-        flagged_stats = expand(
-            "output/eval/flagged_regions/sample_stats/{sample}.{hifi_type}.{ont_type}.na.{chrom}.flagged-stats.tsv",
-            sample=[s for s in COMPLETE_SAMPLES if s != "HG00512"],
-            hifi_type=["HIFIRW"],
-            ont_type=["ONTUL"],
-            chrom=["chrY"],
-        ),
+        flagged_stats = "output/eval/flagged_regions/sample_stats/SAMPLES.{hifi_type}.{ont_type}.na.{chrom}.flagged-stats.tsv",
         flagged_bed = expand(
             "output/eval/flagged_regions/sample_bed/{sample}.{hifi_type}.{ont_type}.na.{chrom}.flagged-all.bed",
             sample=[s for s in COMPLETE_SAMPLES if s != "HG00512"],

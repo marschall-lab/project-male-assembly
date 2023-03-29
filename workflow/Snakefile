@@ -545,6 +545,7 @@ rule build_plotting_summaries:
         'output/eval/merged_errors/SAMPLES.HIFIRW.ONTUL.na.chrY.error-stats.tsv',
         'output/stats/contigs/pctassm-ctgly-median-seqcls.by-sample.HIFIRW.ONTUL.na.chrY.pivot.tsv',
         'output/stats/contigs/pctassm-ctgly-seqcls.by-sample.HIFIRW.ONTUL.na.chrY.pivot.tsv',
+        'output/eval/flagged_regions/sample_stats/SAMPLES.HIFIRW.ONTUL.na.chrY.flagged-stats.tsv',
 
 
 rule run_estimte_chry_qv:

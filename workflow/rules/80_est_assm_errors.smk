@@ -866,6 +866,7 @@ rule dump_sample_beds_flagged_regions:
     # END OF RUN BLOCK
 
 
+localrules: dump_sample_stats_flagged_regions
 rule dump_sample_stats_flagged_regions:
     input:
         tsv = "output/eval/flagged_regions/annotated/{sample}.{hifi_type}.{ont_type}.na.{chrom}.flagged-clustered.tsv",
@@ -895,15 +896,15 @@ rule dump_sample_stats_flagged_regions:
         select_reg = regions["software"].isin(["NucFreq", "VerityMap"])
 
         clusters = regions.loc[regions["cluster_type"] == "mixed_regions", :].copy()
-        clusters.drop_duplicates("cluster_id", inplace=True)
+        clusters.drop_duplicates("cluster_id", inplace=True, keep="first")
 
         stats = col.OrderedDict([
             ("sample", wildcards.sample),
             ("mixed_region_clusters_num", clusters.shape[0]),
             ("mixed_region_clusters_bp", int(clusters["cluster_span"].sum())),
             ("mixed_region_clusters_pct", 0),
-            ("mixed_region_clusters_median_size", int(clusters["cluster_span"].median())),
-            ("mixed_region_clusters_mean_size", int(clusters["cluster_span"].mean())),
+            ("mixed_region_clusters_median_size", 0),
+            ("mixed_region_clusters_mean_size", 0),
             ("flagged_regions_num", int(regions.loc[select_reg, :].shape[0])),
             ("flagged_regions_bp", int(regions.loc[select_reg, "length"].sum())),
             ("flagged_regions_pct", 0),
@@ -926,6 +927,11 @@ rule dump_sample_stats_flagged_regions:
         if stats["mixed_region_clusters_bp"] > 0:
             clustered_pct = round(stats["mixed_region_clusters_bp"] / wg_size * 100, 2)
             stats["mixed_region_clusters_pct"] = clustered_pct      
+
+        if stats["mixed_region_clusters_num"] > 0:
+            stats["mixed_region_clusters_median_size"] = int(clusters["cluster_span"].median())
+            stats["mixed_region_clusters_mean_size"] = int(clusters["cluster_span"].mean())
+
 
         df = pd.DataFrame.from_records([stats])
         df.to_csv(output.sample_stats, header=True, index=False, sep="\t")

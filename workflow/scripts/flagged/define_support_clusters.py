@@ -157,6 +157,11 @@ def identify_support_clusters(regions, merged):
             # everything merged came from the same tool,
             # not interesting; coverage will show if region is problematic
             continue
+        if origins["software"].isin(["DeepVariant", "PEPPER"]).all():
+            # apparently, for sample HG00621, there is a single
+            # case of both SNV callers calling the same position
+            # - hardly qualifies as a "cluster", so skip over it
+            continue
         tool_counts = origins["software"].value_counts()
         tool_support = []
         total_snvs = 0

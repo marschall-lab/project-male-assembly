@@ -157,34 +157,50 @@ def identify_support_clusters(regions, merged):
             # everything merged came from the same tool,
             # not interesting; coverage will show if region is problematic
             continue
-        if origins["software"].isin(["DeepVariant", "NucFreq", "PEPPER"]).all():
-            # NucFreq and variant callers essentially look
-            # for the same thing, so not interesting
-            continue
         tool_counts = origins["software"].value_counts()
         tool_support = []
         total_snvs = 0
+        has_nucfreq_support = False
+        has_veritymap_support = False
         for tool in tool_label_map.keys():
             try:
                 tool_count = tool_counts[tool]
+                if tool == "NucFreq":
+                    has_nucfreq_support = True
+                if tool == "VerityMap":
+                    has_veritymap_support = True
             except KeyError:
                 tool_count = 0
             tool_support.append(tool_count)
             if tool in ["DeepVariant", "PEPPER"]:
                 total_snvs += tool_count
-        
+
+        if has_veritymap_support and has_nucfreq_support:
+            cluster_type = "mixed_regions"
+        else:
+            # NB: because of the above check for nunique > 1,
+            # we know at this point that at least two different
+            # tools must have flagged regions/positions in the
+            # cluster
+            assert (has_nucfreq_support or has_veritymap_support) and total_snvs > 0
+            cluster_type = "single_positions"
+
         start = origins["start"].min()
         end = origins["end"].max()
         cluster_id = hl.md5("".join(region_ids).encode("utf-8")).hexdigest()
         cluster_length = end - start
         snv_density = total_snvs / (cluster_length / 1000)
         for region in region_ids:
-            record = [region, cluster_id, start, end, cluster_length, snv_density]
+            record = [
+                region, cluster_id, start, end,
+                cluster_length, snv_density, cluster_type
+            ]
             record.extend(tool_support)
             cluster_stats.append(record)
 
     stats_columns = [
-        "name", "cluster_id", "cluster_start", "cluster_end", "cluster_span", "snv_density_kbp"
+        "name", "cluster_id", "cluster_start", "cluster_end",
+        "cluster_span", "snv_density_kbp", "cluster_type"
     ]
     stats_columns.extend(list(tool_label_map.values()))
     cluster_stats = pd.DataFrame.from_records(
@@ -218,8 +234,9 @@ def main():
 
     regions = regions.merge(support_clusters, on="name", how="outer")
     regions["cluster_id"].fillna("singleton", inplace=True)
+    regions["cluster_type"].fillna("singleton", inplace=True)
     for column in support_clusters.columns:
-        if column in ["name", "cluster_id"]:
+        if column in ["name", "cluster_id", "cluster_type"]:
             continue
         regions[column].fillna(-1, inplace=True)
         if column in ["cluster_start", "cluster_end", "cluster_span"]:

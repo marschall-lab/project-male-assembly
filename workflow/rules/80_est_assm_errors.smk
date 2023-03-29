@@ -898,21 +898,21 @@ rule dump_sample_stats_flagged_regions:
         clusters.drop_duplicates("cluster_id", inplace=True)
 
         stats = col.OrderedDict([
-            "sample": wildcards.sample,
-            "mixed_region_clusters_num": clusters.shape[0],
-            "mixed_region_clusters_bp": int(clusters["cluster_span"].sum()),
-            "mixed_region_clusters_pct": 0,
-            "mixed_region_clusters_median_size": int(clusters["cluster_span"].median()),
-            "mixed_region_clusters_mean_size": int(clusters["cluster_span"].mean()),
-            "flagged_regions_num": int(regions.loc[select_reg, :].shape[0]),
-            "flagged_regions_bp": int(regions.loc[select_reg, "length"].sum()),
-            "flagged_regions_pct": 0,
-            "het_snv_num": int(regions.loc[select_pos, "length"].sum()),
-            "het_snv_kbp_density": 0,
-            "flagged_nucfreq_num": int(regions.loc[select_nucfreq, :].shape[0]),
-            "flagged_nucfreq_bp": int(regions.loc[select_nucfreq, "length"].sum()),
-            "flagged_veritymap_num": int(regions.loc[select_veritymap, :].shape[0]),
-            "flagged_veritymap_bp": int(regions.loc[select_veritymap, "length"].sum())
+            ("sample", wildcards.sample),
+            ("mixed_region_clusters_num", clusters.shape[0]),
+            ("mixed_region_clusters_bp", int(clusters["cluster_span"].sum())),
+            ("mixed_region_clusters_pct", 0),
+            ("mixed_region_clusters_median_size", int(clusters["cluster_span"].median())),
+            ("mixed_region_clusters_mean_size", int(clusters["cluster_span"].mean())),
+            ("flagged_regions_num", int(regions.loc[select_reg, :].shape[0])),
+            ("flagged_regions_bp", int(regions.loc[select_reg, "length"].sum())),
+            ("flagged_regions_pct", 0),
+            ("het_snv_num", int(regions.loc[select_pos, "length"].sum())),
+            ("het_snv_kbp_density", 0),
+            ("flagged_nucfreq_num", int(regions.loc[select_nucfreq, :].shape[0])),
+            ("flagged_nucfreq_bp", int(regions.loc[select_nucfreq, "length"].sum())),
+            ("flagged_veritymap_num", int(regions.loc[select_veritymap, :].shape[0])),
+            ("flagged_veritymap_bp", int(regions.loc[select_veritymap, "length"].sum()))
         ])
 
         if stats["flagged_regions_bp"] > 0:

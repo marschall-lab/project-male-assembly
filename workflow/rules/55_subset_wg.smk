@@ -663,13 +663,15 @@ rule extract_read_ref_alignments_paf:
     input:
         paf = 'output/alignments/reads-to-ref/{sample}.{other_reads}_aln-to_{reference}.paf.gz',
     output:
-        paf = 'output/subset_wg/60_subset_rdref/{sample}.{other_reads}_aln-to_{reference}.chrY.paf.gz'
+        paf = 'output/subset_wg/60_subset_rdref/{sample}.{other_reads}_aln-to_{reference}.{chrom}.paf.gz'
+    wildcard_constraints:
+        chrom = '(chrX|chrY)'
     conda:
         '../envs/biotools.yaml'
     resources:
         mem_mb = lambda wildcards, attempt: 2048 * attempt,
     params:
-        chroms = lambda wildcards: '(' + '|'.join(REF_CHRY[wildcards.reference]) + ')'
+        chroms = lambda wildcards: '(' + '|'.join(REF_CHRY[(wildcards.reference, wildcards.chrom)]) + ')'
     shell:
         'zgrep -E "{params.chroms}" {input.paf} | pigz -p 2 --best > {output.paf}'
 

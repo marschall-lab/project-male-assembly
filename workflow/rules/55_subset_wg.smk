@@ -551,9 +551,11 @@ rule extract_read_alignments_bam:
     input:
         bam = 'output/alignments/reads-to-assm/{sample}.{other_reads}_aln-to_{hifi_type}.{ont_type}.na.wg.bam',
         bai = 'output/alignments/reads-to-assm/{sample}.{other_reads}_aln-to_{hifi_type}.{ont_type}.na.wg.bam.bai',
-        bed = 'output/subset_wg/20_extract_contigs/{sample}.{hifi_type}.{ont_type}.na.chrY.bed',
+        bed = 'output/subset_wg/20_extract_contigs/{sample}.{hifi_type}.{ont_type}.na.{chrom}.bed',
     output:
-        bam = 'output/subset_wg/40_extract_rdaln/{sample}.{other_reads}_aln-to_{hifi_type}.{ont_type}.na.chrY.bam',
+        bam = 'output/subset_wg/40_extract_rdaln/{sample}.{other_reads}_aln-to_{hifi_type}.{ont_type}.na.{chrom}.bam',
+    wildcard_constraints:
+        chrom = '(chrX|chrY)'
     conda:
         '../envs/biotools.yaml'
     threads: config['num_cpu_low']
@@ -634,8 +636,11 @@ rule extract_motif_hit_sequences_in_reference:
 
 
 REF_CHRY = {
-    'GRCh38': ['chrY', 'chrY_KI270740v1_random'],
-    'T2TXY': ['chrY']
+    ('GRCh38', 'chrY'): ['chrY', 'chrY_KI270740v1_random'],
+    ('T2TXY', 'chrY'): ['chrY'],
+    ('GRCh38', 'chrX'): ['chrX'],
+    ('T2TXY', 'chrX'): ['chrX'],
+
 }
 
 rule extract_read_ref_alignments_bam:
@@ -643,13 +648,13 @@ rule extract_read_ref_alignments_bam:
         bam = 'output/alignments/reads-to-ref/{sample}.{other_reads}_aln-to_{reference}.bam',
         bai = 'output/alignments/reads-to-ref/{sample}.{other_reads}_aln-to_{reference}.bam.bai',
     output:
-        bam = 'output/subset_wg/60_subset_rdref/{sample}.{other_reads}_aln-to_{reference}.chrY.bam'
+        bam = 'output/subset_wg/60_subset_rdref/{sample}.{other_reads}_aln-to_{reference}.{chrom}.bam'
     conda:
         '../envs/biotools.yaml'
     resources:
         mem_mb = lambda wildcards, attempt: 2048 * attempt,
     params:
-        chroms = lambda wildcards: ' '.join(REF_CHRY[wildcards.reference])
+        chroms = lambda wildcards: ' '.join(REF_CHRY[(wildcards.reference, wildcards.chrom)])
     shell:
         'samtools view -b {input.bam} {params.chroms} > {output.bam}'
 

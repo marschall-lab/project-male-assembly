@@ -351,6 +351,23 @@ rule populate_share:
         )
 
 
+rule populate_share_add_chrX:
+    """
+    New request to also copy
+    reads-to-ref alignments
+    for chrX
+    """
+    input:
+        aln_reads_ref = expand(
+            'output/share/alignments/reads-to-ref/{sample}.{other_reads}_aln-to_{reference}.{chrom}.copied.ok',
+            sample=COMPLETE_SAMPLES,
+            other_reads=['HIFIRW'],
+            reference=['T2TXY', 'GRCh38'],
+            chrom=['chrX']
+        ),
+
+
+
 rule run_verkko_wg:
     input:
         ctg_agg = expand(

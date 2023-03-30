@@ -922,15 +922,15 @@ rule dump_sample_stats_flagged_regions:
         ])
 
         if stats["flagged_regions_bp"] > 0:
-            pct_flagged = round(stats["flagged_regions_bp"] / wg_size * 100, 2)
+            pct_flagged = round(stats["flagged_regions_bp"] / wg_size * 100, 3)
             stats["flagged_regions_pct"] = pct_flagged
 
         if stats["het_snv_num"] > 0:
-            snv_density = round(stats["het_snv_num"] / (wg_size / 1000), 2)
+            snv_density = round(stats["het_snv_num"] / (wg_size / 1000), 3)
             stats["het_snv_kbp_density"] = snv_density
 
         if stats["mixed_region_clusters_bp"] > 0:
-            clustered_pct = round(stats["mixed_region_clusters_bp"] / wg_size * 100, 2)
+            clustered_pct = round(stats["mixed_region_clusters_bp"] / wg_size * 100, 3)
             stats["mixed_region_clusters_pct"] = clustered_pct      
 
         if stats["mixed_region_clusters_num"] > 0:
@@ -939,10 +939,10 @@ rule dump_sample_stats_flagged_regions:
 
         stats["flagged_all_num"] = stats["flagged_regions_num"] + stats["het_snv_num"]
         stats["flagged_all_bp"] = stats["flagged_regions_bp"] + stats["het_snv_num"]
-        stats["flagged_all_pct"] = round(stats["flagged_all_bp"] / wg_size * 100, 2)
+        stats["flagged_all_pct"] = round(stats["flagged_all_bp"] / wg_size * 100, 3)
 
-        stats["not_flagged_pct"] = round(100 - stats["flagged_all_pct"], 2)
-        stats["not_clustered_pct"] = round(100 - stats["mixed_region_clusters_pct"], 2) 
+        stats["not_flagged_pct"] = round(100 - stats["flagged_all_pct"], 3)
+        stats["not_clustered_pct"] = round(100 - stats["mixed_region_clusters_pct"], 3) 
 
         df = pd.DataFrame.from_records([stats])
         df.to_csv(output.sample_stats, header=True, index=False, sep="\t")

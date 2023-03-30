@@ -101,12 +101,12 @@ rule run_chrom_veritymap:
         reads = 'output/subset_wg/45_extract_reads/{sample}.{other_reads}_aln-to_{hifi_type}.{ont_type}.na.{chrom}.reads.fasta.gz',
         assembly = 'output/subset_wg/20_extract_contigs/{sample}.{hifi_type}.{ont_type}.na.{chrom}.fasta',
     output:
-        chk = 'output/eval/assm_errors/{sample}.{hifi_type}.{ont_type}.na.{chrom}.{other_reads}.vm.chk',
-        bed = 'output/eval/assm_errors/{sample}.{hifi_type}.{ont_type}.na.{chrom}.{other_reads}/{sample}_kmers_dist_diff.bed'
+        chk = 'output/eval/assm_errors/veritymap/{sample}.{hifi_type}.{ont_type}.na.{chrom}.{other_reads}.vm.chk',
+        bed = 'output/eval/assm_errors/veritymap/{sample}.{hifi_type}.{ont_type}.na.{chrom}.{other_reads}/{sample}_kmers_dist_diff.bed'
     log:
-        'log/output/eval/assm_errors/{sample}.{hifi_type}.{ont_type}.na.{chrom}.{other_reads}.vm.log'
+        'log/output/eval/assm_errors/veritymap/{sample}.{hifi_type}.{ont_type}.na.{chrom}.{other_reads}.vm.log'
     benchmark:
-        'rsrc/output/eval/assm_errors/{sample}.{hifi_type}.{ont_type}.na.{chrom}.{other_reads}.vm.rsrc'
+        'rsrc/output/eval/assm_errors/veritymap/{sample}.{hifi_type}.{ont_type}.na.{chrom}.{other_reads}.vm.rsrc'
     wildcard_constraints:
         chrom = '(chrY|chrX)'
     singularity:
@@ -142,7 +142,7 @@ rule normalize_veritymap_bed_file:
     lowest start and highest end coordinate.
     """
     input:
-        bed = 'output/eval/assm_errors/{sample}.{hifi_type}.{ont_type}.na.{chrom}.{other_reads}/{sample}_kmers_dist_diff.bed'
+        bed = 'output/eval/assm_errors/veritymap/{sample}.{hifi_type}.{ont_type}.na.{chrom}.{other_reads}/{sample}_kmers_dist_diff.bed'
     output:
         tsv = 'output/eval/merged_errors/norm_tables/{sample}.{hifi_type}.{ont_type}.na.{chrom}.{other_reads}.vm-errors.tsv'
     run:
@@ -949,6 +949,7 @@ rule dump_sample_stats_flagged_regions:
     # END OF RUN BLOCK
 
 
+localrules: create_supptable_sample_flagged_regions
 rule create_supptable_sample_flagged_regions:
     input:
         tsv = expand(

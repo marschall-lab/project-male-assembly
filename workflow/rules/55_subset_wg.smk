@@ -424,6 +424,18 @@ rule extract_contig_alignments_bam:
 
 
 rule extract_read_alignments_paf:
+    """ 2023-03-30
+    Fix: because VerityMap does not accept precomputed
+    alignments (BAM files), need to extract the chromosome-
+    specific reads from the alignment. For that, it is
+    important to filter for primary alignments only
+    (no BAM flags present downstream).
+    Otherwise, there will be a ~1% to ~2% contamination
+    of reads with primary alignment to X, but secondary
+    alignment to Y (most likely: PAR region), which then
+    end up in the read set assumed to be chromosome-
+    specific.
+    """
     input:
         paf = 'output/alignments/reads-to-assm/{sample}.{other_reads}_aln-to_{hifi_type}.{ont_type}.na.wg.paf.gz',
         names = 'output/subset_wg/25_name_mappings/{sample}.{hifi_type}.{ont_type}.na.{chrom}.names.txt'
@@ -437,7 +449,11 @@ rule extract_read_alignments_paf:
     resources:
         mem_mb = lambda wildcards, attempt: 1024 * attempt
     shell:
-        'zgrep -w -F -f {input.names} {input.paf} | pigz -p 4 --best > {output.paf}'
+        "zgrep -i -w -e 'tp:a:p' {input.paf}"
+            " | "
+        "grep -w -F -f {input.names} "
+            " | "
+        "pigz -p 4 --best > {output.paf}"
 
 
 rule cache_read_to_assembly_aln:

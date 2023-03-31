@@ -884,6 +884,7 @@ rule dump_sample_stats_flagged_regions:
     output:
         sample_stats = "output/eval/flagged_regions/sample_stats/{sample}.{hifi_type}.{ont_type}.na.{chrom}.flagged-stats.tsv"
     run:
+        import math
         import pandas as pd
         import collections as col
 
@@ -928,20 +929,35 @@ rule dump_sample_stats_flagged_regions:
             ("flagged_veritymap_bp", int(regions.loc[select_veritymap, "length"].sum())),
             ("flagged_all_num", 0),
             ("flagged_all_bp", 0),
-            ("flagged_all_pct", 0)
+            ("flagged_all_pct", 0),
+            ("clustered_bp_per_kbp", 0),
+            ("clustered_qv_est", -1)
+            ("flagged_region_bp_per_kbp", 0),
+            ("flagged_region_qv_est", -1),
+            ("flagged_all_bp_per_kbp", 0),
+            ("flagged_all_qv_est", -1)
         ])
 
         if stats["flagged_regions_bp"] > 0:
-            pct_flagged = round(stats["flagged_regions_bp"] / wg_size * 100, 3)
+            pct_flagged = round(stats["flagged_regions_bp"] / wg_size * 100, 5)
             stats["flagged_regions_pct"] = pct_flagged
+            flagged_region_density = stats["flagged_regions_bp"] / wg_size * 1000
+            stats["flagged_region_bp_per_kbp"] = round(flagged_region_density, 5)
+            stats["flagged_region_qv_est"] = round(abs(10 * math.log10(flagged_region_density)), 0)
+            flagged_all_density = stats["flagged_all_bp"] / wg_size * 1000
+            stats["flagged_all_bp_per_kbp"] = round(flagged_all_density, 5)
+            stats["flagged_all_qv_est"] = round(abs(10 * math.log10(flagged_all_density)), 0)
 
         if stats["het_snv_num"] > 0:
-            snv_density = round(stats["het_snv_num"] / (wg_size / 1000), 3)
+            snv_density = round(stats["het_snv_num"] / (wg_size / 1000), 5)
             stats["het_snv_kbp_density"] = snv_density
 
         if stats["mixed_region_clusters_bp"] > 0:
-            clustered_pct = round(stats["mixed_region_clusters_bp"] / wg_size * 100, 3)
-            stats["mixed_region_clusters_pct"] = clustered_pct      
+            clustered_pct = round(stats["mixed_region_clusters_bp"] / wg_size * 100, 5)
+            stats["mixed_region_clusters_pct"] = clustered_pct
+            clustered_density = stats["mixed_region_clusters_bp"] / wg_size * 1000
+            stats["clustered_bp_per_kbp"] = round(clustered_density, 5)
+            stats["clustered_qv_est"] = round(abs(10 * math.log10(clustered_density)), 0)
 
         if stats["mixed_region_clusters_num"] > 0:
             stats["mixed_region_clusters_median_size"] = int(clusters["cluster_span"].median())
@@ -949,10 +965,10 @@ rule dump_sample_stats_flagged_regions:
 
         stats["flagged_all_num"] = stats["flagged_regions_num"] + stats["het_snv_num"]
         stats["flagged_all_bp"] = stats["flagged_regions_bp"] + stats["het_snv_num"]
-        stats["flagged_all_pct"] = round(stats["flagged_all_bp"] / wg_size * 100, 3)
+        stats["flagged_all_pct"] = round(stats["flagged_all_bp"] / wg_size * 100, 5)
 
-        stats["not_flagged_pct"] = round(100 - stats["flagged_all_pct"], 3)
-        stats["not_clustered_pct"] = round(100 - stats["mixed_region_clusters_pct"], 3) 
+        stats["not_flagged_pct"] = round(100 - stats["flagged_all_pct"], 5)
+        stats["not_clustered_pct"] = round(100 - stats["mixed_region_clusters_pct"], 5) 
 
         df = pd.DataFrame.from_records([stats])
         df.to_csv(output.sample_stats, header=True, index=False, sep="\t")

@@ -931,7 +931,7 @@ rule dump_sample_stats_flagged_regions:
             ("flagged_all_bp", 0),
             ("flagged_all_pct", 0),
             ("clustered_bp_per_kbp", 0),
-            ("clustered_qv_est", -1)
+            ("clustered_qv_est", -1),
             ("flagged_region_bp_per_kbp", 0),
             ("flagged_region_qv_est", -1),
             ("flagged_all_bp_per_kbp", 0),

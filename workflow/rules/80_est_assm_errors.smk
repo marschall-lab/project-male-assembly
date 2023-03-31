@@ -125,6 +125,7 @@ rule run_chrom_veritymap:
         'touch {output.chk}'
 
 
+localrules: normalize_veritymap_bed_file
 rule normalize_veritymap_bed_file:
     """
     Normalize VerityMap BED file for simple
@@ -219,14 +220,23 @@ rule normalize_veritymap_bed_file:
                     
                 #raise ValueError(f'Cannot process presumably identical events: {records}')
 
-        merged_events = pd.concat(merged_events, axis=0, ignore_index=False)    
+        if not merged_events:
+            merged_events = pd.DataFrame(
+                [],
+                columns=[
+                    "chrom", "start", "end", "est_size",
+                    "sample", "reads", "source"
+                ]
+            )
+        else:
+            merged_events = pd.concat(merged_events, axis=0, ignore_index=False)    
 
-        merged_events['sample'] = wildcards.sample
-        merged_events['reads'] = wildcards.other_reads
-        merged_events['source'] = 'VerityMap'
-        merged_events.sort_values(['chrom', 'start'], ascending=True, inplace=True)
+            merged_events['sample'] = wildcards.sample
+            merged_events['reads'] = wildcards.other_reads
+            merged_events['source'] = 'VerityMap'
+            merged_events.sort_values(['chrom', 'start'], ascending=True, inplace=True)
 
-        assert pd.notnull(merged_events).all(axis=1).all()
+            assert pd.notnull(merged_events).all(axis=1).all()
 
         merged_events.to_csv(output.tsv, sep='\t', header=True, index=False)
     # END OF RUN BLOCK

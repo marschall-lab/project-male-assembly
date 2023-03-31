@@ -944,9 +944,6 @@ rule dump_sample_stats_flagged_regions:
             flagged_region_density = stats["flagged_regions_bp"] / wg_size * 1000
             stats["flagged_region_bp_per_kbp"] = round(flagged_region_density, 5)
             stats["flagged_region_qv_est"] = round(abs(10 * math.log10(flagged_region_density)), 0)
-            flagged_all_density = stats["flagged_all_bp"] / wg_size * 1000
-            stats["flagged_all_bp_per_kbp"] = round(flagged_all_density, 5)
-            stats["flagged_all_qv_est"] = round(abs(10 * math.log10(flagged_all_density)), 0)
 
         if stats["het_snv_num"] > 0:
             snv_density = round(stats["het_snv_num"] / (wg_size / 1000), 5)
@@ -966,6 +963,11 @@ rule dump_sample_stats_flagged_regions:
         stats["flagged_all_num"] = stats["flagged_regions_num"] + stats["het_snv_num"]
         stats["flagged_all_bp"] = stats["flagged_regions_bp"] + stats["het_snv_num"]
         stats["flagged_all_pct"] = round(stats["flagged_all_bp"] / wg_size * 100, 5)
+
+        if stats["flagged_all_bp"] > 0:
+            flagged_all_density = stats["flagged_all_bp"] / wg_size * 1000
+            stats["flagged_all_bp_per_kbp"] = round(flagged_all_density, 5)
+            stats["flagged_all_qv_est"] = round(abs(10 * math.log10(flagged_all_density)), 0)
 
         stats["not_flagged_pct"] = round(100 - stats["flagged_all_pct"], 5)
         stats["not_clustered_pct"] = round(100 - stats["mixed_region_clusters_pct"], 5) 

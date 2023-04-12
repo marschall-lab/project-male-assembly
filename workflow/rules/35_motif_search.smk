@@ -29,7 +29,8 @@ rule hmmer_motif_search:
         'rsrc/output/motif_search/00_detection/{sub_folder}/{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.{motif}.hmmer.rsrc',
     wildcard_constraints:
         sub_folder = '(00_raw|10_renamed)',
-        mapq = '(na|ha)'
+        mapq = '(na|ha)',
+        sample = SAMPLE_NAME_CONSTRAINT
     singularity:
         'hmmer.sif'
 #    conda:
@@ -60,7 +61,8 @@ rule hmmer_reference_motif_search:
     benchmark:
         'rsrc/output/motif_search/00_detection/{sub_folder}/{sample}.{hifi_type}.{ont_type}.{mapq}.{chrom}.{motif}.hmmer.rsrc',
     wildcard_constraints:
-        sub_folder = '20_refseq'
+        sub_folder = '20_refseq',
+        sample='(T2T|GRCh38)'
     singularity:
         'hmmer.sif'
 #    conda:

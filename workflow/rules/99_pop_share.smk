@@ -572,6 +572,7 @@ rule copy_reference_motif_seq_files:
         # EBI-UPLOAD only
         subfolder = pl.Path(config['path_root_deposit_ebi']).resolve(strict=True)
         subfolder = subfolder.joinpath("ref_seq_motifs")
+        subfolder.mkdir(parents=True, exist_ok=True)
 
         check_file = ''
         for source in input.motifs:

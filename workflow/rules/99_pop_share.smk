@@ -551,7 +551,7 @@ rule copy_seqclass_annotations:
     # END OF RUN BLOCK
 
 
-rule copy_motif_files:
+rule copy_reference_motif_files:
     input:
         motifs = expand(
             "references_derived/{motif}.fasta",

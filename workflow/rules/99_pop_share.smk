@@ -83,6 +83,7 @@ rule copy_verkko_assemblies:
                 target = verkko_subfolder.joinpath("qc_assembly", source_path.name)
             else:
                 target = verkko_subfolder / source_path.name
+            target.parent.mkdir(parents=True, exist_ok=True)
             rsync(source_path, target)
             check_file += f'{source_path}\t{target}\n'
 
@@ -133,6 +134,7 @@ rule copy_verkko_subset_assembly:
                 target = verkko_subfolder.joinpath("qc_assembly", source_path.name)
             else:
                 target = verkko_subfolder / source_path.name
+            target.parent.mkdir(parents=True, exist_ok=True)
             rsync(source_path, target)
             check_file += f'{source_path}\t{target}\n'
 
@@ -543,6 +545,7 @@ rule copy_seqclass_annotations:
                 target = verkko_subfolder.joinpath("qc_assembly", source_path.name)
             else:
                 target = verkko_subfolder / source_path.name
+            target.parent.mkdir(parents=True, exist_ok=True)
             rsync(source_path, target)
             check_file += f'{source_path}\t{target}\n'
 
@@ -614,6 +617,7 @@ rule copy_flagged_regions:
                 target = verkko_subfolder.joinpath("qc_assembly", source_path.name)
             else:
                 target = verkko_subfolder / source_path.name
+            target.parent.mkdir(parents=True, exist_ok=True)
             rsync(source_path, target)
             check_file += f'{source_path}\t{target}\n'
 

@@ -78,7 +78,7 @@ rule copy_verkko_assemblies:
         )
         for source in [input.linear, input.index]:
             source_path = pl.Path(source)
-            sample = source_path.name
+            sample = source_path.name.split(".")[0]
             if sample in QC_SAMPLES:
                 target = verkko_subfolder.joinpath("qc_assembly", source_path.name)
             else:
@@ -129,7 +129,7 @@ rule copy_verkko_subset_assembly:
         )
         for source in [input.linear, input.index]:
             source_path = pl.Path(source)
-            sample = source_path.name
+            sample = source_path.name.split(".")[0]
             if sample in QC_SAMPLES:
                 target = verkko_subfolder.joinpath("qc_assembly", source_path.name)
             else:
@@ -535,12 +535,12 @@ rule copy_seqclass_annotations:
         )
 
         source_files = [
-            input.t2t_bed, input.t2t_tsv, input_fasta,
+            input.t2t_bed, input.t2t_tsv, input.t2t_fasta,
         ]
 
         for source in itt.chain(source_files, input.bed_generic, input.bed_specific):
             source_path = pl.Path(source)
-            sample = source_path.name
+            sample = source_path.name.split(".")[0]
             if sample in QC_SAMPLES:
                 target = verkko_subfolder.joinpath("qc_assembly", source_path.name)
             else:
@@ -613,7 +613,7 @@ rule copy_flagged_regions:
         check_file = ''
         for source in itt.chain(input.regions, input.clusters):
             source_path = pl.Path(source)
-            sample = source_path.name
+            sample = source_path.name.split(".")[0]
             if sample in QC_SAMPLES:
                 target = verkko_subfolder.joinpath("qc_assembly", source_path.name)
             else:

@@ -589,6 +589,10 @@ rule copy_reference_motif_seq_files:
 
 rule copy_flagged_regions:
     input:
+        version = expand(
+            'output/hybrid/verkko/{sample}.HIFIRW.ONTUL.na.wg.verkko.info',
+            sample=[s for s in COMPLETE_SAMPLES if s != "HG00512"],
+        ),
         regions = expand(
             "output/eval/flagged_regions/sample_bed/{sample}.HIFIRW.ONTUL.na.chrY.flagged-all.bed",
             sample=[s for s in COMPLETE_SAMPLES if s != "HG00512"],

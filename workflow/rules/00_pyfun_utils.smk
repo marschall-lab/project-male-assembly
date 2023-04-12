@@ -42,6 +42,9 @@ def select_whole_genome_assembly(wildcards):
 
     #assert hasattr(wildcards, 'sub_folder'), f'no sub_folder wildcard: {wildcards}'
     formatter = dict(wildcards)
+    if "sample" in formatter:
+        if formatter["sample"].startswith("T2T") or formatter["sample"].startswith("GRC"):
+            raise ValueError(f"ref request as sample: {formatter}")
     if hasattr(wildcards, 'sub_folder'):
         if wildcards.sub_folder == '00_raw':
             if wildcards.mapq == 'ha':

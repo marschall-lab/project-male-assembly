@@ -68,6 +68,24 @@ rule copy_verkko_assemblies:
             rsync(source_path, target)
             check_file += f'{source_path}\t{target}\n'
 
+        # EBI-UPLOAD
+        # add whole-genome assemblies for EBI upload
+        verkko_subfolder, assembly_id = determine_verkko_subfolder(
+            input.version,
+            'assemblies',
+            "whole_genome",
+            purpose="deposit"
+        )
+        for source in [input.linear, input.index]:
+            source_path = pl.Path(source)
+            sample = source_path.name
+            if sample in QC_SAMPLES:
+                target = verkko_subfolder.joinpath("qc_assembly", source_path.name)
+            else:
+                target = verkko_subfolder / source_path.name
+            rsync(source_path, target)
+            check_file += f'{source_path}\t{target}\n'
+
         with open(output.ok, 'w') as dump:
             _ = dump.write(check_file)
     # END OF RUN BLOCK
@@ -97,6 +115,24 @@ rule copy_verkko_subset_assembly:
         for source in [input.linear, input.index]:
             source_path = pl.Path(source)
             target = verkko_subfolder / source_path.name
+            rsync(source_path, target)
+            check_file += f'{source_path}\t{target}\n'
+
+        # EBI-UPLOAD
+        # add whole-genome assemblies for EBI upload
+        verkko_subfolder, assembly_id = determine_verkko_subfolder(
+            input.version,
+            "assemblies",
+            wildcards.chrom,
+            purpose="deposit"
+        )
+        for source in [input.linear, input.index]:
+            source_path = pl.Path(source)
+            sample = source_path.name
+            if sample in QC_SAMPLES:
+                target = verkko_subfolder.joinpath("qc_assembly", source_path.name)
+            else:
+                target = verkko_subfolder / source_path.name
             rsync(source_path, target)
             check_file += f'{source_path}\t{target}\n'
 
@@ -457,6 +493,127 @@ rule copy_seq_class_alignments:
         for source in source_files:
             source_path = pl.Path(source)
             target = verkko_subfolder / source_path.name
+            rsync(source_path, target)
+            check_file += f'{source_path}\t{target}\n'
+
+        with open(output.ok, 'w') as dump:
+            _ = dump.write(check_file)
+    # END OF RUN BLOCK
+
+
+rule copy_seqclass_annotations:
+    input:
+        version = expand(
+            'output/hybrid/verkko/{sample}.HIFIRW.ONTUL.na.wg.verkko.info',
+            sample=COMPLETE_SAMPLES
+        ),
+        t2t_bed = 'references_derived/T2T.chrY-seq-classes.bed',
+        t2t_tsv = 'references_derived/T2T.chrY-seq-classes.tsv',
+        t2t_fasta = 'references_derived/T2T.chrY-seq-classes.fasta',
+        bed_generic = expand(
+            'references_derived/seqclasses/{sample}.HIFIRW.ONTUL.na.chrY.generic-seqcls.bed',
+            sample=COMPLETE_SAMPLES
+        ),
+        bed_specific = expand(
+            'references_derived/seqclasses/{sample}.HIFIRW.ONTUL.na.chrY.specific-seqcls.bed',
+            sample=COMPLETE_SAMPLES
+        )
+    output:
+        ok = 'output/share/seqclasses/verkko_{major}_{minor}/ALL-SAMPLES_T2T-Y.copied.ok'
+    run:
+        import pathlib as pl
+        import itertools as itt
+
+        # EBI-UPLOAD only
+        verkko_subfolder, assembly_id = determine_verkko_subfolder(
+            input.version[0],
+            "seq_classes",
+            "all",
+            purpose="deposit"
+        )
+
+        source_files = [
+            input.t2t_bed, input.t2t_tsv, input_fasta,
+        ]
+
+        for source in itt.chain(source_files, input.bed_generic, input.bed_specific):
+            source_path = pl.Path(source)
+            sample = source_path.name
+            if sample in QC_SAMPLES:
+                target = verkko_subfolder.joinpath("qc_assembly", source_path.name)
+            else:
+                target = verkko_subfolder / source_path.name
+            rsync(source_path, target)
+            check_file += f'{source_path}\t{target}\n'
+
+        with open(output.ok, 'w') as dump:
+            _ = dump.write(check_file)
+    # END OF RUN BLOCK
+
+
+rule copy_motif_files:
+    input:
+        motifs = expand(
+            "references_derived/{motif}.fasta",
+            motif=[
+                "DYZ18_Yq", "DYZ19_Yq", "DYZ1_Yq",
+                "DYZ2_Yq", "DYZ3-prim_Ycentro", "DYZ3-sec_Ycentro",
+                "TSPY", "Yqhet_2k7bp", "Yqhet_3k1bp"
+            ]
+        )
+    output:
+        ok = "output/share/seq_motifs/ALL-MOTIFS.copied.ok"
+    run:
+        import pathlib as pl
+
+        # EBI-UPLOAD only
+        subfolder = pl.Path(config['path_root_deposit_ebi']).resolve(strict=True)
+        subfolder = subfolder.joinpath("ref_seq_motifs")
+
+        check_file = ''
+        for source in input.motifs:
+            source_path = pl.Path(source)
+            target = subfolder / source_path.name
+            rsync(source_path, target)
+            check_file += f'{source_path}\t{target}\n'
+
+        with open(output.ok, 'w') as dump:
+            _ = dump.write(check_file)
+    # END OF RUN BLOCK
+
+
+rule copy_flagged_regions:
+    input:
+        regions = expand(
+            "output/eval/flagged_regions/sample_bed/{sample}.HIFIRW.ONTUL.na.chrY.flagged-all.bed",
+            sample=[s for s in COMPLETE_SAMPLES if s != "HG00512"],
+        ),
+        clusters = expand(
+            "output/eval/flagged_regions/sample_bed/{sample}.HIFIRW.ONTUL.na.chrY.mixed-clusters.bed",
+            sample=[s for s in COMPLETE_SAMPLES if s != "HG00512"],
+        )
+    output:
+        ok = 'output/share/flagged_regions/verkko_{major}_{minor}/ALL-SAMPLES_all-qc-tools.copied.ok',
+    run:
+        import pathlib as pl
+        import itertools as itt
+
+        # EBI-UPLOAD only
+        verkko_subfolder, assembly_id = determine_verkko_subfolder(
+            input.version[0],
+            "flagged_regions",
+            "all",
+            purpose="deposit"
+        )
+
+        check_file = ''
+        for source in itt.chain(input.regions, input.clusters):
+            source_path = pl.Path(source)
+            sample = source_path.name
+            if sample in QC_SAMPLES:
+                target = verkko_subfolder.joinpath("qc_assembly", source_path.name)
+            else:
+                target = verkko_subfolder / source_path.name
             rsync(source_path, target)
             check_file += f'{source_path}\t{target}\n'
 

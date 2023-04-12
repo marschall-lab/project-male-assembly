@@ -107,11 +107,18 @@ def parse_verkko_version(file_path):
     return major, minor
 
 
-def determine_verkko_subfolder(version_file, prefix, suffix):
+def determine_verkko_subfolder(version_file, prefix, suffix, purpose="share"):
     """
     Create versioned Verkko subfolder for sharing results
     """
-    share_path = pl.Path(config['path_root_share_working']).resolve(strict=True)
+    if purpose == "share":
+        # this was only targeting the share before
+        #share_path = pl.Path(config['path_root_share_working']).resolve(strict=True)
+        target_path = pl.Path(config['path_root_share_working']).resolve(strict=True)
+    elif purpose == "deposit":
+        target_path = pl.Path(config['path_root_deposit_ebi']).resolve(strict=True)
+    else:
+        raise
 
     file_name = pl.Path(version_file).name
     assert file_name.endswith('.verkko.info')
@@ -121,7 +128,7 @@ def determine_verkko_subfolder(version_file, prefix, suffix):
     assert major == config['verkko_major'].strip('"'), f'Verkko version error: {major} / {minor}'
     assert minor == config['verkko_minor'].strip('"'), f'Verkko version error: {major} / {minor}'
     subfolder = pl.Path(prefix, f'verkko_{major}_{minor}', suffix)
-    full_path = share_path / subfolder
+    full_path = target_path / subfolder
     full_path.mkdir(parents=True, exist_ok=True)
     return full_path, assembly_id
 

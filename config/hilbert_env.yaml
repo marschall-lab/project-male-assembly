@@ -25,6 +25,7 @@ path_chry_contigs: /gpfs/project/projects/medbioinf/data/share/globus/sig_chrY/2
 path_alignment_cache: /gpfs/project/projects/medbioinf/projects/hgsvc/ontqc/run_folder/output/alignments/reads_to_linear_ref
 
 path_root_share_working: /gpfs/project/projects/medbioinf/data/share/globus/sig_chrY/working
+path_root_deposit_ebi: /gpfs/project/projects/medbioinf/data/share/globus/sig_chrY/ebi_deposit/20230412_sigY_assembly_data
 path_root_share_references: /gpfs/project/projects/medbioinf/data/share/globus/sig_chrY/references
 
 num_cpu_low: 6

@@ -240,6 +240,17 @@ rule run_all:
 rule populate_share:
     input:
         refs = 'output/share/references.ok',
+        seqcls = expand(
+            'output/share/seqclasses/verkko_{major}_{minor}/ALL-SAMPLES_T2T-Y.copied.ok',
+            major=config['verkko_major'].strip('"'),
+            minor=config['verkko_minor'].strip('"'),
+        ),
+        motifs = "output/share/seq_motifs/ALL-MOTIFS.copied.ok",
+        flagged = expand(
+            'output/share/flagged_regions/verkko_{major}_{minor}/ALL-SAMPLES_all-qc-tools.copied.ok',
+            major=config['verkko_major'].strip('"'),
+            minor=config['verkko_minor'].strip('"'),
+        ),
         aln_reads_ref = expand(
             'output/share/alignments/reads-to-ref/{sample}.{other_reads}_aln-to_{reference}.{chrom}.copied.ok',
             sample=COMPLETE_SAMPLES,
